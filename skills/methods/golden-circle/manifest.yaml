@@ -1,0 +1,59 @@
+name: vision-method-golden-circle
+version: 1.0.0
+type: vision-method
+displayName: "黄金圈法"
+description: "3 步愿景构建（Why → How → What，Simon Sinek 黄金圈）：从使命信念出发，经制胜方式，落到未来状态愿景；用 vision-method-template 脚手架创建的演示方法"
+steps:
+  - id: "01"
+    name: "Why：转型的使命与信念"
+    question: "为什么必须转型？这家企业存在的信念与使命是什么——我们真正相信什么？"
+    operations:
+      - "从使命/信念出发回答「为什么」，而非从技术或工具出发"
+      - "提炼一句使命陈述（可被组织成员共鸣）"
+    outputs:
+      - "使命与信念陈述"
+    gate:
+      coreCheck: "使命陈述清晰、可被组织共鸣（不从模型/用例推导）"
+      pass: "使命陈述明确"
+      conditional: "使命存在争议，登记未决项"
+  - id: "02"
+    name: "How：制胜方式与独特路径"
+    question: "我们如何做到与众不同？用什么独特方式把信念变成现实？"
+    operations:
+      - "明确制胜方式（差异化路径/独特价值方程），不写技术方案清单"
+      - "检查 How 与 Why 的一致性"
+    outputs:
+      - "制胜方式陈述"
+    gate:
+      coreCheck: "How 与 Why 一致且路径具体"
+      pass: "制胜方式明确"
+      conditional: "路径细节待补充，登记未决项"
+  - id: "03"
+    name: "What：未来状态愿景"
+    question: "我们具体做什么？未来某天的运营与客户体验是什么画面？"
+    operations:
+      - "将 Why + How 落到具体 What（未来状态愿景）"
+      - "复用共享模板 T5 六特质自检（可想象/可沟通为核心项）"
+    outputs:
+      - "未来状态愿景（visionStatement）"
+      - "六特质自检表（T5）"
+    gate:
+      coreCheck: "愿景可想象且可沟通（核心特质）"
+      pass: "愿景清晰完整"
+      conditional: "仅非核心特质未满足 ≤3 项，登记未决项"
+aiConstraints:
+  - "不从模型、工具或孤立用例推导转型目标——AI 目标须从端到端流程价值池出发"
+  - "AI 嵌入引导与记录，不替代顾问决策；gate 判定结果仅作建议，最终授权由顾问确认后写入"
+  - "AI 不设独立主链——AI 内容嵌入各步骤，不形成独立 AI 检查/推导流程"
+  - "引用层级纪律——只引用顾问确认环节达成的共识，访谈/资料降级为背景材料"
+outputContract:
+  requires:
+    - "visionStatement"
+    - "ambitionTable"
+    - "ambitionRationale"
+    - "impactSummary"
+  optional:
+    - "visionNarrative"
+    - "validationPlan"
+    - "changeControl"
+    - "aiElements"

@@ -78,6 +78,16 @@ def audit(html: str) -> list[str]:
     if re.search(r"[\U0001F300-\U0001FAFF]|\u2705|\u274c|\u2714|\u2716", html):
         violations.append("发现 emoji 信号（不变量：emoji 不作信号）")
 
+    # 打印/离线就绪（M5-04）：内联样式、无外部资源、系统字体
+    if re.search(r'<link[^>]+rel=["\']stylesheet', html, re.I):
+        violations.append("发现外部样式表引用（须离线可打印，应内联 CSS）")
+    if "<script" in html.lower():
+        violations.append("发现 <script>（交付物须离线可打印，不应依赖 JS 渲染）")
+    if re.search(r"@font-face|fonts\.googleapis|fonts\.gstatic", html, re.I):
+        violations.append("发现外部/自定义字体（应使用系统字体）")
+    if re.search(r"background-image\s*:", html):
+        violations.append("发现背景图片（打印不友好，禁用）")
+
     return violations
 
 

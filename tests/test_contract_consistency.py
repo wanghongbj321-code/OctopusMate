@@ -81,5 +81,32 @@ class TestScan(unittest.TestCase):
             self.assertNotIn("_shared", str(m))
 
 
+class TestAllInstalledMethods(unittest.TestCase):
+    """M5-01 契约一致性测试（A7）：全部已安装方法 manifest 通过 schema 校验、注册器 0 异常。"""
+
+    def test_all_installed_methods_contract(self):
+        manifests = scan_manifests()
+        self.assertGreaterEqual(len(manifests), 3, "应至少包含 7 步法 / 北极星法 / 黄金圈 3 个方法")
+        for mf in manifests:
+            instance = load_manifest(mf)
+            errors = validate(instance, MANIFEST_SCHEMA)
+            self.assertEqual(errors, [], f"{mf.name} 契约校验应通过：{errors}")
+
+    def test_registry_zero_errors_and_methods_listed(self):
+        """注册器无异常方法；「选择方法」列表含 3 个已装方法。"""
+        import sys
+        from pathlib import Path
+
+        ROOT = Path(__file__).resolve().parents[1]
+        sys.path.insert(0, str(ROOT / "skills" / "vision-distill" / "scripts"))
+        from engine.registry import scan_methods
+
+        valid, errors = scan_methods()
+        self.assertEqual(errors, [], f"注册器不应有异常方法：{errors}")
+        names = {m.name for m in valid}
+        for expected in ("vision-method-octopus-7step", "vision-method-north-star", "vision-method-golden-circle"):
+            self.assertIn(expected, names, f"方法 {expected} 应出现在注册器列表")
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
