@@ -1,0 +1,40 @@
+name: vision-method-mock
+version: 1.0.0
+type: vision-method
+displayName: "Mock 2 步法（引擎验证用）"
+description: "引擎全链路验证用最小方法；存放于 tests/fixtures，不入方法目录注册"
+steps:
+  - id: "01"
+    name: "界定问题"
+    question: "为什么必须转型？"
+    operations:
+      - "记录缺口判断与量化基线"
+    outputs:
+      - "转型问题陈述"
+    gate:
+      coreCheck: "必要性问题可回答"
+      pass: "问题陈述明确"
+      conditional: "部分数据缺失可登记未决项"
+  - id: "02"
+    name: "形成愿景"
+    question: "未来状态是什么？"
+    operations:
+      - "归并未来状态主题"
+    outputs:
+      - "愿景陈述"
+    gate:
+      coreCheck: "愿景可想象且可沟通"
+      pass: "愿景清晰"
+      conditional: "细节待补充，登记未决项"
+aiConstraints:
+  - "不从模型/工具/孤立用例推导转型目标"
+  - "AI 嵌入引导与记录，不替代顾问决策"
+outputContract:
+  requires:
+    - "visionStatement"
+    - "ambitionTable"
+    - "ambitionRationale"
+    - "impactSummary"
+  optional:
+    - "visionNarrative"
+    - "validationPlan"

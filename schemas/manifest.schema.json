@@ -1,0 +1,146 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://octopus-mate.dev/schemas/manifest.schema.json",
+  "title": "Vision Method Manifest",
+  "description": "方法插件 manifest.yaml 规范（对齐开发计划 §6.2 示例与 §4 输出契约字段全集）。每个方法是一个标准 Skill 包，manifest 声明步骤/gate/AI 约束/输出契约覆盖范围；非法 manifest 被注册器拒绝并返回字段级错误。",
+  "type": "object",
+  "required": [
+    "name",
+    "version",
+    "type",
+    "displayName",
+    "steps"
+  ],
+  "properties": {
+    "name": {
+      "type": "string",
+      "pattern": "^vision-method-[a-z0-9]+(-[a-z0-9]+)*$",
+      "description": "方法标识，必须为 vision-method-{slug}（kebab-case）"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "语义化版本号 MAJOR.MINOR.PATCH"
+    },
+    "type": {
+      "const": "vision-method",
+      "description": "固定值，标识愿景构建方法插件"
+    },
+    "displayName": {
+      "type": "string",
+      "description": "方法显示名（出现在「选择方法」列表）"
+    },
+    "description": {
+      "type": "string",
+      "description": "一句话说明适用场景（出现在「选择方法」列表副标题）"
+    },
+    "steps": {
+      "type": "array",
+      "minItems": 1,
+      "description": "步骤定义（首版线性流程 + 线性回溯，见 §7 M1-03）",
+      "items": {
+        "type": "object",
+        "required": ["id", "name"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "步骤 id，如 \"01\"（全局唯一）"
+          },
+          "name": {
+            "type": "string",
+            "description": "步骤名"
+          },
+          "question": {
+            "type": "string",
+            "description": "向顾问提出的核心问题（AI 引导层读取并呈现）"
+          },
+          "operations": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "操作指引"
+          },
+          "outputs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "该步产出物"
+          },
+          "gate": {
+            "type": "object",
+            "description": "该步可选的三态 gate 判定；语义型判定由 AI 引导层执行（§6.5），规则型判定由引擎执行",
+            "properties": {
+              "coreCheck": {
+                "type": "string",
+                "description": "核心判定项说明；仅核心项失败才触发回指"
+              },
+              "pass": {
+                "type": "string",
+                "description": "通过标准"
+              },
+              "conditional": {
+                "type": "string",
+                "description": "有条件通过标准（登记未决项后可带项继续）"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "aiConstraints": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "方法级 AI 约束（平台 AI 铁律不可放宽，只能追加，见 §6.5）"
+    },
+    "outputContract": {
+      "type": "object",
+      "description": "声明本方法覆盖的输出契约字段（字段全集见 §4）",
+      "properties": {
+        "requires": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "visionStatement",
+              "visionNarrative",
+              "ambitionTable",
+              "ambitionRationale",
+              "impactSummary",
+              "openIssues",
+              "validationPlan",
+              "changeControl",
+              "aiElements",
+              "downstreamInterfaces"
+            ]
+          },
+          "description": "本方法承诺必填的契约字段（缺失核心字段阻断进入确认）"
+        },
+        "optional": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "visionStatement",
+              "visionNarrative",
+              "ambitionTable",
+              "ambitionRationale",
+              "impactSummary",
+              "openIssues",
+              "validationPlan",
+              "changeControl",
+              "aiElements",
+              "downstreamInterfaces"
+            ]
+          },
+          "description": "本方法可选的契约字段"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

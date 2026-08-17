@@ -1,0 +1,37 @@
+# vision-method-template · manifest.yaml 空白模板（带注释）
+
+> 复制本文件到 `skills/methods/{slug}/manifest.yaml` 后填写。字段规范见 `schemas/manifest.schema.json` 与开发计划 §6.2。
+> 提示：`#` 注释行在填写时删除或保留均可（YAML 忽略注释）。
+
+name: vision-method-{slug}          # 必填：vision-method-{kebab-slug}，如 vision-method-golden-circle
+version: 1.0.0                      # 必填：语义化版本号
+type: vision-method                 # 必填：固定值
+displayName: "方法显示名"            # 必填：出现在「选择方法」列表
+description: "一句话说明适用场景"     # 建议
+
+steps:                              # 必填：至少 1 步，首版线性流程
+  - id: "01"                        # 必填：步骤 id（全局唯一）
+    name: "步骤名"                  # 必填
+    question: "向顾问提出的核心问题"  # 建议：AI 引导层读取并呈现
+    operations:                     # 建议：操作指引
+      - "操作指引..."
+    outputs:                        # 建议：该步产出物
+      - "该步产出物..."
+    gate:                           # 可选：三态 gate 判定
+      coreCheck: "核心判定项说明"     # 仅核心项失败才回指
+      pass: "通过标准"
+      conditional: "有条件通过标准（登记未决项）"
+
+aiConstraints:                      # 可选：方法级 AI 约束（平台铁律不可放宽，只能追加）
+  - "不从模型/工具/孤立用例推导转型目标"
+  - "AI 嵌入引导与记录，不替代顾问决策"
+
+outputContract:                     # 建议：声明输出契约覆盖范围（字段全集见开发计划 §4）
+  requires:
+    - "visionStatement"
+    - "ambitionTable"
+    - "ambitionRationale"
+    - "impactSummary"
+  optional:
+    - "visionNarrative"
+    - "validationPlan"

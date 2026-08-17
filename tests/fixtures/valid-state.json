@@ -1,0 +1,27 @@
+{
+  "project_slug": "zhongruan-power",
+  "project_name": "中软电力转型",
+  "topic_slug": "ai-ops-vision",
+  "topic_name": "AI 运维愿景",
+  "updated_at": "2026-08-17T17:00:00+08:00",
+  "status": "review_ready",
+  "method": "octopus-7step",
+  "current_step": "04",
+  "open_issues": [
+    {
+      "id": "U-01",
+      "sourceStep": "04",
+      "content": "愿景的可取性未获一线代表确认",
+      "reason": "disputed",
+      "resolveMode": "supplement",
+      "resolution": "第二轮工作坊补充完成"
+    }
+  ],
+  "artifacts": {
+    "step-output": {
+      "path": "modules/vision-octopus-7step-step04-v1.md",
+      "version": 1,
+      "status": "review_ready"
+    }
+  }
+}

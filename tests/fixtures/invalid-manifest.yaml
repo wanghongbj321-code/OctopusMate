@@ -1,0 +1,7 @@
+# 非法 manifest 样例：缺必填字段（version/steps）、type 错误、未知字段
+name: vision-method-broken
+type: wrong-type
+displayName: "非法方法"
+# 缺 version
+# 缺 steps（minItems 1）
+unknownField: "不应存在"
