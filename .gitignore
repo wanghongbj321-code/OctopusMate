@@ -30,6 +30,7 @@ Thumbs.db
 *.log
 tmp/
 temp/
+artifacts/
 
 # 打包产物
 dist/
