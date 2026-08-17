@@ -1,0 +1,73 @@
+name: vision-method-north-star
+version: 1.0.0
+type: vision-method
+displayName: "北极星指标法"
+description: "快速简化版愿景构建（4 步，适合半天工作坊）：现状痛点 → 北极星指标 → 未来新闻稿愿景 → 六特质自检，接平台出口"
+steps:
+  - id: "01"
+    name: "现状痛点与价值卡点"
+    question: "当前业务价值实现卡在哪里？最值得先解决的一个痛点是什么？"
+    operations:
+      - "识别 1-2 个最核心的现状痛点（成本/周期/体验/收入）"
+      - "标注价值卡点：问题严重度与量化基线（有数据支撑，不凭感觉）"
+    outputs:
+      - "核心痛点陈述"
+      - "价值卡点与基线"
+    gate:
+      coreCheck: "痛点判断有量化基线或事实支撑"
+      pass: "痛点明确且基线可量化"
+      conditional: "基线数据缺失，登记未决项"
+  - id: "02"
+    name: "确定北极星指标"
+    question: "哪个单一可度量指标最能代表转型成功？它的定义、数据源与责任方是什么？"
+    operations:
+      - "选定 1 个北极星指标（须可度量、有数据源、有责任方）"
+      - "填写北极星指标定义卡（指标/定义/数据源/责任方）"
+    outputs:
+      - "北极星指标定义卡"
+    gate:
+      coreCheck: "北极星指标单一且可度量（有定义、数据源与责任方）"
+      pass: "指标定义完整"
+      conditional: "暂无法量化或责任方未定，登记未决项"
+  - id: "03"
+    name: "未来新闻稿与一句话愿景"
+    question: "假设转型成功后，未来某天的新闻会怎么写？用一句话说清愿景？"
+    operations:
+      - "撰写未来新闻稿（标题/正文/FAQ），描述转型成功后的运营画面"
+      - "提炼一句话愿景（从新闻稿反推）"
+    outputs:
+      - "未来新闻稿"
+      - "一句话愿景"
+    gate:
+      coreCheck: "新闻稿可想象（有具体画面）且愿景一句话可讲清"
+      pass: "新闻稿完整、愿景清晰"
+      conditional: "细节待补充，登记未决项"
+  - id: "04"
+    name: "愿景六特质自检"
+    question: "用 Kotter 六特质检验愿景：可想象/可取/可行/聚焦/灵活/可沟通？"
+    operations:
+      - "复用共享模板 T5 愿景六特质自检"
+      - "逐项判定：可想象（核心）/可取/可行/聚焦/灵活/可沟通（核心）"
+      - "4 步完成后接平台出口（检验 + 确认 + 裁决）"
+    outputs:
+      - "六特质自检表（T5）"
+    gate:
+      coreCheck: "愿景可想象且可沟通（核心特质）"
+      pass: "六特质全部满足"
+      conditional: "仅非核心特质未满足 ≤3 项，登记未决项"
+aiConstraints:
+  - "不从模型、工具或孤立用例推导转型目标——AI 目标须从端到端流程价值池出发"
+  - "AI 嵌入引导与记录，不替代顾问决策；gate 判定结果仅作建议，最终授权由顾问确认后写入"
+  - "AI 不设独立主链——AI 内容嵌入各步骤，不形成独立 AI 检查/推导流程"
+  - "引用层级纪律——只引用顾问确认环节达成的共识，访谈/资料降级为背景材料"
+outputContract:
+  requires:
+    - "visionStatement"
+    - "ambitionTable"
+    - "ambitionRationale"
+    - "impactSummary"
+  optional:
+    - "visionNarrative"
+    - "validationPlan"
+    - "changeControl"
+    - "aiElements"

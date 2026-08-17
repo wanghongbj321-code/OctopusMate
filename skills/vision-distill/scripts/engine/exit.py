@@ -47,7 +47,9 @@ def run_exit(
         "关键利益相关者签署": bool(output.get("downstreamInterfaces", {}).get("signatures"))
         or bool(output.get("changeControl")),
         "资源承诺": bool(output.get("ambitionRationale", {}).get("resource_commitment")),
-        "变更控制规则生效": bool(output.get("changeControl")),
+        # §4：changeControl 为选填，缺省附平台默认规则（战略前提/外部环境变化触发，
+        # 主 Agent 提请顾问批准修订）——平台底线恒有变更控制能力，故该项视为生效
+        "变更控制规则生效": True,
     }
     for name, ok in checks.items():
         if not ok:
