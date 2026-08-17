@@ -1,6 +1,6 @@
 {
   "name": "octopus-mate",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Octopus Mate: AI transformation consulting mate — first slice is transformation vision building via the Octopus 7-Step and North Star metric methods, driven by a method engine; direction always decided by the consultant.",
   "agents": [
     "./agents/octopus-mate.md"
