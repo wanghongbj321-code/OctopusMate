@@ -8,41 +8,85 @@
 |---|---|---|
 | WorkBuddy | 最新版 | 专家运行平台（「专家中心」启用） |
 | Python | 3.12+ | 引擎与测试（本仓库脚本零第三方测试依赖） |
-| PyYAML | 6.x | 解析方法 manifest（`pip install pyyaml`） |
+| **PyYAML** | 6.x | **必装**：解析方法 manifest（`pip install pyyaml`，引擎 `parser.py` 与契约校验 `contract_consistency.py` 依赖；未装则 manifest 解析失败） |
 | Chrome（可选） | 任意 | 确认包 HTML 浏览器视觉验证（headless 截图） |
 
 ## 一、安装专家到 WorkBuddy
 
+### 0. 下载与解压（重要：中文文件名）
+
+GitHub 源码 zip 含中文文件名（`skills/methods/**/templates/T1-战略选择级联表.md` 等），**macOS 内置 `unzip` 无法正确处理**（报假 "write error (disk full?)"，实际只解出一部分文件）。请使用以下任一方式：
+
+**方式 A（推荐）：下载 tar.gz**（UTF-8 兼容性更好）：
+
+```bash
+curl -L -o octopusmate.tar.gz \
+  https://github.com/wanghongbj321-code/OctopusMate/archive/refs/tags/v0.1.1.tar.gz
+tar -xzf octopusmate.tar.gz
+```
+
+**方式 B：Python zipfile 解压 zip**（UTF-8/GBK 文件名探测）：
+
+```bash
+python3 - <<'EOF'
+import zipfile
+with zipfile.ZipFile("OctopusMate-0.1.1.zip") as z:
+    for info in z.infolist():
+        name = info.filename
+        if not info.flag_bits & 0x800:      # 非 UTF-8 标记 → cp437 还原
+            try:    name = name.encode("cp437").decode("utf-8")
+            except UnicodeDecodeError: name = name.encode("cp437").decode("gbk")
+        z.extract(info, "src/")
+EOF
+```
+
+> 解压后确认 `skills/methods/` 下中文模板（T1-T10、未决条件清单、北极星指标定义卡等）文件齐全。
+
 专家包结构（发布内容）：
 
 ```
-.workbuddy-plugin/plugin.json    # 专家清单（含展示字段）
-agents/octopus-mate.md           # 主 Agent 薄控制面
-skills/                          # 引擎 + 质检 + 渲染 + 方法插件库
+.codebuddy-plugin/plugin.json    # 专家清单（含展示字段；专家生态规范目录，校验/注册/市场索引统一使用）
+agents/octopus-mate.md           # 主 Agent 薄控制面（agents/ 只放 Agent MD）
+skills/                          # 引擎 + 质检 + 渲染 + 方法插件库（每个声明 skill 均含 SKILL.md）
 schemas/                         # state.json / manifest schema
-tests/                           # 40 用例（建议随包携带，供验证）
-avatars/                         # 头像
+tests/                           # 44 用例（建议随包携带，供验证）
+avatars/                         # 头像（≤500KB）
+artifacts/demo/                  # 演示确认包（HTML + 唯一事实源 MD + 截图）
 README.md / LICENSE              # 项目文档（MIT）
 ```
 
-**上架三步**：
+### 1. 拷贝专家包到本地专家市场目录（排除文档/运行产物）
 
 ```bash
-# 1. 拷贝专家包到本地专家市场目录（排除文档/运行产物）
 mkdir -p ~/.workbuddy/plugins/marketplaces/my-experts/plugins/octopus-mate
 rsync -a --exclude internal/ --exclude artifacts/ --exclude workshop/ \
-      --exclude .git --exclude .workbuddy/ --exclude '*.png' \
+      --exclude .git --exclude .workbuddy/ --exclude '*.pyc' \
       . ~/.workbuddy/plugins/marketplaces/my-experts/plugins/octopus-mate/
+```
 
-# 2. 校验（expert-manager 规范脚本，路径以本机安装为准）
+### 2. 校验（expert-manager 规范脚本，路径以本机安装为准）
+
+```bash
 EM=~/.workbuddy/plugins/cache/workbuddy-builtin/skill-expert-manager/0.1.0/scripts
 python3 $EM/validate_expert.py ~/.workbuddy/plugins/marketplaces/my-experts/plugins/octopus-mate
+```
 
-# 3. 注册上架（校验通过后；--session-id 为本机会话标识）
+### 3. 注册上架（校验通过后；--session-id 为本机会话标识）
+
+```bash
 python3 $EM/register_expert.py \
   ~/.workbuddy/plugins/marketplaces/my-experts/plugins/octopus-mate \
   --session-id <session-id>
 ```
+
+### 4. 确认 session marker 落盘
+
+```bash
+ls -la ~/.workbuddy/plugins/marketplaces/my-experts/plugins/octopus-mate/.created-by-session \
+  || echo -n "<session-id>" > ~/.workbuddy/plugins/marketplaces/my-experts/plugins/octopus-mate/.created-by-session
+```
+
+> 注册脚本的 marker 写入偶发静默失败（try/except 吞异常），缺失不影响注册本身，但建议按上式确认/补写。
 
 **启用**：WorkBuddy 连接器管理 → 右上角「自定义连接器」入口 → 找到 `octopus-mate` → 点击**信任**启用。启用后即可在会话中使用（入口默认自我介绍 + 功能引导，询问「项目名称 + Topic」）。
 

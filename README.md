@@ -21,7 +21,7 @@ Octopus Mate 是一款面向 AI 转型咨询项目的智能体（WorkBuddy 专�
 
 ```bash
 # 运行测试（依赖 PyYAML）
-python3 -m unittest discover -s tests -v          # 40 用例全绿
+python3 -m unittest discover -s tests -v          # 44 用例全绿
 
 # 契约一致性校验（全部已安装方法 manifest）
 python3 tests/contract_consistency.py             # 3 个 manifest，0 失败
@@ -44,7 +44,7 @@ artifacts/demo/
 
 ```
 OctopusMate/
-├── .workbuddy-plugin/plugin.json    # 专家上架配置
+├── .codebuddy-plugin/plugin.json    # 专家上架配置（专家生态规范目录）
 ├── agents/octopus-mate.md           # 主 Agent 薄控制面（五 section）
 ├── skills/
 │   ├── vision-distill/              # 生产：方法引擎（scripts/engine/ 平台公共代码）
@@ -52,7 +52,7 @@ OctopusMate/
 │   ├── vision-render/               # 输出：确认包 HTML 渲染 + 13 条不变量审计
 │   └── methods/                     # 方法插件库（octopus-7step / north-star / golden-circle / 脚手架 / _shared 共享模板）
 ├── schemas/                         # state.json + manifest.schema.json
-├── tests/                           # 40 用例（契约/引擎/会话/e2e/生命周期/载体）
+├── tests/                           # 44 用例（契约/引擎/会话/e2e/生命周期/载体/包结构）
 └── workshop/                        # 运行产物（{project_slug}/{topic_slug}/，gitignore）
 ```
 

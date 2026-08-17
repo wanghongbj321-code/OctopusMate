@@ -1,9 +1,26 @@
 # Changelog · Octopus Mate
 
 > 版本变更记录与专家包修改规范。项目采用语义化版本（SemVer）：`MAJOR.MINOR.PATCH`。
-> 专家包当前版本：**0.1.0**（首个功能「构建转型愿景与雄心」）。
+> 专家包当前版本：**0.1.0**（首个功能「构建转型愿景与雄心」）；**0.1.1 修复待发布**。
 
 ## 版本历史
+
+### 0.1.1 — 未发布 · 上架安装缺陷修复
+
+> 依据：`internal/docs/debug/上架安装调试记录-20260817.md`（P1-P8）与修复计划。修复均已落地 main，待发布。
+
+**Fixed**
+- 元数据目录迁移：`.workbuddy-plugin/` → **`.codebuddy-plugin/`**（专家生态规范目录，校验/注册/市场索引统一使用；源头消除 P2 校验"plugin.json not found"）
+- 补 `octopus-7step/SKILL.md`、`north-star/SKILL.md`（frontmatter name 对齐 manifest；消除 P3 校验"skill path has no SKILL.md"）
+- 删除 `agents/README.md`（agents/ 仅保留 Agent MD；消除 P4 校验 "README.md: No YAML frontmatter found"）
+- 头像压缩至 512×512 ≤500KB（P5；主用 202KB，提交 ffed4b8）
+- 演示产物入库：`.gitignore` 调整（`artifacts/*` + `!artifacts/demo/**`），`artifacts/demo/` 6 文件随包发布（消除 P7 测试 FileNotFoundError）
+
+**Added**
+- 测试 `tests/test_package_structure.py`（4 用例）：声明 skills 路径↔SKILL.md、agents 路径存在、agents/ 仅 Agent MD、avatar ≤500KB（F9 防回归；全量 44 用例）
+
+**Docs**
+- `INSTALL.md`：新增「下载与解压」章节（macOS unzip 中文文件名问题 → tar.gz 或 Python zipfile 解压，P1）；注册后 `.created-by-session` 检查步骤（P8）；PyYAML 标注必装（P6）；专家包结构图更新（.codebuddy-plugin）
 
 ### 0.1.0 — 2026-08-17 · 首个功能
 
