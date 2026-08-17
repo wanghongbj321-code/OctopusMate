@@ -1,0 +1,111 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://octopus-mate.dev/schemas/state.json.schema.json",
+  "title": "Octopus Mate Vision Session State",
+  "description": "会话状态 state.json（对齐开发计划 v0.3 §5.1 落盘约定）。顶层元数据 project_slug/project_name/topic_slug/topic_name（无 group 层级）+ 状态机 review_ready → authorized → finalized + 未决条件清单 + 产物索引。授权约束：authorized 状态仅可由主 Agent 在顾问确认后写入（用户授权节点 = 出口确认环节）。",
+  "type": "object",
+  "required": [
+    "project_slug",
+    "project_name",
+    "topic_slug",
+    "topic_name",
+    "updated_at",
+    "status"
+  ],
+  "properties": {
+    "project_slug": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+      "description": "项目目录短名（kebab-case ASCII），与 workshop/ 目录名一致"
+    },
+    "project_name": {
+      "type": "string",
+      "description": "项目显示名（可中文），保留用户输入"
+    },
+    "topic_slug": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+      "description": "Topic 目录短名（kebab-case ASCII），与 workshop/{project_slug}/{topic_slug}/ 目录名一致"
+    },
+    "topic_name": {
+      "type": "string",
+      "description": "Topic 显示名（可中文），保留用户输入"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "最后更新时间（ISO 8601）"
+    },
+    "status": {
+      "enum": ["review_ready", "authorized", "finalized"],
+      "description": "状态机：review_ready（可评审）→ authorized（顾问已授权）→ finalized（定稿渲染）。authorized 仅可由主 Agent 在顾问确认后写入；非法迁移（如 review_ready 直接跳 finalized）应被拒绝（M5-03 状态机流转测试覆盖）"
+    },
+    "method": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+      "description": "当前方法 slug（如 octopus-7step / north-star），可为空（未选方法）"
+    },
+    "current_step": {
+      "type": "string",
+      "description": "当前步骤 id（对应 manifest steps[].id），可为空"
+    },
+    "open_issues": {
+      "type": "array",
+      "description": "未决条件清单（对齐方法论 T10 六列）。可为空数组；每项必填 id/sourceStep/content/reason/resolveMode，resolution 在出口确认环节裁决后填写",
+      "items": {
+        "type": "object",
+        "required": ["id", "sourceStep", "content", "reason", "resolveMode"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^U-\\d{2}$",
+            "description": "未决项编号，如 U-01（全流程唯一）"
+          },
+          "sourceStep": {
+            "type": "string",
+            "description": "登记步骤 id（来源步骤）"
+          },
+          "content": {
+            "type": "string",
+            "description": "未决内容"
+          },
+          "reason": {
+            "enum": ["answer_unavailable", "evidence_missing", "disputed"],
+            "description": "登记原因：答不上来 / 证据缺失 / 争议"
+          },
+          "resolveMode": {
+            "enum": ["supplement", "downgrade", "remove"],
+            "description": "拟裁决方式：补充回答 / 降级为假设 / 移出转型范围"
+          },
+          "resolution": {
+            "type": "string",
+            "description": "裁决结果（步骤 07 / 出口确认环节填写），未裁决时省略；降级为假设的项必须在 validationPlan 中有对应验证计划（对齐 §4 条件必填）"
+          }
+        }
+      }
+    },
+    "artifacts": {
+      "type": "object",
+      "description": "产物索引：key = 产物类型（step-output / open-issues / confirm-package），value = 产物路径与版本记录",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "相对 workshop/{project_slug}/{topic_slug}/ 的产物路径"
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "版本号 v{N}"
+          },
+          "status": {
+            "enum": ["draft", "review_ready", "authorized", "finalized"],
+            "description": "产物状态"
+          }
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}

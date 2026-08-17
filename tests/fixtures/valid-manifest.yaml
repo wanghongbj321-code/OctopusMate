@@ -1,0 +1,42 @@
+# 合法 manifest 样例（对齐开发计划 §6.2 示例 + §4 契约字段全集）
+name: vision-method-demo
+version: 1.0.0
+type: vision-method
+displayName: "演示方法"
+description: "最小两步演示方法，用于契约一致性测试"
+
+steps:
+  - id: "01"
+    name: "界定现状"
+    question: "当前业务价值实现的卡点是什么？"
+    operations:
+      - "记录现状痛点与价值卡点"
+    outputs:
+      - "现状描述"
+    gate:
+      coreCheck: "现状描述有事实支撑"
+      pass: "卡点明确且有数据或事实支撑"
+      conditional: "卡点明确但缺数据 → 登记未决项"
+  - id: "02"
+    name: "形成愿景"
+    question: "希望达成什么未来状态？"
+    operations:
+      - "归并未来状态主题"
+    outputs:
+      - "愿景陈述"
+
+aiConstraints:
+  - "不从模型/工具/孤立用例推导转型目标"
+  - "AI 嵌入引导与记录，不替代顾问决策"
+
+outputContract:
+  requires:
+    - visionStatement
+    - ambitionTable
+    - ambitionRationale
+    - impactSummary
+  optional:
+    - visionNarrative
+    - validationPlan
+    - changeControl
+    - aiElements

@@ -7,6 +7,9 @@ workspace/
 projects/
 state/
 
+# 运行产物（愿景会话工作目录，不随专家包发布，见开发计划 §5.1）
+workshop/
+
 # 真实客户素材（业务敏感，不入库；方法论蒸馏件在专家包内）
 test-transcripts/
 interviews/
