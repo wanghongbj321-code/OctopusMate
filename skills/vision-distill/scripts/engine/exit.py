@@ -104,8 +104,19 @@ def assemble_confirm_package(output: dict, state: dict, method: Method | None = 
             ]
             lines.append(_md_table(["KPI", "基线", "第一年", "第二年", "第三年", "责任人", "数据源"], rows))
         elif field == "ambitionRationale" and isinstance(value, dict):
+            # 四维定位中文标签（对齐愿景与雄心口径：深度/广度/规模/速度）
+            labels = {
+                "depth": "深度",
+                "scope": "广度",
+                "breadth": "广度",
+                "scale": "规模",
+                "speed": "速度",
+                "basis": "依据摘要",
+                "resource_commitment": "资源承诺",
+            }
             for k, v in value.items():
-                lines.append(f"- **{k}**：{v}")
+                label = labels.get(k, k)
+                lines.append(f"- **{label}**：{v}")
         elif field == "openIssues" and isinstance(value, list):
             rows = [
                 [

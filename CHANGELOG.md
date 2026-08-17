@@ -12,6 +12,7 @@
 - 3 个内置/演示方法：**Octopus 7 步法**（7 步骤 + T1-T10 模板 + AI 引导剧本）、**北极星指标法**（4 步半天工作坊）、**黄金圈法**（3 步第三方演示，验证插件机制）
 - 3 个 vision skills：vision-distill（生产）/ vision-gate（质检）/ vision-render（确认包 HTML 输出）
 - 交付物规范：黑灰专业配色（10-black-gray-professional）+ 13 条 Pan-Mode Invariants 静态审计
+- 项目头像 `avatars/octopus-mate.png`（v1 几何罗盘风格，章鱼+罗盘意象，去水印工具 `remove_watermark.py`）
 - 测试套件：8 个文件 40 用例全绿（契约/引擎/会话/e2e/生命周期/载体）
 - 会话初始化：入口默认自我介绍 + 功能引导 + 收集「项目名称 + Topic」（无 group 层级，确认前不落盘）
 - 开源：MIT License
@@ -25,6 +26,11 @@
 - `audit_html.py`：box-shadow 注释误报 → 改属性检测（`box-shadow:`）
 - `exit.py`：变更控制检查对齐 §4（选填缺省附平台默认规则）
 - 测试：`executor.begin(method, state)` 参数顺序
+
+**Changed（口径统一 2026-08-17）**
+- 雄心四维用词统一为「深度/广度/规模/速度」（对齐德勤愿景×雄心口径 v004）：方法论 v2.1、开发计划 §4、7 步法 manifest/AI 剧本
+- 愿景环节补「价值/结果」维度：7 步法步骤 04 与北极星法步骤 03 的 question/operations 显式追问"为客户/员工/业务/组织创造的结果与价值"（对齐口径：愿景 = 状态 + 价值 + 结果，CCEP 案例）
+- 确认包渲染：`ambitionRationale` 四维输出中文标签（深度/广度/规模/速度/依据摘要/资源承诺），演示产物已重新生成
 
 **Removed / 待办**
 - 阶段二能力路线图 / 阶段三端到端方案（后续功能）
