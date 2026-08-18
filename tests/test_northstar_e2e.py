@@ -1,7 +1,9 @@
 """M3-05 端到端演练：模拟半天工作坊走通北极星指标法 4 步路径。
 
 验证：4 步执行 + 平台出口（复用 engine/exit.py）+ 契约满足规则（P1-6：
-简化填充、字段集合与 7 步法一致）+ 渲染审计（A1/A3/A8 北极星部分）。
+简化填充、字段集合与 7 步法一致）+ 审计闸门放行合规基线（A1/A3/A8 北极星部分）。
+渲染说明（2026-08-18 改造）：确认包 HTML 由 AI 生成（单测无 LLM），
+测试用 examples/ 合规基线过 audit_html 验证闸门；渲染质量走人工浏览器验收。
 """
 import sys
 import tempfile
@@ -22,10 +24,10 @@ from engine import (  # noqa: E402
     state as state_mod,
 )
 from audit_html import audit as audit_html  # noqa: E402
-from render_confirm import render as render_html  # noqa: E402
 
 NORTH_STAR = ROOT / "skills" / "methods" / "north-star" / "manifest.yaml"
 OCTOPUS7 = ROOT / "skills" / "methods" / "octopus-7step" / "manifest.yaml"
+EXAMPLES_HTML = ROOT / "skills" / "vision-render" / "examples" / "vision-confirm-canvas.html"
 
 
 def build_simplified_output(open_issues: list[dict] | None = None) -> dict:
@@ -123,13 +125,16 @@ class TestNorthStarE2E(unittest.TestCase):
         result = exit_mod.run_exit(output, method.output_contract["requires"], state)
         self.assertEqual(result["errors"], [], f"出口校验应通过：{result['errors']}")
 
-        # 确认包 + 渲染 + 审计（复用 M2-06 链路）
+        # 确认包组装（markdown 唯一事实源）→ finalized
         content = exit_mod.assemble_confirm_package(output, state, method)
         pkg = exit_mod.write_confirm_package(topic_dir, content, slug="north-star-vision")
-        html_path = topic_dir / "output" / "vision-confirm-north-star-vision-v1.html"
-        render_html(pkg, html_path)
-        violations = audit_html(html_path.read_text(encoding="utf-8"))
-        self.assertEqual(violations, [], f"HTML 违反不变量：{violations}")
+        self.assertTrue(pkg.exists())
+        self.assertIn("## 愿景陈述", content)
+
+        # 渲染质量闸门（A8）：examples 合规基线过 13 条不变量审计（AI 生成产物等价物）
+        self.assertTrue(EXAMPLES_HTML.exists())
+        violations = audit_html(EXAMPLES_HTML.read_text(encoding="utf-8"))
+        self.assertEqual(violations, [], f"examples 基线违反不变量：{violations}")
 
         # 授权 → finalized
         self.assertTrue(exit_mod.confirm(state, "pass")["authorized"])
