@@ -59,10 +59,13 @@ README.md / LICENSE              # 项目文档（MIT）
 
 ```bash
 mkdir -p ~/.workbuddy/plugins/marketplaces/my-experts/plugins/octopus-mate
-rsync -a --exclude internal/ --exclude artifacts/ --exclude workshop/ \
-      --exclude .git --exclude .workbuddy/ --exclude '*.pyc' \
+rsync -a --exclude internal/ --exclude artifacts/docs/ --exclude workshop/ \
+      --exclude .git --exclude .workbuddy/ --exclude .venv \
+      --exclude AGENTS.md --exclude '*.pyc' \
       . ~/.workbuddy/plugins/marketplaces/my-experts/plugins/octopus-mate/
 ```
+
+> 注：`artifacts/demo/`（演示确认包）是发布内容，须保留；仅排除 `artifacts/docs/`（内部方案文档）。`test_doc_carrier.py` 依赖 `artifacts/demo/`，排除整个 `artifacts/` 会导致安装后测试报错。
 
 ### 2. 校验（expert-manager 规范脚本，路径以本机安装为准）
 
