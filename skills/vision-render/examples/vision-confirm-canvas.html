@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>愿景确认包</title>
+<title>{{CONFIRM_PACKAGE_TITLE}}</title>
 <style>
 :root {
   --page-bg: #FFFFFF;
@@ -16,7 +16,7 @@
   --accent-border: #1A1A1A;
 }
 * { margin: 0; padding: 0; box-sizing: border-box; }
-html {{ background: var(--page-bg); }}
+html { background: var(--page-bg); }
 body {
   font-family: -apple-system, "PingFang SC", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
   color: var(--ink);
@@ -25,11 +25,19 @@ body {
   padding: 48px 24px;
 }
 .page {
-  max-width: 860px;
+  max-width: 900px;
   margin: 0 auto;
   background: var(--page-bg);
   border-top: 4px solid var(--ink);
   padding: 32px 8px 24px;
+}
+.demo-note {
+  margin: 0 0 22px;
+  padding: 10px 14px;
+  background: var(--block-bg);
+  border-left: 3px solid var(--ink);
+  color: var(--ink-deep);
+  font-size: 13px;
 }
 h1 {
   font-size: 26px;
@@ -37,12 +45,21 @@ h1 {
   color: var(--ink);
   border-bottom: 2px solid var(--ink);
   padding-bottom: 10px;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 }
 .meta {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px 16px;
   color: var(--ink-muted);
   font-size: 13px;
   margin-bottom: 28px;
+}
+.meta strong {
+  display: block;
+  color: var(--ink-deep);
+  font-size: 12px;
+  font-weight: 600;
 }
 h2 {
   font-size: 18px;
@@ -52,7 +69,12 @@ h2 {
   padding-bottom: 6px;
   border-bottom: 1px solid var(--border);
 }
-h3 { font-size: 15px; font-weight: 600; color: var(--ink); margin: 18px 0 8px; }
+h3 {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink);
+  margin: 18px 0 8px;
+}
 p { margin: 8px 0; color: var(--ink); }
 strong { font-weight: 700; }
 blockquote {
@@ -90,46 +112,251 @@ code {
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 12.5px;
 }
-/* 13 条不变量底线：无 box-shadow / 无渐变 / 无圆润胶囊 / 无彩色信号 */
+.section-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin: 12px 0;
+}
+.field-block {
+  border: 1px solid var(--border);
+  padding: 10px 12px;
+  background: var(--page-bg);
+}
+.field-label {
+  display: block;
+  color: var(--ink-muted);
+  font-size: 12px;
+  margin-bottom: 4px;
+}
+.signature-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  margin-top: 12px;
+}
+.signature-box {
+  min-height: 108px;
+  border: 1px solid var(--border);
+  padding: 12px;
+  background: var(--page-bg);
+}
+.signature-line {
+  border-bottom: 1px solid var(--ink);
+  height: 34px;
+  margin: 16px 0 8px;
+}
+.footer-note {
+  margin-top: 28px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+  color: var(--ink-muted);
+  font-size: 12px;
+}
 a { color: var(--ink); text-decoration: underline; }
+@media (max-width: 720px) {
+  body { padding: 28px 16px; }
+  .meta, .section-grid, .signature-grid { grid-template-columns: 1fr; }
+  table { display: block; overflow-x: auto; white-space: nowrap; }
+}
+@media print {
+  body { padding: 0; }
+  .page { max-width: none; border-top: 2px solid var(--ink); padding: 20px 0 0; }
+  .demo-note { display: none; }
+}
 </style>
 </head>
 <body>
 <div class="page">
-<h1>愿景确认包：示例零售集团 · AI 运营转型愿景</h1>
-<blockquote>方法：Octopus 7 步法 ｜ 状态：review_ready ｜ 更新：2026-08-17T10:23:41.041046+00:00</blockquote>
-<h2>愿景陈述</h2>
-<p>成为行业 AI 转型标杆：以数据驱动的运营体系重塑客户体验</p>
-<h2>一页叙事稿</h2>
-<p>三年后的一天：客户自助下单，AI 实时调度订单，运营团队聚焦例外决策……</p>
-<h2>雄心量化表</h2>
-<table>
-<tr><td>KPI</td><td>基线</td><td>第一年</td><td>第二年</td><td>第三年</td><td>责任人</td><td>数据源</td></tr>
-<tr><td>订单处理周期</td><td>72h</td><td>48h</td><td>24h</td><td>12h</td><td>运营负责人</td><td>流程系统</td></tr>
-<tr><td>一次性解决率</td><td>55%</td><td>65%</td><td>75%</td><td>80%</td><td>客服负责人</td><td>客服系统</td></tr>
-</table>
-<h2>雄心决策依据</h2>
-<li><strong>深度</strong>：技术赋能的业务转型</li>
-<li><strong>广度</strong>：核心运营流程 + 客服体系</li>
-<li><strong>规模</strong>：全集团推广</li>
-<li><strong>速度</strong>：3 年三步走</li>
-<li><strong>依据摘要</strong>：对标行业 S1 证据 + 内部试点</li>
-<li><strong>资源承诺</strong>：预算 5000 万/年 + 转型团队 30 人</li>
-<h2>组织 / 能力 / 财务影响</h2>
-<p>{'organization': '新增 AI 运营中心，客服与运营合并汇报', 'capability': '数据驱动决策 / AI 用例规模化能力', 'financial': '年降本 2000 万，收入提升 5%'}</p>
-<h2>未决条件清单</h2>
-<table>
-<tr><td>编号</td><td>登记步骤</td><td>内容</td><td>原因</td><td>拟裁决</td><td>裁决结果</td></tr>
-<tr><td>U-01</td><td>04</td><td>六特质中「可取」待一线确认</td><td>answer_unavailable</td><td>supplement</td><td>补充完成：第二轮工作坊获一线确认</td></tr>
-</table>
-<h2>验证计划表</h2>
-<p>（未填写）</p>
-<h2>变更控制规则</h2>
-<p>{'trigger': '战略前提变化 / 外部环境重大变化 / 检验新证据', 'approver': '发起人 + CEO', 'process': '主 Agent 提请顾问批准修订'}</p>
-<h2>AI 增强状态</h2>
-<p>{'enhanced': 'AI 嵌入运营决策，不设独立主链'}</p>
-<h2>下游接口</h2>
-<p>{'roadmap': '能力路线图接口（阶段二）', 'benefit_case': 'Benefit Case 接口（含待验证假设）', 'communication': '愿景沟通策略草案', 'signatures': ['发起人：张总', '业务负责人：李总', 'IT 负责人：王总']}</p>
+  <div class="demo-note">
+    本文件是确认包 HTML 的占位式版面 demo，仅提供布局、表格、治理与签署区块的视觉参照；生成正式交付物时，所有 <code>{{PLACEHOLDER}}</code> 必须由确认包 markdown 唯一事实源映射，不得复制本 demo 的占位文案。
+  </div>
+
+  <h1>{{PROJECT_NAME}} · {{VISION_TOPIC}} 愿景确认包</h1>
+  <div class="meta">
+    <div><strong>方法</strong>{{METHOD_NAME}}</div>
+    <div><strong>版本</strong>{{CONFIRM_VERSION}}</div>
+    <div><strong>状态</strong>{{CONFIRM_STATUS}}</div>
+    <div><strong>更新</strong>{{UPDATED_AT}}</div>
+  </div>
+
+  <h2>愿景陈述</h2>
+  <blockquote>{{VISION_STATEMENT}}</blockquote>
+
+  <h2>一页叙事稿</h2>
+  <p>{{ONE_PAGE_NARRATIVE_PARAGRAPH_1}}</p>
+  <p>{{ONE_PAGE_NARRATIVE_PARAGRAPH_2}}</p>
+
+  <h2>雄心量化表</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>KPI</th>
+        <th>基线</th>
+        <th>第一年</th>
+        <th>第二年</th>
+        <th>第三年</th>
+        <th>责任人</th>
+        <th>数据源</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>{{KPI_1_NAME}}</td>
+        <td>{{KPI_1_BASELINE}}</td>
+        <td>{{KPI_1_YEAR_1}}</td>
+        <td>{{KPI_1_YEAR_2}}</td>
+        <td>{{KPI_1_YEAR_3}}</td>
+        <td>{{KPI_1_OWNER}}</td>
+        <td>{{KPI_1_SOURCE}}</td>
+      </tr>
+      <tr>
+        <td>{{KPI_2_NAME}}</td>
+        <td>{{KPI_2_BASELINE}}</td>
+        <td>{{KPI_2_YEAR_1}}</td>
+        <td>{{KPI_2_YEAR_2}}</td>
+        <td>{{KPI_2_YEAR_3}}</td>
+        <td>{{KPI_2_OWNER}}</td>
+        <td>{{KPI_2_SOURCE}}</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>雄心决策依据</h2>
+  <ul>
+    <li><strong>深度</strong>：{{AMBITION_DEPTH}}</li>
+    <li><strong>广度</strong>：{{AMBITION_BREADTH}}</li>
+    <li><strong>规模</strong>：{{AMBITION_SCALE}}</li>
+    <li><strong>速度</strong>：{{AMBITION_SPEED}}</li>
+    <li><strong>依据摘要</strong>：{{EVIDENCE_SUMMARY}}</li>
+    <li><strong>资源承诺</strong>：{{RESOURCE_COMMITMENT}}</li>
+  </ul>
+
+  <h2>组织 / 能力 / 财务影响</h2>
+  <div class="section-grid">
+    <div class="field-block">
+      <span class="field-label">组织影响</span>
+      <p>{{ORGANIZATION_IMPACT}}</p>
+    </div>
+    <div class="field-block">
+      <span class="field-label">能力影响</span>
+      <p>{{CAPABILITY_IMPACT}}</p>
+    </div>
+    <div class="field-block">
+      <span class="field-label">财务影响</span>
+      <p>{{FINANCIAL_IMPACT}}</p>
+    </div>
+  </div>
+
+  <h2>未决条件清单</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>编号</th>
+        <th>登记步骤</th>
+        <th>内容</th>
+        <th>原因</th>
+        <th>拟裁决</th>
+        <th>裁决结果</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>{{OPEN_ITEM_ID}}</td>
+        <td>{{OPEN_ITEM_STEP}}</td>
+        <td>{{OPEN_ITEM_CONTENT}}</td>
+        <td>{{OPEN_ITEM_REASON}}</td>
+        <td>{{OPEN_ITEM_PROPOSED_DECISION}}</td>
+        <td>{{OPEN_ITEM_FINAL_DECISION}}</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>验证计划表</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>假设</th>
+        <th>验证方式</th>
+        <th>成功标准</th>
+        <th>责任人</th>
+        <th>时间点</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>{{VALIDATION_HYPOTHESIS}}</td>
+        <td>{{VALIDATION_METHOD}}</td>
+        <td>{{VALIDATION_SUCCESS_CRITERIA}}</td>
+        <td>{{VALIDATION_OWNER}}</td>
+        <td>{{VALIDATION_DATE}}</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>变更控制规则</h2>
+  <ul>
+    <li><strong>触发条件</strong>：{{CHANGE_TRIGGER}}</li>
+    <li><strong>批准人</strong>：{{CHANGE_APPROVER}}</li>
+    <li><strong>流程</strong>：{{CHANGE_PROCESS}}</li>
+  </ul>
+
+  <h2>AI 增强状态</h2>
+  <p>{{AI_ENHANCEMENT_STATUS}}</p>
+
+  <h2>下游接口</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>接口</th>
+        <th>交付物 / 用途</th>
+        <th>状态</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Roadmap</td>
+        <td>{{ROADMAP_INTERFACE}}</td>
+        <td>{{ROADMAP_STATUS}}</td>
+      </tr>
+      <tr>
+        <td>Benefit Case</td>
+        <td>{{BENEFIT_CASE_INTERFACE}}</td>
+        <td>{{BENEFIT_CASE_STATUS}}</td>
+      </tr>
+      <tr>
+        <td>Communication</td>
+        <td>{{COMMUNICATION_INTERFACE}}</td>
+        <td>{{COMMUNICATION_STATUS}}</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>确认签署</h2>
+  <div class="signature-grid">
+    <div class="signature-box">
+      <strong>{{SIGNATORY_1_ROLE}}</strong>
+      <div class="signature-line"></div>
+      <p>{{SIGNATORY_1_NAME}}</p>
+      <p>{{SIGNATORY_1_DATE}}</p>
+    </div>
+    <div class="signature-box">
+      <strong>{{SIGNATORY_2_ROLE}}</strong>
+      <div class="signature-line"></div>
+      <p>{{SIGNATORY_2_NAME}}</p>
+      <p>{{SIGNATORY_2_DATE}}</p>
+    </div>
+    <div class="signature-box">
+      <strong>{{SIGNATORY_3_ROLE}}</strong>
+      <div class="signature-line"></div>
+      <p>{{SIGNATORY_3_NAME}}</p>
+      <p>{{SIGNATORY_3_DATE}}</p>
+    </div>
+  </div>
+
+  <div class="footer-note">
+    {{FOOTER_NOTE}}
+  </div>
 </div>
 </body>
 </html>

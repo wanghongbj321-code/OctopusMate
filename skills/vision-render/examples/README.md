@@ -1,6 +1,6 @@
 # examples/
 
-确认包渲染的**版面与签名视觉参照库**（对齐 pratyaya canvas-render/examples 范式）。
+确认包渲染的**版面与签名视觉参照库**。
 
 ## 用途
 
