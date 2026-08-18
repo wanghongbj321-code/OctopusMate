@@ -26,10 +26,10 @@ python3 -m unittest discover -s tests -v          # 44 用例全绿
 # 契约一致性校验（全部已安装方法 manifest）
 python3 tests/contract_consistency.py             # 3 个 manifest，0 失败
 
-# 生成确认包 HTML（示例）
-python3 skills/vision-render/scripts/render_confirm.py \
-  artifacts/demo/octopus-7step-e2e/vision-confirm-ai-ops-vision.md \
-  /tmp/confirm.html
+# 确认包 HTML：由 AI 按用户选定视觉模式直接生成（见 skills/vision-render/SKILL.md）
+# 生成后静态审计（13 条 Pan-Mode Invariants）：
+python3 skills/vision-render/scripts/audit_html.py \
+  artifacts/demo/octopus-7step-e2e/vision-confirm-ai-ops-vision.html   # 应 [PASS]
 ```
 
 演练产物（含浏览器视觉截图）：

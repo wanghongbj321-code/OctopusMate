@@ -1,9 +1,25 @@
 # Changelog · Octopus Mate
 
 > 版本变更记录与专家包修改规范。项目采用语义化版本（SemVer）：`MAJOR.MINOR.PATCH`。
-> 专家包当前版本：**0.1.1**（上架安装缺陷修复）。
+> 专家包当前版本：**0.1.1**（上架安装缺陷修复）；**0.2.0 渲染改造待发布**。
 
 ## 版本历史
+
+### 0.2.0 — 未发布 · 渲染改造（AI 直接生成 HTML）
+
+> 依据：`internal/docs/debug/渲染改造方案-LLM生成HTML-20260818.md`。渲染方式由代码生成改为 AI 直接生成（对齐 pratyaya canvas-render），多配色真实生效。
+
+**Changed**
+- 渲染方式：确认包 HTML 由 **AI 按用户选定视觉模式直接生成**（读取确认包 md 唯一事实源 + 模式六节规格 + examples 版面参照），不再由代码生成
+- `render_confirm.py` 删除；`skills/vision-render/scripts/` 仅保留 `audit_html.py`（13 条不变量静态审计）
+- 主 Agent 组合编排新增**视觉模式选择环节**：渲染前展示 visual-patterns 候选（zh_name/best_for）供顾问选定，默认黑灰专业
+
+**Added**
+- `skills/vision-render/examples/vision-confirm-canvas.html`：确认包版面与签名视觉参照库（AI 生成前必须读取）
+- `tests/test_audit_html.py`（14 用例）：正向样本（合规放行）+ 反向样本（box-shadow/渐变/圆润胶囊/彩色/emoji/SVG/外链/脚本/外部字体/背景图全被拦截）——锁定审计闸门拦截能力
+
+**Fixed**
+- 消除提示词与实现不一致：此前 SKILL.md 提示"供用户选择配色"但代码只支持黑灰（M5 遗留 L4）；现多模式真实生效
 
 ### 0.1.1 — 2026-08-17 · 上架安装缺陷修复
 

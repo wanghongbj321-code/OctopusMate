@@ -1,7 +1,10 @@
 """M2-07 端到端演练：模拟顾问会话完整走完 Octopus 7 步法。
 
 链路：会话初始化 → 7 步执行（gate 三态，含未决登记）→ 出口校验 →
-未决裁决 → 确认授权（A6）→ 渲染 HTML → 13 条不变量静态审计（A8）。
+未决裁决 → 确认授权（A6）→ finalized（A6）。
+渲染说明（2026-08-18 改造）：确认包 HTML 由 AI 按视觉模式直接生成（单测环境无
+LLM，不现场渲染）；测试用 examples/ 合规基线 HTML 过 13 条不变量审计，验证
+"审计闸门"（audit_html）对合规产物放行（A8）。渲染质量走人工浏览器验收。
 """
 import sys
 import tempfile
@@ -22,9 +25,10 @@ from engine import (  # noqa: E402
     state as state_mod,
 )
 from audit_html import audit as audit_html  # noqa: E402
-from render_confirm import render as render_html  # noqa: E402
 
 MANIFEST = ROOT / "skills" / "methods" / "octopus-7step" / "manifest.yaml"
+# AI 生成确认包的合规基线（版面参照，过审计即代表 LLM 产物质量达标）
+EXAMPLES_HTML = ROOT / "skills" / "vision-render" / "examples" / "vision-confirm-canvas.html"
 
 
 def build_full_output() -> dict:
@@ -135,16 +139,12 @@ class TestOctopus7StepE2E(unittest.TestCase):
         self.assertEqual(result["errors"], [], f"出口校验应通过：{result['errors']}")
         self.assertFalse(result["blocked"])
 
-        # 9. 确认包组装（markdown 唯一事实源）→ 渲染（M2-06）
+        # 9. 确认包组装（markdown 唯一事实源）→ finalized
         content = exit_mod.assemble_confirm_package(output, state, method)
         pkg_path = exit_mod.write_confirm_package(topic_dir, content, slug="ai-ops-vision")
         self.assertTrue(pkg_path.exists())
         self.assertIn("## 愿景陈述", content)
         self.assertIn("## 未决条件清单", content)
-
-        html_path = topic_dir / "output" / "vision-confirm-ai-ops-vision-v1.html"
-        render_html(pkg_path, html_path)
-        self.assertTrue(html_path.exists())
 
         # 10. 授权节点（A6）→ finalized
         auth = exit_mod.confirm(state, "pass")
@@ -152,9 +152,11 @@ class TestOctopus7StepE2E(unittest.TestCase):
         state_mod.transition(state, "finalized")
         self.assertEqual(state["status"], "finalized")
 
-        # 11. 13 条不变量静态审计（A8）
-        violations = audit_html(html_path.read_text(encoding="utf-8"))
-        self.assertEqual(violations, [], f"HTML 违反不变量：{violations}")
+        # 11. 渲染质量闸门（A8）：AI 生成产物（单测环境无 LLM，用 examples 合规基线代表）
+        #     过 13 条不变量审计 → 闸门放行；审计闸门拦截能力见 test_audit_html.py
+        self.assertTrue(EXAMPLES_HTML.exists(), "examples 版面参照应存在")
+        violations = audit_html(EXAMPLES_HTML.read_text(encoding="utf-8"))
+        self.assertEqual(violations, [], f"examples 基线违反不变量：{violations}")
 
         # 12. 演练产物齐备（md 中间产物 + HTML 确认包）
         self.assertTrue((topic_dir / "modules" / "step-01.md").exists())

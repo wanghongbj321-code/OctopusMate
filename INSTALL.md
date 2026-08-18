@@ -135,4 +135,4 @@ print(build_method_list())
 | 专家未出现在「专家中心」 | 检查拷贝目录名必须为 `octopus-mate`；确认已执行注册脚本并在连接器管理点击「信任」 |
 | 方法列表为空 | `skills/methods/` 下方法目录需含 `manifest.yaml`；`templates/`/`_shared/` 为保留目录不会被注册 |
 | manifest 校验失败 | 对照 `schemas/manifest.schema.json` 与 `references/CHECKLIST.md` 检查字段级错误 |
-| 确认包配色不对 | 默认黑灰专业；其他 9 种模式在 `skills/vision-render/visual-patterns/`（frontmatter `zh_name/best_for`） |
+| 确认包配色不对 | 渲染前主 Agent 会展示 `skills/vision-render/visual-patterns/` 各模式（frontmatter `zh_name/best_for`）供选择，未选择默认黑灰专业；AI 按选定模式生成 |
