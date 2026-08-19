@@ -37,6 +37,8 @@ def new_state(
         "steps": {},
         "open_issues": [],
         "artifacts": {},
+        "scoring_config": None,
+        "scoring_config_history": [],
     }
 
 
@@ -82,3 +84,29 @@ def set_step(state: dict, step_id: str, **fields) -> None:
 
 def step_status(state: dict, step_id: str) -> str:
     return state.get("steps", {}).get(step_id, {}).get("status", "pending")
+
+
+# --- M1-04 打分规则运行时注入（scoring_config）---
+
+def set_scoring_config(state: dict, config: dict | None) -> None:
+    """写入打分规则（版本化，覆盖不丢失历史）。
+
+    - 首写：scoring_config = config，history = [config]
+    - 更新：旧值入 history（含写入时间戳），scoring_config = 新值
+    - 规则唯一事实源在 state.json.scoring_config（方法论锚点仅作默认参考，
+      见开发计划 §6.3）；scoring/evidence/blocker 统一从 state 读规则
+    """
+    prev = state.get("scoring_config")
+    history = state.setdefault("scoring_config_history", [])
+    if prev is not None:
+        history.append({
+            **prev,
+            "replaced_at": datetime.now(timezone.utc).isoformat(),
+        })
+    state["scoring_config"] = config
+    state["updated_at"] = datetime.now(timezone.utc).isoformat()
+
+
+def get_scoring_config(state: dict) -> dict | None:
+    """读取当前打分规则；未确认前返回 None（诊断准备步骤完成前不进入打分）。"""
+    return state.get("scoring_config")
