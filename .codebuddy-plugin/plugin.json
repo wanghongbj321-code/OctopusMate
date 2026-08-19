@@ -1,16 +1,19 @@
 {
   "name": "octopus-mate",
-  "version": "0.1.1",
-  "description": "OctopusMate: AI transformation consulting mate — first slice is transformation vision building via the Octopus 7-Step and North Star metric methods, driven by a method engine; direction always decided by the consultant.",
+  "version": "0.2.0",
+  "description": "OctopusMate: AI transformation consulting mate — transformation vision building via the Octopus 7-Step and North Star metric methods, plus VITAL five-dimension status diagnosis (22 angles, 1-5 scoring, blocker identification), all driven by a shared method engine; direction always decided by the consultant.",
   "agents": [
     "./agents/octopus-mate.md"
   ],
   "skills": [
     "./skills/vision-distill",
     "./skills/vision-gate",
+    "./skills/diagnosis-distill",
+    "./skills/diagnosis-gate",
     "./skills/deliverable-render",
     "./skills/methods/octopus-7step",
-    "./skills/methods/north-star"
+    "./skills/methods/north-star",
+    "./skills/methods/vital-diagnosis"
   ],
   "expertType": "agent",
   "agentName": "octopus-mate",
@@ -23,8 +26,8 @@
     "zh": "章鱼大副"
   },
   "displayDescription": {
-    "en": "Consulting mate for AI transformation advisors: full-chain support across vision, roadmap, delivery and reporting — direction always decided by the consultant.",
-    "zh": "给 AI 转型咨询顾问当大副：愿景构建、能力路线图、方案与汇报全链路搭手，方向决策永远由顾问拍板。"
+    "en": "Consulting mate for AI transformation advisors: vision building, VITAL five-dimension status diagnosis, roadmap, delivery and reporting — direction always decided by the consultant.",
+    "zh": "给 AI 转型咨询顾问当大副：愿景构建、VITAL 五维现状诊断、路线图与汇报全链路搭手，方向由顾问拍板。"
   },
   "avatar": "avatars/octopus-mate.png",
   "categoryId": "12-IndustryConsultant",
@@ -43,8 +46,8 @@
       "zh": "愿景构建"
     },
     {
-      "en": "Consulting Mate",
-      "zh": "咨询搭档"
+      "en": "VITAL Diagnosis",
+      "zh": "VITAL 诊断"
     }
   ],
   "quickPrompts": [
@@ -57,8 +60,8 @@
       "zh": "帮我用 Octopus 7 步法构建转型愿景"
     },
     {
-      "en": "Help me quickly build a transformation vision with the North Star metric method.",
-      "zh": "帮我用北极星指标法快速构建转型愿景"
+      "en": "Run a VITAL five-dimension diagnosis on our data management domain.",
+      "zh": "用 VITAL 五维诊断法做数据管理域现状诊断"
     }
   ]
 }
