@@ -45,7 +45,7 @@ grep -n "^### " CHANGELOG.md | head -3        # CHANGELOG 最新版本段
 2. **推送**：`git push -u origin feature/{slug}`
 3. **创建 PR**：`gh pr create`（base = `main`，head = 功能分支），附变更说明；不得本地 merge
 4. **人工评审合并**：等待用户评审、提出修改意见；合并动作由用户在 GitHub 上执行（或用户明确授权后由 AI 执行 `gh pr merge`）
-5. **发布**：PR 合并完成后，基于 `main` 打 tag 并创建 Release（遵守规则 2 版本一致性）
+5. **发布**：PR 合并完成后，基于 `main` 打 tag 并创建 Release（遵守规则 2 版本一致性）。**Release 不附 demo 确认包**（artifacts/demo/ 仅存于仓库与市场包内，供测试与演示，不随 release 附件分发）
 
 **边界**：
 - `main` 分支默认**只读**（禁止 AI 直接 checkout main 后本地 merge / commit / push）
