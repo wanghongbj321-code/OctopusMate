@@ -1,9 +1,21 @@
 # Changelog · Octopus Mate
 
 > 版本变更记录与专家包修改规范。项目采用语义化版本（SemVer）：`MAJOR.MINOR.PATCH`。
-> 专家包当前版本：**0.2.0**（渲染改造 + VITAL 诊断，2026-08-20 发布）。
+> 专家包当前版本：**0.2.1**（方法包锚点自包含修复，待发布）。
 
 ## 版本历史
+
+### 0.2.1 — 未发布 · 方法包锚点来源自包含修复
+
+> 依据：`internal/docs/debug/VITAL诊断锚点来源缺失调试记录-20260820.md`（方案 B：方法包自包含锚点数据）。`internal/` 明确内部设计文档、不随 release 分发；运行时方法包本应自包含运行所需数据。
+
+**Fixed**
+- VITAL 方法包锚点来源自包含：新增 `skills/methods/vital-diagnosis/frameworks/anchors.md`（22 角度 × 1-5 分锚点，方法实现数据，运行时唯一事实源，锚点文本与方法论文档逐字一致）；manifest `anchorSource` 指向包内 `frameworks/anchors.md`，不再引用 internal 设计文档
+- 方法包 internal 引用清零：vital-diagnosis（manifest/references/ai-scripts/SKILL/templates/anchors 溯源）与 octopus-7step references 同步清理；north-star / golden-circle 实测无 internal 引用
+- 门禁防复发：`tests/test_package_structure.py` 新增 `TestMethodSelfContained`——方法包 manifest/references 不得引用 `internal/` 或包外路径；`scoring.anchorSource` 指向包内路径且文件存在
+
+**Changed**
+- 打分规则动态化纪律不变：锚点数据仅作默认参考，顾问确认/修改后写入 `state.json.scoring_config`
 
 ### 0.2.0 — 2026-08-20 · 渲染改造 + VITAL 诊断
 
