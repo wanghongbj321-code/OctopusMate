@@ -14,6 +14,7 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "skills"))
 
 from _engine import blocker, contract, evidence, scoring, session, state as state_mod  # noqa: E402
+from _engine.executor import advance, begin, current_step_id, regress_to, run_step  # noqa: E402
 from _engine.parser import parse_manifest  # noqa: E402
 
 MOCK_MANIFEST = ROOT / "tests" / "fixtures" / "mock-diagnosis-method" / "manifest.yaml"
@@ -162,6 +163,77 @@ class TestDiagnosisPipeline(unittest.TestCase):
             requires=[], contract_type="diagnosis",
         )
         self.assertTrue(any("improvementPath" in e for e in errs))
+
+    def test_gate_three_state_reuse(self):
+        """diagnosis 方法步骤 gate 三态复用（P2-5）：executor 走 begin/run_step/advance/regress_to。
+
+        验证诊断方法步骤（步骤 01 V 维）三态判定：
+        - core_ok=False → regress（回指到步骤 00 之前的处理：回指已执行步骤）
+        - core_ok=True + conditional=True → conditional（登记未决项）
+        - core_ok=True + conditional=False → pass
+        """
+        method, errs = parse_manifest(MOCK_MANIFEST)
+        self.assertEqual(errs, [])
+
+        with tempfile.TemporaryDirectory() as td:
+            st = make_state(Path(td))
+            begin(method, st)
+
+            # 步骤 00 诊断准备：pass
+            r0 = run_step(st, method, "00", Path(td) / "step00.md",
+                          ai_verdict={"core_ok": True, "conditional": False, "note": "范围明确"})
+            self.assertEqual(r0["status"], "pass")
+            advance(st, method)  # 00 → 01
+            self.assertEqual(current_step_id(st, method), "01")
+
+            # 步骤 01 V 维：conditional（非核心项未满足，登记未决项）
+            r1 = run_step(st, method, "01", Path(td) / "step01.md",
+                          ai_verdict={"core_ok": True, "conditional": True, "note": "V4 证据待补强"})
+            self.assertEqual(r1["status"], "conditional")
+            self.assertEqual(len(st["open_issues"]), 1)
+            self.assertEqual(st["open_issues"][0]["sourceStep"], "01")
+
+            # 步骤 02 I 维：core 失败 → regress（回指到已执行步骤 01）
+            r2 = run_step(st, method, "02", Path(td) / "step02.md",
+                          ai_verdict={"core_ok": False, "conditional": False, "note": "I1 无证据"})
+            self.assertEqual(r2["status"], "regress")
+            regress_to(st, method, "01", reason="I1 无证据（core 失败）")
+            self.assertEqual(current_step_id(st, method), "01")
+            self.assertEqual(state_mod.step_status(st, "01"), "draft")
+            self.assertEqual(st["steps"]["01"]["regress_count"], 1)
+
+    def test_threshold_adjust_changes_blockers(self):
+        """阻断阈值调整场景（P2-7）：调低阈值后识别结果变化。"""
+        scores = {
+            "V1": {"score": 3.5, "judgment": "良好", "evidenceIds": ["E-01"]},
+            "I1": {"score": 2.0, "judgment": "覆盖不全", "evidenceIds": ["E-02"]},
+            "I2": {"score": 1.5, "judgment": "漏采", "evidenceIds": ["E-03"]},
+        }
+        # 默认阈值 2.0：I1(2.0) 与 I2(1.5) 均触发
+        blocks_default = blocker.identify_blockers(scores, [], {"blockThreshold": 2.0})
+        self.assertEqual({b["angle"] for b in blocks_default}, {"I1", "I2"})
+
+        # 顾问下调阈值至 1.8：I1(2.0) 不再触发，仅 I2(1.5) 触发（动态化生效）
+        blocks_lowered = blocker.identify_blockers(scores, [], {"blockThreshold": 1.8})
+        self.assertEqual({b["angle"] for b in blocks_lowered}, {"I2"})
+
+    def test_evidence_single_source_not_blocking(self):
+        """缺双来源"待补强"而非阻断（P2-5 / 方法论"材料缺失≠能力缺失"）。
+
+        重要事实仅单一来源时，cross_validation_ok 返回 False（提示待补强），
+        但阻断性问题识别与出口校验均不因此阻断——证据不足只提示，不低分代替。
+        """
+        ev_list: list[dict] = []
+        evidence.register(ev_list, "仅制度文件", level="B", source_type="制度",
+                          verification="文档评审", supports=["V1"])
+        ok, sources = evidence.cross_validation_ok(ev_list, "V1")
+        self.assertFalse(ok)  # 单来源 → 待补强提示
+        self.assertEqual(len(sources), 1)
+
+        # 阻断识别不受单来源影响（按打分判定，不因证据少而误报）
+        scores = {"V1": {"score": 4.0, "judgment": "良好", "evidenceIds": ["E-01"]}}
+        blocks = blocker.identify_blockers(scores, ev_list, {"blockThreshold": 2.0})
+        self.assertEqual(blocks, [])
 
     def test_bad_score_step_excluded(self):
         """非法步进分值：报错 + 剔除出统计（对齐 M1-01 完成标准）。"""
