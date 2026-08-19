@@ -10,9 +10,9 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
-sys.path.insert(0, str(ROOT / "skills" / "vision-distill" / "scripts"))
+sys.path.insert(0, str(ROOT / "skills"))
 
-from engine import (  # noqa: E402
+from _engine import (  # noqa: E402
     executor,
     exit as exit_mod,
     install,
@@ -219,6 +219,54 @@ class TestGoldenCircleE2E(unittest.TestCase):
         self.assertTrue(exit_mod.confirm(state, "pass")["authorized"])
         state_mod.transition(state, "finalized")
         self.assertEqual(state["status"], "finalized")
+
+
+class TestStateMachineBoundary(unittest.TestCase):
+    """M5-03 边界测试 · 类 6：状态机非法迁移——异常均被阻断并给出明确错误。"""
+
+    def setUp(self):
+        self._tmp = tempfile.TemporaryDirectory()
+        self.ws = Path(self._tmp.name)
+        self.topic_dir = session.create_session(self.ws, "p", "P", "t", "T")
+        self.octopus, self.errs = parser.parse_manifest(OCTOPUS_MANIFEST)
+        self.assertEqual(self.errs, [])
+        self.state = state_mod.load_state(self.topic_dir / "state.json")
+        executor.begin(self.octopus, self.state)
+
+    def tearDown(self):
+        self._tmp.cleanup()
+
+    def test_regress_to_unexecuted_step_blocked(self):
+        """回指未执行的后续步骤 → ExecutionError（线性回溯约束）。"""
+        with self.assertRaises(executor.ExecutionError) as ctx:
+            executor.regress_to(self.state, self.octopus, "05", "回溯")
+        self.assertIn("不能回指到未执行的后续步骤", str(ctx.exception))
+
+    def test_regress_to_unknown_step_blocked(self):
+        """回指不存在的步骤 → ExecutionError。"""
+        with self.assertRaises(executor.ExecutionError) as ctx:
+            executor.regress_to(self.state, self.octopus, "99", "回溯")
+        self.assertIn("回指目标步骤不存在", str(ctx.exception))
+
+    def test_run_step_unknown_step_blocked(self):
+        """执行不存在的步骤 → ExecutionError。"""
+        with self.assertRaises(executor.ExecutionError) as ctx:
+            executor.run_step(self.state, self.octopus, "99", self.topic_dir / "modules" / "x.md", {"core_ok": True})
+        self.assertIn("步骤不存在", str(ctx.exception))
+
+    def test_regress_marks_draft_and_keeps_artifact(self):
+        """合法回指：目标及后续步骤转 draft、草稿保留、回指计数递增（正向对照）。"""
+        for sid in ("01", "02", "03"):
+            out = self.topic_dir / "modules" / f"step-{sid}.md"
+            out.write_text(f"# 步骤 {sid}\n", encoding="utf-8")
+            executor.run_step(self.state, self.octopus, sid, out, {"core_ok": True})
+            executor.advance(self.state, self.octopus)
+        executor.regress_to(self.state, self.octopus, "02", "核心项失败回指")
+        self.assertEqual(self.state["current_step"], "02")
+        self.assertEqual(self.state["steps"]["02"]["status"], "draft")
+        self.assertEqual(self.state["steps"]["02"]["regress_count"], 1)
+        # 草稿保留：产物索引仍在
+        self.assertGreaterEqual(len(self.state["artifacts"]), 3)
 
 
 if __name__ == "__main__":

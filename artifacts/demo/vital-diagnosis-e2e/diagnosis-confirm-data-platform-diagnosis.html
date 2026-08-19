@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{REPORT_TITLE}}</title>
+<!--
+  ⚠️ 版面与签名视觉参照（diagnosis-report 画布）——仅作版式参照，不提供业务内容
+  - 本文件是诊断报告最终交付物的【版面与签名视觉事实源】：封面 + 六节编号 section 结构、
+    页头/表格/卡片/徽章样式、黑灰配色骨架须与之一致
+  - 业务内容一律用 {{占位符}} 标注，渲染时由 deliverable-render 按确认包 markdown 映射填充
+  - 禁止复制本文件中的样例占位文案；禁止引用 Demo 样例数值（演示用分数/覆盖率/时效等，见开发计划 §5.3）
+  - token 只来自用户选定视觉模式文件（visual-patterns/{NN}-{id}.md），本文件不提供 token 候选
+-->
+<style>
+  :root{
+    --page-bg:#FFFFFF; --block-bg:#F7F7F7; --ink:#1A1A1A; --ink-deep:#2D2D2D;
+    --ink-soft:#6B6B6B; --ink-muted:#808080; --border:#D4D4D4; --accent-border:#1A1A1A;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:"PingFang SC","Microsoft YaHei","Helvetica Neue",Arial,sans-serif;background:var(--block-bg);color:var(--ink);line-height:1.62;}
+  .page{width:210mm;margin:0 auto;background:transparent;}
+  .cover,section{width:210mm;min-height:297mm;margin:14px auto;background:var(--page-bg);box-shadow:none;page-break-after:always;}
+  section{padding:22mm 18mm;border:0;position:relative;}
+  .eyebrow{font-size:12px;letter-spacing:3px;color:var(--ink-muted);font-weight:500;text-transform:uppercase;}
+  h1{font-size:30px;font-weight:500;color:var(--ink);line-height:1.4;}
+  h2{font-size:22px;font-weight:500;color:var(--ink);margin-bottom:8px;}
+  h3{font-size:16px;font-weight:500;color:var(--ink-deep);margin:28px 0 10px;}
+  p{font-size:14px;color:var(--ink-soft);margin:8px 0;}
+  .lead{font-size:16px;color:var(--ink);}
+  .sec-head{display:flex;align-items:center;gap:14px;margin-bottom:22px;}
+  .sec-num{background:var(--ink);color:#fff;font-size:14px;font-weight:500;padding:6px 12px;border-radius:0;letter-spacing:1px;}
+  .sec-head:after{content:"";flex:1;height:2px;background:var(--accent-border);}
+  .so-what{background:var(--block-bg);padding:12px 16px;margin:14px 0;font-size:13px;color:var(--ink-soft);}
+  .so-what b{color:var(--ink);}
+  table{width:100%;border-collapse:collapse;margin:12px 0;font-size:12.4px;}
+  th{background:var(--block-bg);color:var(--ink);font-weight:500;text-align:left;padding:9px 12px;border:1px solid var(--border);border-bottom:2px solid var(--accent-border);}
+  td{padding:8px 12px;border:1px solid var(--border);color:var(--ink-soft);vertical-align:top;}
+  tr:nth-child(even) td{background:var(--block-bg);}
+  .badge{display:inline-block;padding:2px 10px;border-radius:0;font-size:12px;font-weight:500;color:#fff;white-space:nowrap;background:var(--ink-deep);}
+  .fig{border:1px solid var(--border);border-radius:0;padding:16px;margin:16px 0;background:var(--page-bg);}
+  .fig-cap{font-size:12.5px;color:var(--ink-muted);margin-top:10px;text-align:center;}
+  .kpi-row{display:flex;gap:12px;margin:18px 0;flex-wrap:wrap;}
+  .kpi{flex:1;background:var(--block-bg);border:1px solid var(--border);border-radius:0;padding:16px 18px;}
+  .kpi .num{font-size:26px;font-weight:500;color:var(--ink);}
+  .kpi .lab{font-size:12px;color:var(--ink-muted);margin-top:2px;}
+  .kpi .sub{font-size:12.5px;color:var(--ink-soft);margin-top:6px;}
+  .callout{border:1px solid var(--accent-border);background:var(--block-bg);border-radius:0;padding:16px 20px;margin:16px 0;font-size:13.5px;color:var(--ink-soft);}
+  .callout b{color:var(--ink);}
+  .breakout{border:1px solid var(--accent-border);background:var(--block-bg);border-radius:0;padding:16px 20px;margin:16px 0;font-size:13.5px;color:var(--ink-soft);}
+  .breakout b{color:var(--ink);}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+  .card{background:var(--block-bg);border:1px solid var(--border);border-radius:0;padding:18px;}
+  .card h4{font-size:14px;font-weight:500;color:var(--ink);margin-bottom:8px;}
+  .card ul{padding-left:18px;font-size:13px;color:var(--ink-soft);}
+  .card li{margin:5px 0;}
+  .decision-grid{display:grid;grid-template-columns:1.15fr .85fr;gap:14px;margin:16px 0;}
+  .decision-box{border:1px solid var(--border);border-radius:0;padding:14px 16px;background:var(--block-bg);}
+  .decision-box b{color:var(--ink);}
+  .decision-box ul{padding-left:18px;font-size:12.8px;color:var(--ink-soft);}
+  .decision-box li{margin:4px 0;}
+  .metric-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:12px 0;}
+  .metric{border:1px solid var(--border);border-radius:0;padding:8px 10px;background:var(--page-bg);}
+  .metric b{display:block;color:var(--ink);font-size:15px;}
+  .metric span{font-size:11.5px;color:var(--ink-muted);}
+  .small-note{font-size:12px;color:var(--ink-muted);margin-top:6px;}
+  .tight td{padding:6px 9px;}
+  .tight th{padding:7px 9px;}
+  .diagnosis-hero{display:grid;grid-template-columns:1fr 1.65fr;gap:14px;margin:4px 0 18px;align-items:stretch;}
+  .diagnosis-section{padding-top:18mm;padding-bottom:18mm;}
+  .overall-card{background:var(--ink);color:#fff;border-radius:0;padding:16px 18px;display:flex;flex-direction:column;justify-content:space-between;min-height:132px;}
+  .overall-card .label{font-size:12px;letter-spacing:1px;color:var(--ink-muted);text-transform:uppercase;}
+  .overall-card .level{font-size:42px;line-height:1;color:#fff;font-weight:600;margin:10px 0 6px;}
+  .overall-card .text{font-size:13px;color:var(--ink-soft);}
+  .hero-insight{border:1px solid var(--border);border-radius:0;padding:16px 18px;background:var(--block-bg);}
+  .hero-insight h3{margin:0 0 8px;font-size:17px;color:var(--ink);}
+  .hero-insight p{font-size:13.4px;margin:6px 0;}
+  .diagnosis-layout{display:grid;grid-template-columns:1.15fr .85fr;gap:18px;align-items:stretch;}
+  .radar-panel{border:1px solid var(--border);border-radius:0;background:var(--page-bg);padding:14px 16px;}
+  .radar-panel h3,.rating-table-wrap h3{margin:0 0 10px;font-size:15px;color:var(--ink-deep);}
+  .radar-panel svg{display:block;margin:0 auto;max-width:430px;}
+  .diagnosis-side{display:grid;grid-template-rows:1fr 1fr;gap:14px;}
+  .diagnosis-side .breakout,.diagnosis-side .so-what{margin:0;height:100%;font-size:12.8px;line-height:1.65;}
+  .diagnosis-side .breakout{padding:16px 18px;}
+  .diagnosis-side .so-what{padding:16px 18px;}
+  .rating-table-wrap{margin-top:16px;}
+  .rating-table{table-layout:fixed;margin:8px 0 0;font-size:12.2px;}
+  .rating-table th,.rating-table td{text-align:center;vertical-align:middle;}
+  .rating-table td:last-child{text-align:left;}
+  .rating-table .risk-row td{background:var(--block-bg);}
+  .rating-table .total-row td{background:var(--block-bg);font-weight:500;}
+  ul.tick{padding-left:0;list-style:none;}
+  ul.tick li{padding-left:22px;position:relative;margin:7px 0;font-size:13.5px;color:var(--ink-soft);}
+  ul.tick li:before{content:"";position:absolute;left:2px;top:7px;width:9px;height:5px;border-left:2px solid var(--ink);border-bottom:2px solid var(--ink);transform:rotate(-45deg);}
+  .foot{margin-top:30px;padding-top:16px;border-top:1px solid var(--border);font-size:12px;color:var(--ink-muted);display:flex;justify-content:space-between;}
+  .cover{background:var(--page-bg);color:var(--ink);padding:20mm 18mm;display:flex;flex-direction:column;}
+  .cover-top{display:flex;justify-content:flex-end;margin-bottom:7mm;}
+  .conf{font-size:10.5px;letter-spacing:2.5px;color:var(--ink-muted);font-weight:500;}
+  .cover-goldline{height:3px;background:var(--accent-border);width:100%;}
+  .cover-body{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:0 8mm;}
+  .cover-body .eyebrow{color:var(--ink-muted);}
+  .cover h1{color:var(--ink);font-size:33px;margin:14px 0 0;line-height:1.45;}
+  .cover-divider{width:64px;height:2px;background:var(--accent-border);margin:22px 0 20px;}
+  .cover .sub{font-size:15px;color:var(--ink-soft);}
+  .cover-meta{display:flex;gap:24px;margin-top:14mm;border-top:1px solid var(--border);padding-top:9mm;}
+  .cover-block{flex:1;text-align:left;}
+  .cover-block .lbl{display:block;font-size:10px;letter-spacing:1.6px;color:var(--ink-muted);text-transform:uppercase;margin-bottom:7px;}
+  .cover-block b{display:block;font-size:14px;color:var(--ink);font-weight:500;margin-bottom:5px;}
+  .cover-block span{font-size:12px;color:var(--ink-soft);}
+  .toc{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:24px;}
+  .toc div{background:var(--ink);border:1px solid var(--ink-deep);border-radius:0;padding:12px;font-size:12.5px;color:var(--ink-soft);}
+  .toc b{display:block;color:#fff;font-size:18px;margin-bottom:4px;font-weight:500;}
+  .legend{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0 0;}
+  .legend span{font-size:12px;color:var(--ink-soft);}
+  @page{size:A4;margin:0;}
+  @media print{
+    body{background:var(--page-bg);}
+    .page{width:210mm;}
+    .cover,section{margin:0;box-shadow:none;break-after:page;page-break-after:always;}
+  }
+  @media(max-width:700px){
+    .page,.cover,section{width:100%;min-height:auto;margin:0;box-shadow:none;}
+    section{padding:34px 24px;}
+    .grid2,.decision-grid,.diagnosis-hero,.diagnosis-layout{grid-template-columns:1fr;}
+    .cover{padding:40px 24px;}
+    .cover h1{font-size:28px;word-break:keep-all;overflow-wrap:anywhere;}
+    .cover-body{padding:56px 0;}
+    .cover-meta{flex-direction:column;gap:14px;}
+    .toc{grid-template-columns:repeat(2,1fr);}
+    .kpi{flex:1 1 calc(50% - 8px);min-width:0;}
+    .metric-strip{grid-template-columns:repeat(2,1fr);}
+    table{display:block;overflow-x:auto;white-space:normal;}
+    .fig{overflow-x:auto;}
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+<!-- ==================== 封面 ==================== -->
+<div class="cover">
+  <div class="cover-top"><span class="conf">CONFIDENTIAL</span></div>
+  <div class="cover-goldline"></div>
+  <div class="cover-body">
+    <div class="eyebrow">AI TRANSFORMATION DIAGNOSTIC · VITAL METHODOLOGY</div>
+    <h1>{{报告主标题}}<br>{{报告副标题}}</h1>
+    <div class="cover-divider"></div>
+    <div class="sub">基于 VITAL 五维诊断方法 · 五分制打分</div>
+  </div>
+  <div class="cover-meta">
+    <div class="cover-block">
+      <span class="lbl">Prepared for</span>
+      <b>{{客户名称}}</b>
+      <span>{{诊断对象描述}}</span>
+    </div>
+    <div class="cover-block">
+      <span class="lbl">Prepared by</span>
+      <b>数字化转型诊断项目组</b>
+      <span>VITAL 五维 · 22 个二级角度 · 五分制打分</span>
+    </div>
+    <div class="cover-block">
+      <span class="lbl">Date</span>
+      <b>{{报告日期}}</b>
+      <span>内部资料 · 仅限项目组使用</span>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== 01 执行摘要 ==================== -->
+<section>
+  <div class="sec-head"><span class="sec-num">01</span><h2>执行摘要</h2></div>
+  <p class="lead">数据中台总体打分为 <b>{{总体分}} 分（满分 5）</b>。当前最重要的管理判断是{{核心管理判断}}。</p>
+
+  <div class="kpi-row">
+    <div class="kpi"><div class="num">{{总体分}}</div><div class="lab">总体分（满分 5）</div><div class="sub">五维均分 · 阻断性问题清单已识别</div></div>
+    <div class="kpi"><div class="num">{{战略运营维度分}}</div><div class="lab">战略与运营维度（V / L）</div><div class="sub">{{战略运营维度说明}}</div></div>
+    <div class="kpi"><div class="num">{{数据维度分}}</div><div class="lab">数据维度（I）</div><div class="sub">{{数据维度说明}}</div></div>
+    <div class="kpi"><div class="num">{{关键指标值}}</div><div class="lab">{{关键指标名}}</div><div class="sub">{{关键指标说明}}</div></div>
+  </div>
+
+  <div class="decision-grid">
+    <div class="decision-box">
+      <b>建议管理层立即批准的决策</b>
+      <ul>
+        <li>{{决策一}}</li>
+        <li>{{决策二}}</li>
+        <li>{{决策三}}</li>
+      </ul>
+    </div>
+    <div class="decision-box">
+      <b>12-18 个月目标态</b>
+      <div class="metric-strip">
+        <div class="metric"><b>{{目标指标1}}</b><span>{{目标指标1名}}</span></div>
+        <div class="metric"><b>{{目标指标2}}</b><span>{{目标指标2名}}</span></div>
+        <div class="metric"><b>{{目标指标3}}</b><span>{{目标指标3名}}</span></div>
+        <div class="metric"><b>{{目标指标4}}</b><span>{{目标指标4名}}</span></div>
+      </div>
+      <p class="small-note">{{目标态说明}}</p>
+    </div>
+  </div>
+
+  <h3>核心发现</h3>
+  <ul class="tick">
+    <li>{{核心发现一}}</li>
+    <li>{{核心发现二}}</li>
+    <li>{{核心发现三}}</li>
+  </ul>
+
+  <div class="so-what"><b>So What：</b>{{So What 结论}}</div>
+</section>
+
+<!-- ==================== 02 诊断方法与打分框架 ==================== -->
+<section>
+  <div class="sec-head"><span class="sec-num">02</span><h2>诊断方法与打分框架</h2></div>
+
+  <h3>VITAL 五维诊断框架</h3>
+  <table>
+    <tr><th style="width:60px">维度</th><th style="width:250px">名称</th><th>核心目标</th></tr>
+    <tr><td><b>V</b></td><td>业务价值与战略对齐</td><td>战略和管理要求的业务承接、运行支撑及价值实现。</td></tr>
+    <tr><td><b>I</b></td><td>数据生命周期与适用性</td><td>数据对象完整纳入管理、适合 AI 场景、语义清晰，从产生到 AI 消费持续可追踪贯通。</td></tr>
+    <tr><td><b>T</b></td><td>技术架构与平台支撑</td><td>平台完成应用承接，具备架构承载、服务开放及跨平台协同能力。</td></tr>
+    <tr><td><b>A</b></td><td>管控、风险与可信保障</td><td>数据与 AI 建设运行安全合规、可信受控、公平透明、可解释、可追溯。</td></tr>
+    <tr><td><b>L</b></td><td>长效运营与持续演进</td><td>组织、流程和运营机制支撑稳定运行、应用采用及持续改进。</td></tr>
+  </table>
+
+  <h3>打分与统计规则</h3>
+  <ul class="tick">
+    <li><b>单一打分：</b>每个二级角度按锚点评定 1-5 分（0.5 步进），以单一数值标记输出。</li>
+    <li><b>维度分：</b>取本维各二级角度打分的算术平均（保留一位小数），总体诊断报告 V/I/T/A/L 五维分布。</li>
+    <li><b>总体分：</b>取五维维度分的算术平均（保留一位小数），为统计结果，不设下限或否决规则。</li>
+    <li><b>阻断性问题识别与展示：</b>任一二级角度打分不高于 2 分，或核验发现链路断裂、能力缺口时，识别为阻断性问题（必须修复的问题，不限于链路断裂），列入"阻断性问题清单"独立呈现并作为改进路径优先输入，不参与总体分否决。</li>
+  </ul>
+  <h3>证据质量要求</h3>
+  <table class="tight">
+    <tr><th style="width:120px">证据等级</th><th>判定要求</th><th style="width:170px">本次使用方式</th></tr>
+    <tr><td><b>A 级</b></td><td>系统日志、接口清单、数据抽样、运行指标等可复核材料，具备时间窗口与口径说明。</td><td>{{A 级用途}}</td></tr>
+    <tr><td><b>B 级</b></td><td>制度、架构、流程、审批记录等正式文档，需与访谈或现网核验交叉验证。</td><td>{{B 级用途}}</td></tr>
+    <tr><td><b>C 级</b></td><td>单一访谈、会议纪要或项目组判断，仅作为假设来源，不单独支撑打分。</td><td>{{C 级用途}}</td></tr>
+  </table>
+  <div class="so-what"><b>MECE 边界：</b>{{MECE 边界说明}}</div>
+  <div class="callout"><b>与 DCMM 的区分：</b>VITAL 打分描述"数据管理域对 AI 转型的就绪支撑程度"（1-5 分），与数据管理能力成熟度相互独立，不可相互推导。</div>
+</section>
+
+<!-- ==================== 03 总体诊断结论 ==================== -->
+<section class="diagnosis-section">
+  <div class="sec-head"><span class="sec-num">03</span><h2>总体诊断结论</h2></div>
+
+  <div class="diagnosis-hero">
+    <div class="overall-card">
+      <div>
+        <div class="label">Overall Score</div>
+        <div class="level">{{总体分}}</div>
+        <div class="text">五分制总分 · 阻断性问题清单已识别</div>
+      </div>
+      <div class="text">{{总体分说明}}</div>
+    </div>
+    <div class="hero-insight">
+      <h3>{{总体结论标题}}</h3>
+      <p>{{总体结论段落一}}</p>
+      <p><b>管理含义：</b>{{管理含义}}</p>
+    </div>
+  </div>
+
+  <div class="diagnosis-layout">
+    <div class="radar-panel">
+      <h3>五维打分总览</h3>
+      <!-- 制图规格：references/chart-specs.md §1（数据=dimensionScores，必含 title/desc，var() 引用） -->
+      {{五维雷达图 SVG}}
+    </div>
+    <div class="diagnosis-side">
+      <div class="breakout"><b>阻断性问题识别：</b>{{阻断识别摘要}}</div>
+      <div class="so-what"><b>So What：</b>{{So What 结论}}</div>
+    </div>
+  </div>
+
+  <div class="rating-table-wrap">
+    <h3>分维打分结果</h3>
+    <table class="rating-table tight">
+      <tr>
+        <th style="width:64px">维度</th>
+        <th style="width:110px">打分</th>
+        <th>一句话结论</th>
+        <th style="width:120px">管理含义</th>
+      </tr>
+      {{维度打分行（V/I/T/A/L + 总体）}}
+    </table>
+  </div>
+
+  <div class="fig">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <b style="font-size:14px;color:#1A1A1A;">诊断问题树（Issue Tree）</b>
+      <span style="font-size:11.5px;color:#808080;">从总体分逐层分解至维度与关键问题 · MECE</span>
+    </div>
+    <!-- 制图规格：references/chart-specs.md §2（数据=overallScore+dimensionScores+blockingIssues，三层树形） -->
+    {{问题树 SVG}}
+    <div class="fig-cap">{{问题树图注}}</div>
+  </div>
+</section>
+
+<!-- ==================== 04 分维诊断详情 ==================== -->
+<section>
+  <div class="sec-head"><span class="sec-num">04</span><h2>分维诊断详情</h2></div>
+
+  {{维度详情（每维：h3 标题 + 维度概述 + 角度打分表 + 阻断识别框）}}
+</section>
+
+<!-- ==================== 05 阻断性问题专题 ==================== -->
+<section>
+  <div class="sec-head"><span class="sec-num">05</span><h2>阻断性问题专题</h2></div>
+  <p class="lead">{{阻断专题导语}}</p>
+
+  <div class="fig">
+    <!-- 制图规格：references/chart-specs.md §3（数据=diagnosisScope 环节+blockingIssues 断裂点，横向节点链） -->
+    {{链路问题示意 SVG}}
+    <div class="fig-cap">{{链路图注}}</div>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <h4>{{阻断问题一标题}}</h4>
+      <ul>
+        <li>现状：{{现状}}</li>
+        <li>影响：{{影响}}</li>
+        <li>根因：{{根因}}</li>
+        <li>证据：{{证据}}</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>{{阻断问题二标题}}</h4>
+      <ul>
+        <li>现状：{{现状}}</li>
+        <li>影响：{{影响}}</li>
+        <li>根因：{{根因}}</li>
+        <li>证据：{{证据}}</li>
+      </ul>
+    </div>
+  </div>
+  <div class="so-what"><b>So What：</b>{{So What 结论}}</div>
+</section>
+
+<!-- ==================== 06 附录 ==================== -->
+<section>
+  <div class="sec-head"><span class="sec-num">06</span><h2>附录</h2></div>
+
+  <h3>证据清单</h3>
+  <table class="tight">
+    <tr><th style="width:70px">编号</th><th>证据</th><th style="width:90px">等级</th><th style="width:150px">核验口径</th><th style="width:130px">支撑打分</th></tr>
+    {{证据清单行}}
+  </table>
+  <div class="callout"><b>待补强证据：</b>{{待补强证据说明}}</div>
+  <div class="foot"><span>本报告为 VITAL 五维诊断方法报告</span><span>VITAL 五维诊断方法 · 五分制打分 · {{报告日期}}</span></div>
+</section>
+
+</div>
+</body>
+</html>

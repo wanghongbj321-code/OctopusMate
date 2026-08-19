@@ -1,8 +1,8 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://octopus-mate.dev/schemas/manifest.schema.json",
-  "title": "Vision Method Manifest",
-  "description": "方法插件 manifest.yaml 规范（对齐开发计划 §6.2 示例与 §4 输出契约字段全集）。每个方法是一个标准 Skill 包，manifest 声明步骤/gate/AI 约束/输出契约覆盖范围；非法 manifest 被注册器拒绝并返回字段级错误。",
+  "title": "Method Manifest (vision-method / diagnosis-method)",
+  "description": "方法插件 manifest.yaml 规范（对齐开发计划 §6.2 示例与 §4 输出契约字段全集）。每个方法是一个标准 Skill 包，manifest 声明步骤/gate/AI 约束/输出契约覆盖范围；非法 manifest 被注册器拒绝并返回字段级错误。v2（M0-03）：type 支持 diagnosis-method 分支，新增 scoring 节（打分规则声明，运行时由顾问确认覆盖）。",
   "type": "object",
   "required": [
     "name",
@@ -14,8 +14,8 @@
   "properties": {
     "name": {
       "type": "string",
-      "pattern": "^vision-method-[a-z0-9]+(-[a-z0-9]+)*$",
-      "description": "方法标识，必须为 vision-method-{slug}（kebab-case）"
+      "pattern": "^(vision|diagnosis)-method-[a-z0-9]+(-[a-z0-9]+)*$",
+      "description": "方法标识，必须为 vision-method-{slug} 或 diagnosis-method-{slug}（kebab-case）"
     },
     "version": {
       "type": "string",
@@ -23,8 +23,8 @@
       "description": "语义化版本号 MAJOR.MINOR.PATCH"
     },
     "type": {
-      "const": "vision-method",
-      "description": "固定值，标识愿景构建方法插件"
+      "enum": ["vision-method", "diagnosis-method"],
+      "description": "方法类型：vision-method=愿景构建方法；diagnosis-method=诊断方法（如 VITAL）"
     },
     "displayName": {
       "type": "string",
@@ -70,7 +70,7 @@
           },
           "gate": {
             "type": "object",
-            "description": "该步可选的三态 gate 判定；语义型判定由 AI 引导层执行（§6.5），规则型判定由引擎执行",
+            "description": "该步可选的三态 gate 判定；语义型判定由 AI 引导层执行（§6.4），规则型判定由引擎执行",
             "properties": {
               "coreCheck": {
                 "type": "string",
@@ -91,16 +91,42 @@
         "additionalProperties": false
       }
     },
+    "scoring": {
+      "type": "object",
+      "required": ["scale"],
+      "description": "打分规则声明（仅 diagnosis-method 使用；作为默认参考呈现给顾问确认，运行时以 state.json.scoring_config 为准，见开发计划 §6.3）",
+      "properties": {
+        "scale": {
+          "type": "object",
+          "required": ["min", "max", "step"],
+          "properties": {
+            "min": { "type": "number", "description": "最小分（如 1）" },
+            "max": { "type": "number", "description": "最大分（如 5）" },
+            "step": { "type": "number", "description": "步进（如 0.5）" }
+          },
+          "additionalProperties": false
+        },
+        "blockThreshold": {
+          "type": "number",
+          "description": "阻断阈值：任一角度 ≤ 该值识别为阻断性问题（默认 2.0）"
+        },
+        "anchorSource": {
+          "type": "string",
+          "description": "默认锚点来源文档路径（仅作默认参考，不构成事实引用）"
+        }
+      },
+      "additionalProperties": false
+    },
     "aiConstraints": {
       "type": "array",
       "items": {
         "type": "string"
       },
-      "description": "方法级 AI 约束（平台 AI 铁律不可放宽，只能追加，见 §6.5）"
+      "description": "方法级 AI 约束（平台 AI 铁律不可放宽，只能追加，见 §6.4）"
     },
     "outputContract": {
       "type": "object",
-      "description": "声明本方法覆盖的输出契约字段（字段全集见 §4）",
+      "description": "声明本方法覆盖的输出契约字段（字段全集见开发计划 §4）",
       "properties": {
         "requires": {
           "type": "array",
@@ -115,7 +141,16 @@
               "validationPlan",
               "changeControl",
               "aiElements",
-              "downstreamInterfaces"
+              "downstreamInterfaces",
+              "diagnosisScope",
+              "scoringConfig",
+              "dimensionScores",
+              "angleScores",
+              "blockingIssues",
+              "evidenceList",
+              "improvementPath",
+              "overallScore",
+              "reportNarrative"
             ]
           },
           "description": "本方法承诺必填的契约字段（缺失核心字段阻断进入确认）"
@@ -133,7 +168,16 @@
               "validationPlan",
               "changeControl",
               "aiElements",
-              "downstreamInterfaces"
+              "downstreamInterfaces",
+              "diagnosisScope",
+              "scoringConfig",
+              "dimensionScores",
+              "angleScores",
+              "blockingIssues",
+              "evidenceList",
+              "improvementPath",
+              "overallScore",
+              "reportNarrative"
             ]
           },
           "description": "本方法可选的契约字段"

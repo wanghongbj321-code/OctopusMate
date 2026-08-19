@@ -1,0 +1,85 @@
+# Mock 诊断方法（M1-05 引擎全链路验证用；存放于 tests/fixtures，不入方法目录注册）
+name: diagnosis-method-mock
+version: 1.0.0
+type: diagnosis-method
+displayName: "Mock 诊断 2 维 4 角度"
+description: "诊断引擎全链路验证用最小方法：诊断准备（scoring_config 确认）→ 2 维打分 → 阻断识别"
+
+steps:
+  - id: "00"
+    name: "诊断准备"
+    question: "诊断对象与范围是什么？"
+    operations:
+      - "收集诊断对象与范围"
+      - "引导顾问确认打分规则（锚点/步进/阻断阈值）→ 写入 scoring_config"
+    outputs:
+      - "诊断范围界定"
+      - "scoring_config（打分规则快照）"
+    gate:
+      coreCheck: "范围明确且打分规则已确认"
+      pass: "范围边界清晰、打分规则确认"
+      conditional: "范围部分明确（登记未决项）"
+  - id: "01"
+    name: "V · 价值战略"
+    question: "战略承接与价值成效现状？"
+    operations:
+      - "按 scoring_config.anchors.V 逐角度打分"
+      - "记录核心判断与证据引用"
+    outputs:
+      - "V1-V2 角度打分表"
+    gate:
+      coreCheck: "两角度均有分且有证据"
+      pass: "两角度打分完成且证据充分"
+      conditional: "个别角度证据待补强（登记未决项）"
+  - id: "02"
+    name: "I · 数据"
+    question: "数据对象与链路现状？"
+    operations:
+      - "按 scoring_config.anchors.I 逐角度打分"
+      - "记录数据链路证据"
+    outputs:
+      - "I1-I2 角度打分表"
+    gate:
+      coreCheck: "两角度均有分且有证据"
+      pass: "两角度打分完成且证据充分"
+      conditional: "个别角度证据待补强（登记未决项）"
+  - id: "03"
+    name: "阻断识别"
+    question: "哪些角度 ≤ 阻断阈值，或存在链路断裂？"
+    operations:
+      - "引擎 blocker 识别阻断性问题（≤ blockThreshold 或链路断裂）"
+      - "形成改进路径（阻断性问题优先输入）"
+    outputs:
+      - "阻断性问题清单"
+      - "改进路径"
+    gate:
+      coreCheck: "清单与路径一致"
+      pass: "阻断清单与改进路径对齐"
+      conditional: "待补充影响范围（登记未决项）"
+
+scoring:
+  scale:
+    min: 1
+    max: 5
+    step: 0.5
+  blockThreshold: 2.0
+  anchorSource: "tests/fixtures/mock-method（测试用，非方法论文档）"
+
+aiConstraints:
+  - "打分规则以顾问在会话中确认的 scoring_config 为准，方法论文档锚点仅作默认参考，不得作为事实引用"
+  - "打分以经核验的现状事实为依据；事实不明时继续核验或限定结论边界，不以低分代替未知状态"
+
+outputContract:
+  requires:
+    - diagnosisScope
+    - scoringConfig
+    - dimensionScores
+    - angleScores
+    - evidenceList
+    - overallScore
+    - reportNarrative
+  optional:
+    - blockingIssues
+    - improvementPath
+    - openIssues
+    - downstreamInterfaces

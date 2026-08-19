@@ -1,0 +1,61 @@
+# 合法 diagnosis manifest 样例（对齐开发计划 §6.2 示例 + scoring 节声明）
+# 用于契约一致性测试：验证 diagnosis-method 分支 + scoring 节校验
+name: diagnosis-method-vital
+version: 1.0.0
+type: diagnosis-method
+displayName: "VITAL 数据管理域 AI 转型五维诊断（测试样例）"
+description: "五维 22 角度 AI-Ready 现状诊断，识别阻断性问题，输出诊断报告（测试夹具）"
+
+steps:
+  - id: "00"
+    name: "诊断准备"
+    question: "诊断对象与范围是什么？（平台/工具清单、职责边界）"
+    operations:
+      - "收集诊断对象与范围"
+      - "引导顾问确认打分规则（锚点/步进/阻断阈值）→ 写入 scoring_config"
+    outputs:
+      - "诊断范围界定"
+      - "scoring_config（打分规则快照）"
+    gate:
+      coreCheck: "范围明确且打分规则已确认"
+      pass: "范围边界清晰、打分规则确认"
+      conditional: "范围部分明确（登记未决项）"
+  - id: "01"
+    name: "V · 业务价值与战略对齐"
+    question: "战略承接、业务边界、运行支撑、价值成效现状如何？"
+    operations:
+      - "按 scoring_config.anchors.V 逐角度打分"
+      - "记录核心判断与证据引用"
+    outputs:
+      - "V1-V4 角度打分表"
+    gate:
+      coreCheck: "四角度均有分且有证据"
+      pass: "四角度打分完成且证据充分"
+      conditional: "个别角度证据待补强（登记未决项）"
+
+scoring:
+  scale:
+    min: 1
+    max: 5
+    step: 0.5
+  blockThreshold: 2.0
+  anchorSource: "internal/docs/methodology/VITAL数据管理域AI转型五维诊断方法.md"
+
+aiConstraints:
+  - "打分规则以顾问在会话中确认的 scoring_config 为准，方法论文档锚点仅作默认参考，不得作为事实引用"
+  - "打分以经核验的现状事实为依据；事实不明时继续核验或限定结论边界，不以低分代替未知状态"
+
+outputContract:
+  requires:
+    - diagnosisScope
+    - scoringConfig
+    - dimensionScores
+    - angleScores
+    - evidenceList
+    - overallScore
+    - reportNarrative
+  optional:
+    - blockingIssues
+    - improvementPath
+    - openIssues
+    - downstreamInterfaces

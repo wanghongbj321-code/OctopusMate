@@ -125,8 +125,8 @@ python3 tests/contract_consistency.py
 
 # 选择方法列表（应含 3 方法：7 步法 / 北极星法 / 黄金圈法）
 python3 -c "
-import sys; sys.path.insert(0, 'skills/vision-distill/scripts')
-from engine.registry import build_method_list
+import sys; sys.path.insert(0, 'skills')
+from _engine.registry import build_method_list
 print(build_method_list())
 "
 ```

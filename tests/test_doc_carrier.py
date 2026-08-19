@@ -13,9 +13,9 @@ class TestDocCarrier(unittest.TestCase):
     """A8 载体合规：交付物统一 HTML + 每个 HTML 有对应 MD 唯一事实源 + 中间产物 MD。"""
 
     def test_each_html_has_md_source(self):
-        """每个 HTML 确认包有对应的 markdown 唯一事实源。"""
+        """每个 HTML 确认包有对应的 markdown 唯一事实源（vision-confirm / diagnosis-confirm）。"""
         for d in (d for d in DEMO_DIR.iterdir() if d.is_dir()):
-            htmls = sorted(d.glob("vision-confirm-*.html"))
+            htmls = sorted(d.glob("vision-confirm-*.html")) + sorted(d.glob("diagnosis-confirm-*.html"))
             self.assertGreater(len(htmls), 0, f"{d.name} 应至少含一个 HTML 确认包")
             for html in htmls:
                 md_name = html.stem + ".md"
@@ -31,11 +31,31 @@ class TestDocCarrier(unittest.TestCase):
     def test_html_uses_inline_styles_no_external_resources(self):
         """交付物 HTML 内联 CSS，无外部样式表/脚本（离线可打印）。"""
         for d in (d for d in DEMO_DIR.iterdir() if d.is_dir()):
-            for html in d.glob("vision-confirm-*.html"):
+            for html in list(d.glob("vision-confirm-*.html")) + list(d.glob("diagnosis-confirm-*.html")):
                 content = html.read_text(encoding="utf-8")
                 self.assertIn("<style>", content, f"{html.name} 应含内联 <style>")
                 self.assertNotIn('<link rel="stylesheet"', content, "交付物不得依赖外部样式表")
                 self.assertNotIn("<script", content, "交付物不得依赖 JS 渲染")
+
+    def test_diagnosis_canvas_audit_and_no_demo_leak(self):
+        """M4-01：诊断报告画布通过 audit（token 无裸值 + 不变量）且 Demo 样例数值零泄漏。"""
+        import sys
+
+        canvas = ROOT / "skills" / "deliverable-render" / "examples" / "diagnosis-report-canvas.html"
+        self.assertTrue(canvas.exists(), "diagnosis-report-canvas.html 应存在（M4-01 产出）")
+        sys.path.insert(0, str(ROOT / "skills" / "deliverable-render" / "scripts"))
+        from audit_html import audit
+
+        content = canvas.read_text(encoding="utf-8")
+        self.assertEqual(audit(content), [], f"画布应通过审计：{canvas.name}")
+        # Demo 样例数值零泄漏（分数语义模式：2.9 分 / 3.4 分 等独立词）
+        import re
+
+        demo_pattern = re.compile(r"(2\.9|3\.4|2\.1|2\.7)\s*(分|%)")
+        self.assertIsNone(demo_pattern.search(content), "画布不得含 Demo 样例数值（2.9 分 / 3.4 分 等）")
+        self.assertNotIn("T+15", content)
+        self.assertNotIn("快消品", content)
+        self.assertNotIn("经销商", content)
 
 
 if __name__ == "__main__":

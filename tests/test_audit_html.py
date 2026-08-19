@@ -10,7 +10,7 @@ from pathlib import Path
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "skills" / "vision-render" / "scripts"))
+sys.path.insert(0, str(ROOT / "skills" / "deliverable-render" / "scripts"))
 
 from audit_html import audit  # noqa: E402
 
@@ -50,7 +50,7 @@ class TestAuditHtmlPositive(unittest.TestCase):
 
     def test_examples_baseline_passes(self):
         """examples/ 版面参照基线必须持续合规（AI 生成产物质量基准）。"""
-        example = ROOT / "skills" / "vision-render" / "examples" / "vision-confirm-canvas.html"
+        example = ROOT / "skills" / "deliverable-render" / "examples" / "vision-confirm-canvas.html"
         self.assertTrue(example.exists(), "examples 基线应存在")
         violations = audit(example.read_text(encoding="utf-8"))
         self.assertEqual(violations, [], f"examples 基线违反不变量：{violations}")
@@ -98,6 +98,93 @@ class TestAuditHtmlNegative(unittest.TestCase):
 
     def test_background_image_blocked(self):
         self.assertTrue(audit(_inject(VALID_HTML, "div { background-image: url(bg.png); }")))
+
+
+class TestAuditHtmlToken(unittest.TestCase):
+    """M2-03 token 无裸值 + 语义演进（accent 允许自定义色）。"""
+
+    def test_token_bare_color_blocked(self):
+        """token 集外裸值（#FF0000 不在黑灰 token 集）→ 拦截。"""
+        self.assertTrue(audit(_inject(VALID_HTML, "div { color: #FF0000; }")))
+
+    def test_token_inline_value_allowed(self):
+        """内联 token 值（#1A1A1A = ink）允许（token 集内）。"""
+        bad = VALID_HTML.replace("th { background: var(--block-bg);", "th { background: #F7F7F7;")
+        self.assertEqual(audit(bad), [], "内联 token 值应通过")
+
+    def test_accent_custom_color_allowed(self):
+        """语义演进：accent token 允许模式自定义色（如深蓝金 #C9A227）。"""
+        html = VALID_HTML.replace("</style>", "h1 { color: var(--accent); }\n</style>")
+        # 使用带 accent 自定义色的 token 集（深蓝金 accent）
+        colors = {
+            "pageBg": "#FFFFFF", "blockBg": "#F7F7F7", "ink": "#1A1A1A",
+            "inkStrong": "#2D2D2D", "inkSoft": "#6B6B6B", "inkMuted": "#808080",
+            "line": "#D4D4D4", "accentLine": "#0E2A47", "accent": "#C9A227",
+            "tableHeadBg": "#F1F1F1", "calloutBg": "#FAFAFA",
+        }
+        html2 = html.replace("</style>", "h1 { color: #C9A227; }\n</style>")
+        self.assertEqual(audit(html2, token_colors=colors), [], "accent 自定义色应通过语义演进审计")
+
+    def test_pattern_file_token_loaded(self):
+        """--token 模式文件：解析 Design Token 块校验（黑灰模式）。"""
+        pattern = ROOT / "skills" / "deliverable-render" / "visual-patterns" / "10-black-gray-professional.md"
+        self.assertTrue(pattern.exists())
+        self.assertEqual(audit(VALID_HTML, pattern_path=pattern), [])
+
+    def test_bare_hex_short_form(self):
+        """#abc 短 hex 归一化后仍应被 token 无裸值捕获。"""
+        self.assertTrue(audit(_inject(VALID_HTML, "div { color: #f00; }")))
+
+
+# 合规图表 SVG（diagnosis-report 画布：title + role + token 集内色值，无渐变/阴影）
+CHART_SVG = """
+<div class="fig">
+<svg viewBox="0 0 520 420" role="img" xmlns="http://www.w3.org/2000/svg">
+  <title>VITAL 五维打分雷达图</title>
+  <desc>V 3.4 分、I 2.1 分（最弱，存在链路断裂）、T 2.7 分、A 2.9 分、L 3.4 分。</desc>
+  <polygon points="0,-95 56,-18 45,61 -47,65 -90,-29" fill="none" stroke="#1A1A1A" stroke-width="2"/>
+  <text x="0" y="-164" text-anchor="middle" font-size="13" fill="#1A1A1A">V 价值战略 · 3.4</text>
+</svg>
+</div>
+"""
+
+
+class TestAuditHtmlChartSvg(unittest.TestCase):
+    """M4 补强（方案 A）：图表 SVG 语义演进——diagnosis-report 放行但强校验。"""
+
+    def _with_svg(self, svg: str) -> str:
+        return VALID_HTML.replace("</body>", f"{svg}</body>")
+
+    def test_chart_svg_blocked_by_default(self):
+        """默认（vision-confirm）模式：图表 SVG 仍全拦（SVG 不作信号）。"""
+        self.assertTrue(audit(self._with_svg(CHART_SVG)))
+
+    def test_chart_svg_allowed_with_title_role(self):
+        """diagnosis-report 模式：合规图表 SVG（title+role+token 集内色值）放行。"""
+        self.assertEqual(
+            audit(self._with_svg(CHART_SVG), allow_chart_svg=True),
+            [], "合规图表 SVG 应通过 diagnosis-report 审计",
+        )
+
+    def test_chart_svg_missing_title_rejected(self):
+        """diagnosis-report 模式：图表 SVG 缺 <title> → 拒（无障碍 G2）。"""
+        bad = CHART_SVG.replace("<title>VITAL 五维打分雷达图</title>", "")
+        self.assertTrue(audit(self._with_svg(bad), allow_chart_svg=True))
+
+    def test_chart_svg_missing_role_rejected(self):
+        """diagnosis-report 模式：图表 SVG 缺 role="img" → 拒（无障碍 G2）。"""
+        bad = CHART_SVG.replace('<svg viewBox="0 0 520 420" role="img"', '<svg viewBox="0 0 520 420"')
+        self.assertTrue(audit(self._with_svg(bad), allow_chart_svg=True))
+
+    def test_chart_svg_bare_color_still_blocked(self):
+        """diagnosis-report 模式：图表 SVG 内裸色值（#FF0000）仍被 token 无裸值拦截。"""
+        bad = CHART_SVG.replace('stroke="#1A1A1A"', 'stroke="#FF0000"')
+        self.assertTrue(audit(self._with_svg(bad), allow_chart_svg=True))
+
+    def test_decorative_svg_still_blocked_in_diagnosis(self):
+        """diagnosis-report 模式：无 title/role 的装饰性 SVG 仍拒（白名单仅图表语义）。"""
+        decorative = '<svg width="16" height="16"><circle cx="8" cy="8" r="5" fill="#1A1A1A"/></svg>'
+        self.assertTrue(audit(self._with_svg(decorative), allow_chart_svg=True))
 
 
 if __name__ == "__main__":

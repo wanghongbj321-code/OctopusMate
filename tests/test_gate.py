@@ -5,9 +5,9 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
-sys.path.insert(0, str(ROOT / "skills" / "vision-distill" / "scripts"))
+sys.path.insert(0, str(ROOT / "skills"))
 
-from engine.gate import GATE_CONDITIONAL, GATE_PASS, GATE_REGRESS, judge_gate  # noqa: E402
+from _engine.gate import GATE_CONDITIONAL, GATE_PASS, GATE_REGRESS, judge_gate  # noqa: E402
 
 GATE_CONF = {
     "coreCheck": "愿景可想象且可沟通",

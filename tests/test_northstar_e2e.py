@@ -12,10 +12,10 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
-sys.path.insert(0, str(ROOT / "skills" / "vision-distill" / "scripts"))
-sys.path.insert(0, str(ROOT / "skills" / "vision-render" / "scripts"))
+sys.path.insert(0, str(ROOT / "skills"))
+sys.path.insert(0, str(ROOT / "skills" / "deliverable-render" / "scripts"))
 
-from engine import (  # noqa: E402
+from _engine import (  # noqa: E402
     executor,
     exit as exit_mod,
     open_issues,
@@ -27,7 +27,7 @@ from audit_html import audit as audit_html  # noqa: E402
 
 NORTH_STAR = ROOT / "skills" / "methods" / "north-star" / "manifest.yaml"
 OCTOPUS7 = ROOT / "skills" / "methods" / "octopus-7step" / "manifest.yaml"
-EXAMPLES_HTML = ROOT / "skills" / "vision-render" / "examples" / "vision-confirm-canvas.html"
+EXAMPLES_HTML = ROOT / "skills" / "deliverable-render" / "examples" / "vision-confirm-canvas.html"
 
 
 def build_simplified_output(open_issues: list[dict] | None = None) -> dict:
@@ -145,7 +145,7 @@ class TestNorthStarE2E(unittest.TestCase):
         """P1-6：ambitionTable 仅 1 项（单一北极星指标）即可通过校验。"""
         output = build_simplified_output(open_issues=[])
         self.assertEqual(len(output["ambitionTable"]), 1)
-        from engine.contract import validate_output
+        from _engine.contract import validate_output
 
         self.assertEqual(validate_output(output, ["visionStatement", "ambitionTable", "ambitionRationale", "impactSummary"], []), [])
 

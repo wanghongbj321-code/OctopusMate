@@ -10,9 +10,9 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
-sys.path.insert(0, str(ROOT / "skills" / "vision-distill" / "scripts"))
+sys.path.insert(0, str(ROOT / "skills"))
 
-from engine import contract, executor, open_issues, parser, state as state_mod  # noqa: E402
+from _engine import contract, executor, open_issues, parser, state as state_mod  # noqa: E402
 
 MOCK_MANIFEST = ROOT / "tests" / "fixtures" / "mock-method" / "manifest.yaml"
 

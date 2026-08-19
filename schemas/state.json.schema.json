@@ -134,6 +134,44 @@
           }
         }
       }
+    },
+    "scoring_config": {
+      "type": ["object", "null"],
+      "description": "打分规则快照（M1-04 运行时注入）：诊断准备步骤引导顾问确认锚点/步进/阻断阈值后写入；唯一事实源，方法论锚点仅作默认参考。null = 未确认（诊断准备完成前不进入打分步骤）。结构：{scale:{min,max,step}, blockThreshold, anchors:{V:{V1:{1:...}},...}, customNote?}",
+      "properties": {
+        "scale": {
+          "type": "object",
+          "required": ["min", "max", "step"],
+          "properties": {
+            "min": { "type": "number" },
+            "max": { "type": "number" },
+            "step": { "type": "number" }
+          }
+        },
+        "blockThreshold": { "type": "number", "description": "阻断阈值：任一角度 ≤ 该值识别为阻断性问题（默认 2.0，顾问可调）" },
+        "anchors": {
+          "type": "object",
+          "description": "各维度锚点文本（顾问确认后）：{维度: {角度: {分值: 锚点描述}}}",
+          "additionalProperties": { "type": "object" }
+        },
+        "customNote": { "type": "string", "description": "顾问备注（可选）" }
+      },
+      "additionalProperties": false
+    },
+    "scoring_config_history": {
+      "type": "array",
+      "description": "打分规则版本历史（版本化可追溯；覆盖不丢失历史，replaced_at 标记替换时间）",
+      "items": {
+        "type": "object",
+        "properties": {
+          "scale": { "type": "object" },
+          "blockThreshold": { "type": "number" },
+          "anchors": { "type": "object" },
+          "customNote": { "type": "string" },
+          "replaced_at": { "type": "string", "format": "date-time" }
+        },
+        "additionalProperties": false
+      }
     }
   },
   "additionalProperties": false
