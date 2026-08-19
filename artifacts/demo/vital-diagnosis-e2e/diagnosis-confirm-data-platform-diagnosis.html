@@ -264,6 +264,7 @@
   <div class="diagnosis-layout">
     <div class="radar-panel">
       <h3>五维打分总览</h3>
+      <!-- 制图规格：references/chart-specs.md §1（数据=dimensionScores，必含 title/desc，var() 引用） -->
       {{五维雷达图 SVG}}
     </div>
     <div class="diagnosis-side">
@@ -290,6 +291,7 @@
       <b style="font-size:14px;color:#1A1A1A;">诊断问题树（Issue Tree）</b>
       <span style="font-size:11.5px;color:#808080;">从总体分逐层分解至维度与关键问题 · MECE</span>
     </div>
+    <!-- 制图规格：references/chart-specs.md §2（数据=overallScore+dimensionScores+blockingIssues，三层树形） -->
     {{问题树 SVG}}
     <div class="fig-cap">{{问题树图注}}</div>
   </div>
@@ -308,6 +310,7 @@
   <p class="lead">{{阻断专题导语}}</p>
 
   <div class="fig">
+    <!-- 制图规格：references/chart-specs.md §3（数据=diagnosisScope 环节+blockingIssues 断裂点，横向节点链） -->
     {{链路问题示意 SVG}}
     <div class="fig-cap">{{链路图注}}</div>
   </div>

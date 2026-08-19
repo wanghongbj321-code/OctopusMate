@@ -41,12 +41,23 @@ init.md render 角色的统一落地（vision-render 更名升级，多画布）
 2. **读取选定模式文件**：frontmatter + token 化正文（色板 token / 字体 / 网格 / 组件库）
 3. 按选定 token 集实现**内联 CSS 与组件**——主题 CSS 必须内联进成品 HTML，禁止外链（`<link rel="stylesheet">`）、外部脚本、外部字体、`fetch()`、iframe，确保**单文件自包含、离线可打开可打印**
 4. 用「适用场景」校准信息层级；用「反例」检查禁用混搭与错误实现
-5. **遵守 token 无裸值 + 13 条 Pan-Mode Invariants 语义演进底线**：所有颜色/字体/间距必须引用选定 token 集（CSS 变量），禁止裸值；无 box-shadow / 无渐变 / 无圆润胶囊 / 无 SVG 作信号 / 无 emoji 作信号；表格表头 pale 背景 + 2px 主色底线；accent token 允许模式自定义色但主体文字对比度底线保留（见开发计划 §5.2）
+5. **遵守 token 无裸值 + 13 条 Pan-Mode Invariants 语义演进底线**：所有颜色/字体/间距必须引用选定 token 集（CSS 变量），禁止裸值；无 box-shadow / 无渐变 / 无圆润胶囊 / 无 emoji 作信号；表格表头 pale 背景 + 2px 主色底线；accent token 允许模式自定义色但主体文字对比度底线保留（见开发计划 §5.2）。**SVG 语义演进**（方案 A）：`vision-confirm` 画布仍**禁用 SVG**（装饰信号）；`diagnosis-report` 画布**允许数据图表 SVG**（雷达图/问题树/链路图）——必须按 `references/chart-specs.md` 制图规格生成（含 `<title>` + `role="img"` 无障碍、全部 var() 引用、禁红绿黄信号），装饰性 SVG 仍禁用
 6. **一个输出只允许一个 `visual_system`**，不得混搭多种模式
 7. 视觉模式只提供设计语法，**不提供业务内容**——不复制模式文档之外的标题、数字、指标、结论
 8. 确认包全部 section 必须完整呈现，不因视觉适配省略：
    - vision-confirm：愿景陈述 / 叙事稿 / 雄心量化表 / 决策依据 / 影响 / 未决项裁决 / 签署 / 变更控制等
    - diagnosis-report：封面 / 执行摘要 / 诊断方法与打分框架 / 总体诊断结论 / 分维诊断详情 / 阻断性问题专题 / 附录证据清单（对齐开发计划 §5.3）
+
+## 诊断报告图表制图（canvasType=diagnosis-report）
+
+渲染 `diagnosis-report` 时，三处图表占位符（`{{五维雷达图 SVG}}` / `{{问题树 SVG}}` / `{{链路问题示意 SVG}}`）按 **`references/chart-specs.md`**（唯一制图依据）生成实际 SVG：
+
+- **图 1 五维雷达图**（§1）：数据 = 确认包 `dimensionScores`；五轴 0-5 分坐标系、5 层网格、得分多边形 + 顶点标记 + 维度标签（含分数）
+- **图 2 诊断问题树**（§2）：数据 = `overallScore`（根）→ `dimensionScores`（二层）→ `blockingIssues`（三层）；自上而下三层树形，MECE 无交叉
+- **图 3 数据链路问题示意**（§3）：数据 = `diagnosisScope` 环节 + `blockingIssues` 断裂点；横向节点链，断裂用 accent 虚线 + × 标记
+- 通用规范（§0）：每个 SVG 必含 `<title>` + `<desc>` + `role="img"`；颜色全部 var() 引用；仅 `var(--accent)` 表达阻断/最弱语义；**禁红/绿/黄颜色信号**；禁渐变/阴影/圆角
+
+渲染流程：读 chart-specs.md → 读确认包数据 → 逐图算数据、定布局、填 token → 替换画布占位符 → 静态审计（`--canvas-type=diagnosis-report`）→ 浏览器视觉验收（图表与 Demo 图 1/图 2/图 3 版面一致）。
 
 ## 示例参照（必须）
 
@@ -64,11 +75,16 @@ init.md render 角色的统一落地（vision-render 更名升级，多画布）
 **阶段 1 · Python 静态审计**（必须）：
 
 ```bash
+# vision-confirm（SVG 全拦）
 python3 skills/deliverable-render/scripts/audit_html.py \
-  workshop/{project_slug}/{topic_slug}/output/{canvas}-{slug}-v{N}.html
+  workshop/{project_slug}/{topic_slug}/output/vision-confirm-{slug}-v{N}.html
+
+# diagnosis-report（放行图表 SVG，强校验 title/role）
+python3 skills/deliverable-render/scripts/audit_html.py --canvas-type=diagnosis-report \
+  workshop/{project_slug}/{topic_slug}/output/diagnosis-report-{slug}-v{N}.html
 ```
 
-脚本检查 token 无裸值（颜色/字体/间距必须引用选定 token 集）+ 13 条 Pan-Mode Invariants 语义演进底线 + 内联样式离线可打印。返回非零状态时**阻断交付**，按失败项修订同一版本 HTML 后重跑；不得绕过、删除检查或手工改写审计结果。
+脚本检查 token 无裸值（颜色/字体/间距必须引用选定 token 集）+ 13 条 Pan-Mode Invariants 语义演进底线 + 内联样式离线可打印；diagnosis-report 画布另校验图表 SVG 无障碍（title + role）。返回非零状态时**阻断交付**，按失败项修订同一版本 HTML 后重跑；不得绕过、删除检查或手工改写审计结果。
 
 **阶段 2 · 浏览器视觉验收**（必须，正式交付前）：
 

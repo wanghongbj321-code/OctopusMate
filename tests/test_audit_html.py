@@ -136,5 +136,56 @@ class TestAuditHtmlToken(unittest.TestCase):
         self.assertTrue(audit(_inject(VALID_HTML, "div { color: #f00; }")))
 
 
+# 合规图表 SVG（diagnosis-report 画布：title + role + token 集内色值，无渐变/阴影）
+CHART_SVG = """
+<div class="fig">
+<svg viewBox="0 0 520 420" role="img" xmlns="http://www.w3.org/2000/svg">
+  <title>VITAL 五维打分雷达图</title>
+  <desc>V 3.4 分、I 2.1 分（最弱，存在链路断裂）、T 2.7 分、A 2.9 分、L 3.4 分。</desc>
+  <polygon points="0,-95 56,-18 45,61 -47,65 -90,-29" fill="none" stroke="#1A1A1A" stroke-width="2"/>
+  <text x="0" y="-164" text-anchor="middle" font-size="13" fill="#1A1A1A">V 价值战略 · 3.4</text>
+</svg>
+</div>
+"""
+
+
+class TestAuditHtmlChartSvg(unittest.TestCase):
+    """M4 补强（方案 A）：图表 SVG 语义演进——diagnosis-report 放行但强校验。"""
+
+    def _with_svg(self, svg: str) -> str:
+        return VALID_HTML.replace("</body>", f"{svg}</body>")
+
+    def test_chart_svg_blocked_by_default(self):
+        """默认（vision-confirm）模式：图表 SVG 仍全拦（SVG 不作信号）。"""
+        self.assertTrue(audit(self._with_svg(CHART_SVG)))
+
+    def test_chart_svg_allowed_with_title_role(self):
+        """diagnosis-report 模式：合规图表 SVG（title+role+token 集内色值）放行。"""
+        self.assertEqual(
+            audit(self._with_svg(CHART_SVG), allow_chart_svg=True),
+            [], "合规图表 SVG 应通过 diagnosis-report 审计",
+        )
+
+    def test_chart_svg_missing_title_rejected(self):
+        """diagnosis-report 模式：图表 SVG 缺 <title> → 拒（无障碍 G2）。"""
+        bad = CHART_SVG.replace("<title>VITAL 五维打分雷达图</title>", "")
+        self.assertTrue(audit(self._with_svg(bad), allow_chart_svg=True))
+
+    def test_chart_svg_missing_role_rejected(self):
+        """diagnosis-report 模式：图表 SVG 缺 role="img" → 拒（无障碍 G2）。"""
+        bad = CHART_SVG.replace('<svg viewBox="0 0 520 420" role="img"', '<svg viewBox="0 0 520 420"')
+        self.assertTrue(audit(self._with_svg(bad), allow_chart_svg=True))
+
+    def test_chart_svg_bare_color_still_blocked(self):
+        """diagnosis-report 模式：图表 SVG 内裸色值（#FF0000）仍被 token 无裸值拦截。"""
+        bad = CHART_SVG.replace('stroke="#1A1A1A"', 'stroke="#FF0000"')
+        self.assertTrue(audit(self._with_svg(bad), allow_chart_svg=True))
+
+    def test_decorative_svg_still_blocked_in_diagnosis(self):
+        """diagnosis-report 模式：无 title/role 的装饰性 SVG 仍拒（白名单仅图表语义）。"""
+        decorative = '<svg width="16" height="16"><circle cx="8" cy="8" r="5" fill="#1A1A1A"/></svg>'
+        self.assertTrue(audit(self._with_svg(decorative), allow_chart_svg=True))
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

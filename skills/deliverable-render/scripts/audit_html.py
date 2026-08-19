@@ -14,8 +14,10 @@
    - 内联样式离线可打印（无外链样式表/脚本/外部字体/背景图）
 3. 输出 token 合规报告（颜色出现位置统计）
 
-用法：python3 audit_html.py <output.html> [--token <pattern.md>]
+用法：python3 audit_html.py <output.html> [--token <pattern.md>] [--canvas-type <vision-confirm|diagnosis-report>] [--report]
   --token: 选定视觉模式文件路径（解析 Design Token 块）；缺省用黑灰 token 集
+  --canvas-type: 画布类型。vision-confirm（默认）：SVG 全拦（装饰信号）；
+    diagnosis-report：放行图表 SVG 但强校验（必含 title+role，见 chart-specs.md）
 """
 from __future__ import annotations
 
@@ -80,12 +82,22 @@ def _color_literals(html: str) -> list[tuple[str, str]]:
     return found
 
 
-def audit(html: str, pattern_path: Path | None = None, token_colors: dict | None = None) -> list[str]:
+def audit(
+    html: str,
+    pattern_path: Path | None = None,
+    token_colors: dict | None = None,
+    allow_chart_svg: bool = False,
+) -> list[str]:
     """静态审计，返回违规清单（空 = 通过）。
 
     - html: 成品 HTML
     - pattern_path: 选定视觉模式文件路径（解析 token 集）
     - token_colors: 直接传 token 色板（优先于 pattern_path）
+    - allow_chart_svg: 是否放行图表 SVG（canvasType=diagnosis-report 时 True）。
+      语义演进（方案 A，2026-08-19）：数据图表（雷达/问题树/链路图，见
+      references/chart-specs.md）属"图表"非"装饰信号"，放行但强校验——
+      每个 SVG 必须含 <title> + role="img"（无障碍，G2）；裸值/渐变/阴影
+      仍由 token 无裸值与其他不变量拦截。容器外装饰性 SVG 仍拦。
     """
     violations: list[str] = []
     colors = token_colors or _load_token_colors(pattern_path)
@@ -117,9 +129,16 @@ def audit(html: str, pattern_path: Path | None = None, token_colors: dict | None
         if "2px solid var(--ink)" not in th_block and "2px solid #1A1A1A" not in th_block and "2px solid #1a1a1a" not in th_block:
             violations.append("表格表头缺 2px 主色底线")
 
-    # 无 SVG / emoji 作信号
-    if "<svg" in html.lower():
-        violations.append("发现 SVG（不变量：SVG 不作信号）")
+    # 无 SVG / emoji 作信号（语义演进：图表 SVG 放行但强校验，见 chart-specs.md G1/G2）
+    svg_blocks = re.findall(r"<svg[^>]*>.*?</svg>", html, re.S | re.I)
+    if svg_blocks and not allow_chart_svg:
+        violations.append("发现 SVG（不变量：SVG 不作信号；诊断图表画布须 --canvas-type=diagnosis-report）")
+    if allow_chart_svg:
+        for i, blk in enumerate(svg_blocks):
+            if not re.search(r"<title[ >]", blk, re.I):
+                violations.append(f"图表 SVG[{i}] 缺少 <title>（无障碍要求，chart-specs.md G2）")
+            if not re.search(r'<svg[^>]*role=["\']img["\']', blk, re.I):
+                violations.append(f"图表 SVG[{i}] 缺 role=\"img\"（无障碍要求，chart-specs.md G2）")
     if re.search(r"[\U0001F300-\U0001FAFF]|\u2705|\u274c|\u2714|\u2716", html):
         violations.append("发现 emoji 信号（不变量：emoji 不作信号）")
 
@@ -156,12 +175,15 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="deliverable-render HTML 静态审计")
     parser.add_argument("html_file", help="成品 HTML 路径")
     parser.add_argument("--token", help="选定视觉模式文件路径（Design Token 块）")
+    parser.add_argument("--canvas-type", choices=["vision-confirm", "diagnosis-report"],
+                        default="vision-confirm", help="画布类型（diagnosis-report 放行图表 SVG）")
     parser.add_argument("--report", action="store_true", help="输出 token 合规报告")
     args = parser.parse_args()
 
     html = Path(args.html_file).read_text(encoding="utf-8")
     token_colors = _load_token_colors(Path(args.token) if args.token else None)
-    violations = audit(html, token_colors=token_colors)
+    violations = audit(html, token_colors=token_colors,
+                       allow_chart_svg=args.canvas_type == "diagnosis-report")
 
     if args.report:
         print(token_report(html, token_colors))
