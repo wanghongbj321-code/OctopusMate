@@ -1,6 +1,6 @@
 {
   "name": "octopus-mate",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "OctopusMate: AI transformation consulting mate — transformation vision building via the Octopus 7-Step and North Star metric methods, plus VITAL five-dimension status diagnosis (22 angles, 1-5 scoring, blocker identification), all driven by a shared method engine; direction always decided by the consultant.",
   "agents": [
     "./agents/octopus-mate.md"

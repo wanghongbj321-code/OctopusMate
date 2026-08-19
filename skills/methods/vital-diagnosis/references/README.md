@@ -1,4 +1,5 @@
 # references
 
-- VITAL 方法论文档：internal/docs/methodology/VITAL数据管理域AI转型五维诊断方法.md（锚点仅作默认参考）
-- 检查清单：22 角度（V1-V4 / I1-I4 / T1-T3 / A1-A7 / L1-L4），证据等级 A/B/C，阻断阈值默认 2.0
+- **锚点数据（运行时唯一事实源）**：`frameworks/anchors.md`——22 角度（V1-V4 / I1-I4 / T1-T3 / A1-A7 / L1-L4）× 1-5 分打分参照锚点；步骤 00「诊断准备」呈现给顾问确认/修改后写入 `scoring_config`（锚点仅作默认参考，不构成事实引用）
+- **引导剧本**：`frameworks/ai-scripts.md`——步骤 00-06 逐步骤 AI 话术与交互规则
+- 检查清单：证据等级 A/B/C（A 可复核材料 / B 正式文档交叉验证 / C 单一访谈假设来源），阻断阈值默认 2.0

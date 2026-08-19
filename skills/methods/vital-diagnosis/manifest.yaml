@@ -12,7 +12,7 @@ steps:
     operations:
       - "收集诊断对象与范围（纳入范围的平台/工具清单 + 职责边界 + 跨平台协同说明）"
       - "引导顾问确认打分规则（锚点文本/步进/阻断阈值）→ 写入 scoring_config"
-      - "呈现方法论文档默认锚点作参考，顾问可整体替换或逐角度修改"
+      - "呈现锚点数据（frameworks/anchors.md）默认锚点作参考，顾问可整体替换或逐角度修改"
     outputs:
       - "诊断范围界定（diagnosisScope）"
       - "scoring_config（打分规则快照）"
@@ -111,10 +111,10 @@ scoring:                        # 打分规则声明（默认参考，运行时�
     max: 5
     step: 0.5
   blockThreshold: 2.0
-  anchorSource: "internal/docs/methodology/VITAL数据管理域AI转型五维诊断方法.md"
+  anchorSource: "frameworks/anchors.md"   # 方法包内锚点数据（B-2 自包含，不再引用 internal 设计文档）
 
 aiConstraints:                  # 方法级 AI 约束（平台 AI 铁律不可降级）
-  - "打分规则以顾问在会话中确认的 scoring_config 为准，方法论文档锚点仅作默认参考，不得作为事实引用"
+  - "打分规则以顾问在会话中确认的 scoring_config 为准，锚点数据（frameworks/anchors.md）仅作默认参考，不得作为事实引用"
   - "打分以经核验的现状事实为依据；事实不明时继续核验或限定结论边界，不以低分代替未知状态"
   - "AI 嵌入引导与记录，不替代顾问决策——gate 判定结果仅作建议，最终授权由顾问确认"
   - "引用层级纪律：只引用顾问确认环节达成的共识与经核验证据，访谈/资料降级为背景材料"
