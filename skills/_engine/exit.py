@@ -1,9 +1,11 @@
-"""M2-05 平台出口层：步骤 06 检验 / 步骤 07 确认 接入引擎。
+"""平台出口层：步骤 06 检验 / 步骤 07 确认 接入引擎（vision + diagnosis 双域）。
 
 出口层是平台底线（方法不可覆盖，§3.1）：
-1. 契约校验（§4 核心字段必填 + validationPlan 条件必填，contract.py）
+1. 契约校验（§4 核心字段必填 + 条件必填；contract.py 按 contract_type 分支）
+   - vision：validationPlan 条件必填（降级项存在时）
+   - diagnosis：improvementPath 条件必填（blockingIssues 存在时）
 2. exit criteria 判定（T9：未决项裁决完成 / 签署 / 资源承诺 / 变更控制生效）
-3. 确认包组装（markdown 唯一事实源，供 vision-render 渲染）
+3. 确认包组装（markdown 唯一事实源，供 deliverable-render 渲染）
 4. 用户授权节点：顾问决策 通过/有条件通过 → authorized 写入；驳回 → 不写 authorized
 """
 from __future__ import annotations
@@ -29,24 +31,51 @@ CONFIRM_SECTIONS = (
     ("downstreamInterfaces", "下游接口"),
 )
 
+# 诊断报告确认包 section（§4 诊断报告契约，M3-05）
+DIAGNOSIS_CONFIRM_SECTIONS = (
+    ("diagnosisScope", "诊断范围界定"),
+    ("scoringConfig", "打分规则快照"),
+    ("dimensionScores", "维度打分分布"),
+    ("angleScores", "二级角度打分"),
+    ("blockingIssues", "阻断性问题清单"),
+    ("improvementPath", "改进路径"),
+    ("evidenceList", "证据清单"),
+    ("overallScore", "总体分"),
+    ("reportNarrative", "报告叙事"),
+    ("openIssues", "未决条件清单"),
+    ("downstreamInterfaces", "下游接口"),
+)
+
 
 def run_exit(
     output: dict,
     requires: list[str] | None,
     state: dict,
+    contract_type: str = "vision",
 ) -> dict:
     """出口校验：契约校验 + exit criteria 检查（T9 四项）。
 
+    - contract_type: "vision"（默认）/ "diagnosis"（诊断报告契约分支）
     返回 {"errors": [...], "blocked": bool, "exit_checks": [...], "unowned": [...]}
     """
-    errors = list(contract_mod.validate_output(output, requires, state.get("open_issues", [])))
+    errors = list(contract_mod.validate_output(
+        output, requires, state.get("open_issues", []), contract_type=contract_type,
+    ))
     unowned = issues_mod.unowned(state)
 
     checks = {
         "未决项裁决完成": len(unowned) == 0,
-        "关键利益相关者签署": bool(output.get("downstreamInterfaces", {}).get("signatures"))
-        or bool(output.get("changeControl")),
-        "资源承诺": bool(output.get("ambitionRationale", {}).get("resource_commitment")),
+        # diagnosis 契约无 T9 签署/资源承诺判据（§4 诊断报告契约不含 changeControl/
+        # resource_commitment），按 "vision 分支才检查，diagnosis 跳过" 处理
+        "关键利益相关者签署": (
+            bool(output.get("downstreamInterfaces", {}).get("signatures"))
+            or bool(output.get("changeControl"))
+        ) if contract_type == "vision" else True,
+        "资源承诺": (
+            bool(output.get("ambitionRationale", {}).get("resource_commitment"))
+            if contract_type == "vision"
+            else True  # diagnosis 契约无资源承诺判据，跳过
+        ),
         # §4：changeControl 为选填，缺省附平台默认规则（战略前提/外部环境变化触发，
         # 主 Agent 提请顾问批准修订）——平台底线恒有变更控制能力，故该项视为生效
         "变更控制规则生效": True,
@@ -154,6 +183,102 @@ def write_confirm_package(session_dir: Path, content: str, slug: str = "confirm"
     while target.exists():
         version += 1
         target = modules_dir / f"vision-confirm-{slug}-v{version}.md"
+    target.write_text(content, encoding="utf-8")
+    return target
+
+
+def assemble_diagnosis_package(output: dict, state: dict, method: Method | None = None) -> str:
+    """组装诊断确认包 markdown（唯一事实源，供 deliverable-render 渲染 diagnosis-report）。
+
+    结构：§4 诊断报告契约字段 → 固定 section；业务内容全部来自产出与 state，不凭空生成。
+    """
+    lines: list[str] = []
+    proj = state.get("project_name", "")
+    topic = state.get("topic_name", "")
+    lines.append(f"# 诊断确认包：{proj} · {topic}")
+    meta = (
+        f"> 方法：{method.display_name if method else state.get('method', '')}"
+        f" ｜ 状态：{state.get('status', '')}"
+        f" ｜ 更新：{datetime.now(timezone.utc).isoformat()}"
+    )
+    lines.append(meta)
+    lines.append("")
+
+    for field, title in DIAGNOSIS_CONFIRM_SECTIONS:
+        value = output.get(field)
+        lines.append(f"## {title}")
+        if field == "dimensionScores" and isinstance(value, list):
+            rows = [[r.get("dim", ""), r.get("name", ""), r.get("score", "")] for r in value]
+            lines.append(_md_table(["维度", "名称", "打分"], rows))
+        elif field == "angleScores" and isinstance(value, list):
+            rows = [
+                [
+                    r.get("angle", ""), r.get("name", ""), r.get("score", ""),
+                    r.get("judgment", ""), "、".join(r.get("evidenceIds", [])),
+                ]
+                for r in value
+            ]
+            lines.append(_md_table(["角度", "名称", "打分", "核心判断", "证据"], rows))
+        elif field == "blockingIssues" and isinstance(value, list):
+            rows = [
+                [
+                    b.get("id", ""), b.get("angle", ""), b.get("issue", ""),
+                    b.get("impact", ""), "、".join(b.get("evidenceIds", [])), b.get("suggestion", ""),
+                ]
+                for b in value
+            ]
+            lines.append(_md_table(["编号", "角度", "问题", "影响", "证据", "建议"], rows))
+        elif field == "improvementPath" and isinstance(value, list):
+            rows = [
+                [str(p.get("priority", "")), p.get("action", ""), p.get("owner", ""), p.get("timeline", "")]
+                for p in value
+            ]
+            lines.append(_md_table(["优先级", "行动", "责任方", "时间线"], rows))
+        elif field == "evidenceList" and isinstance(value, list):
+            rows = [
+                [
+                    e.get("id", ""), e.get("evidence", ""), e.get("source_type", ""),
+                    e.get("level", ""), e.get("verification", ""), "、".join(e.get("supports", [])),
+                ]
+                for e in value
+            ]
+            lines.append(_md_table(["编号", "证据", "来源", "等级", "核验方式", "支撑角度"], rows))
+        elif field == "openIssues" and isinstance(value, list):
+            rows = [
+                [
+                    i.get("id", ""), i.get("sourceStep", ""), i.get("content", ""),
+                    i.get("reason", ""), i.get("resolveMode", ""), i.get("resolution", "未裁决"),
+                ]
+                for i in value
+            ]
+            lines.append(_md_table(["编号", "登记步骤", "内容", "原因", "拟裁决", "裁决结果"], rows))
+        elif field == "scoringConfig" and isinstance(value, dict):
+            scale = value.get("scale", {})
+            lines.append(
+                f"- **量表**：{scale.get('min')}–{scale.get('max')} 分（步进 {scale.get('step')}）"
+                f"；阻断阈值：{value.get('blockThreshold')}"
+            )
+            if value.get("customNote"):
+                lines.append(f"- **顾问备注**：{value['customNote']}")
+        elif value in (None, "", [], {}):
+            lines.append("（未填写）")
+        elif isinstance(value, (list, dict)):
+            lines.append(str(value))
+        else:
+            lines.append(str(value))
+        lines.append("")
+    return "\n".join(lines)
+
+
+def write_diagnosis_package(session_dir: Path, content: str, slug: str = "confirm") -> Path:
+    """写诊断确认包 markdown 到 modules/（版本化 v{N} 不覆盖）。"""
+    modules_dir = session_dir / "modules"
+    modules_dir.mkdir(parents=True, exist_ok=True)
+    version = 1
+    target = modules_dir / f"diagnosis-confirm-{slug}-v{version}.md"
+    while target.exists():
+        version += 1
+        target = modules_dir / f"diagnosis-confirm-{slug}-v{version}.md"
     target.write_text(content, encoding="utf-8")
     return target
 

@@ -1,0 +1,136 @@
+# VITAL 数据管理域 AI 转型五维诊断方法 manifest
+name: diagnosis-method-vital
+version: 1.0.0
+type: diagnosis-method
+displayName: "VITAL 五维诊断"
+description: "数据管理域 AI 转型现状诊断（V 价值战略 / I 数据 / T 技术 / A 管控可信 / L 运营演进，22 个二级角度），识别阻断性问题并输出诊断报告"
+
+steps:
+  - id: "00"
+    name: "诊断准备"
+    question: "诊断对象与范围是什么？（平台/工具清单、职责边界、跨平台说明）"
+    operations:
+      - "收集诊断对象与范围（纳入范围的平台/工具清单 + 职责边界 + 跨平台协同说明）"
+      - "引导顾问确认打分规则（锚点文本/步进/阻断阈值）→ 写入 scoring_config"
+      - "呈现方法论文档默认锚点作参考，顾问可整体替换或逐角度修改"
+    outputs:
+      - "诊断范围界定（diagnosisScope）"
+      - "scoring_config（打分规则快照）"
+    gate:
+      coreCheck: "诊断范围明确且打分规则已确认"
+      pass: "范围边界清晰、打分规则确认（scoring_config 已写入 state.json）"
+      conditional: "范围部分明确（登记未决项）"
+
+  - id: "01"
+    name: "V · 业务价值与战略对齐"
+    question: "战略承接、业务边界、运行支撑、价值成效现状如何？"
+    operations:
+      - "按 scoring_config.anchors.V 逐角度打分（V1 战略承接 / V2 业务边界 / V3 运行支撑 / V4 价值成效）"
+      - "记录每个角度的核心判断与证据引用（evidence 登记）"
+      - "证据等级 A/B/C + 核验方式，确保可第三方复核"
+    outputs:
+      - "V1-V4 角度打分表（score/judgment/evidenceIds）"
+    gate:
+      coreCheck: "V1-V4 四角度均有分且每角度有证据支撑"
+      pass: "四角度打分完成、证据充分"
+      conditional: "个别角度证据待补强（登记未决项）"
+
+  - id: "02"
+    name: "I · 数据生命周期与适用性"
+    question: "数据对象、数据适用、数据语义、数据生命周期现状如何？"
+    operations:
+      - "按 scoring_config.anchors.I 逐角度打分（I1 数据对象 / I2 数据适用 / I3 数据语义 / I4 数据生命周期）"
+      - "记录数据链路证据（来源/加工/流转/消费；链路断裂重点核验）"
+      - "I 维判断数据链条是否成立；系统链条支撑问题归 T 维、控制问题归 A 维"
+    outputs:
+      - "I1-I4 角度打分表（score/judgment/evidenceIds）"
+    gate:
+      coreCheck: "I1-I4 四角度均有分且每角度有证据支撑"
+      pass: "四角度打分完成、证据充分"
+      conditional: "个别角度证据待补强（登记未决项）"
+
+  - id: "03"
+    name: "T · 技术架构与平台支撑"
+    question: "应用承接、架构承载、服务开放与协同现状如何？"
+    operations:
+      - "按 scoring_config.anchors.T 逐角度打分（T1 应用承接 / T2 架构承载 / T3 服务开放与协同）"
+      - "记录接口/链路证据（接口清单、调用日志、跨平台链路）"
+      - "DMS 直连缺失等接口协同缺口重点核验（归 T3）"
+    outputs:
+      - "T1-T3 角度打分表（score/judgment/evidenceIds）"
+    gate:
+      coreCheck: "T1-T3 三角色均有分且每角度有证据支撑"
+      pass: "三角度打分完成、证据充分"
+      conditional: "个别角度证据待补强（登记未决项）"
+
+  - id: "04"
+    name: "A · 管控、风险与可信保障"
+    question: "治理规则、安全合规、AI 受控、审计闭环、公平偏见、可解释透明、模型监控现状如何？"
+    operations:
+      - "按 scoring_config.anchors.A 逐角度打分（A1 治理规则 / A2 安全合规 / A3 AI 受控 / A4 审计闭环 / A5 公平偏见 / A6 可解释透明 / A7 模型监控）"
+      - "记录治理/合规/AI 受控/审计/公平/透明/监控证据"
+      - "A 维覆盖 NIST AI RMF 7 可信特征"
+    outputs:
+      - "A1-A7 角度打分表（score/judgment/evidenceIds）"
+    gate:
+      coreCheck: "A1-A7 七角度均有分且每角度有证据支撑"
+      pass: "七角度打分完成、证据充分"
+      conditional: "个别角度证据待补强（登记未决项）"
+
+  - id: "05"
+    name: "L · 长效运营与持续演进"
+    question: "组织能力、运营机制、应用采用、持续演进现状如何？"
+    operations:
+      - "按 scoring_config.anchors.L 逐角度打分（L1 组织能力 / L2 运营机制 / L3 应用采用 / L4 持续演进）"
+      - "记录组织/运营/采用/演进证据"
+    outputs:
+      - "L1-L4 角度打分表（score/judgment/evidenceIds）"
+    gate:
+      coreCheck: "L1-L4 四角度均有分且每角度有证据支撑"
+      pass: "四角度打分完成、证据充分"
+      conditional: "个别角度证据待补强（登记未决项）"
+
+  - id: "06"
+    name: "阻断性问题与改进路径"
+    question: "哪些角度 ≤ 阻断阈值，或存在链路断裂/能力覆盖缺口？"
+    operations:
+      - "引擎 blocker 识别阻断性问题（规则型：任一角度 ≤ blockThreshold；语义型：链路断裂/能力覆盖缺口）"
+      - "阻断性问题清单独立呈现（角度/影响范围/证据引用/改进建议），不参与总体分否决"
+      - "形成改进路径（阻断性问题作为优先输入；owner/timeline 留待顾问确认）"
+    outputs:
+      - "阻断性问题清单（blockingIssues）"
+      - "改进路径（improvementPath）"
+    gate:
+      coreCheck: "阻断清单与打分一致且改进路径覆盖全部阻断问题"
+      pass: "阻断识别完整、改进路径齐全"
+      conditional: "待补充影响范围/建议（登记未决项）"
+
+scoring:                        # 打分规则声明（默认参考，运行时由顾问确认覆盖，见开发计划 §6.3）
+  scale:
+    min: 1
+    max: 5
+    step: 0.5
+  blockThreshold: 2.0
+  anchorSource: "internal/docs/methodology/VITAL数据管理域AI转型五维诊断方法.md"
+
+aiConstraints:                  # 方法级 AI 约束（平台 AI 铁律不可降级）
+  - "打分规则以顾问在会话中确认的 scoring_config 为准，方法论文档锚点仅作默认参考，不得作为事实引用"
+  - "打分以经核验的现状事实为依据；事实不明时继续核验或限定结论边界，不以低分代替未知状态"
+  - "AI 嵌入引导与记录，不替代顾问决策——gate 判定结果仅作建议，最终授权由顾问确认"
+  - "引用层级纪律：只引用顾问确认环节达成的共识与经核验证据，访谈/资料降级为背景材料"
+  - "阻断性问题 = 必须修复的问题（不限于链路断裂）；清单独立呈现，不参与总体分否决"
+
+outputContract:                 # 声明本方法覆盖的诊断报告契约字段（字段全集见开发计划 §4）
+  requires:
+    - diagnosisScope
+    - scoringConfig
+    - dimensionScores
+    - angleScores
+    - evidenceList
+    - overallScore
+    - reportNarrative
+  optional:
+    - blockingIssues
+    - improvementPath
+    - openIssues
+    - downstreamInterfaces

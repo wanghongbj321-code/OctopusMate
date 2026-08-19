@@ -15,6 +15,12 @@ sys.path.insert(0, str(ROOT / "skills"))
 
 from _engine import blocker, contract, evidence, scoring, session, state as state_mod  # noqa: E402
 from _engine.executor import advance, begin, current_step_id, regress_to, run_step  # noqa: E402
+from _engine.exit import (  # noqa: E402
+    assemble_diagnosis_package,
+    confirm,
+    run_exit,
+    write_diagnosis_package,
+)
 from _engine.parser import parse_manifest  # noqa: E402
 
 MOCK_MANIFEST = ROOT / "tests" / "fixtures" / "mock-diagnosis-method" / "manifest.yaml"
@@ -242,6 +248,125 @@ class TestDiagnosisPipeline(unittest.TestCase):
         result = scoring.compute_all(scores, SCORING_CONFIG)
         self.assertTrue(any("V1" in e for e in result["errors"]))
         self.assertEqual(result["dimension_scores"]["V"], 4.0)
+
+
+def build_diagnosis_output(st: dict, scores: dict | None = None) -> dict:
+    """组装完整诊断输出（供出口链路测试复用）。"""
+    scores = scores or {
+        "V1": {"score": 3.5, "judgment": "战略承接清晰", "evidenceIds": ["E-01"]},
+        "V2": {"score": 4.0, "judgment": "业务边界明确", "evidenceIds": ["E-01"]},
+        "I1": {"score": 3.0, "judgment": "对象目录基本贯通", "evidenceIds": ["E-02"]},
+        "I2": {"score": 1.5, "judgment": "动销数据漏采迟报", "evidenceIds": ["E-03"]},
+    }
+    cfg = state_mod.get_scoring_config(st)
+    result = scoring.compute_all(scores, cfg)
+    ev_list: list[dict] = []
+    evidence.register(ev_list, "战略文件与年度 OKR", level="B",
+                      verification="文档评审 + 访谈", supports=["V1", "V2"], source_type="制度")
+    evidence.register(ev_list, "对象目录清单", level="B",
+                      verification="现网核验", supports=["I1"], source_type="系统现状")
+    evidence.register(ev_list, "覆盖率统计 <40%", level="A",
+                      verification="按终端/SKU/月份抽样", supports=["I2"], source_type="运行记录")
+    blocks = blocker.identify_blockers(scores, ev_list, cfg)
+    return {
+        "diagnosisScope": {"objects": ["数据中台"], "boundary": "数据管理域"},
+        "scoringConfig": cfg,
+        "dimensionScores": [
+            {"dim": d, "name": n, "score": s}
+            for d, n, s in [("V", "业务价值与战略对齐", result["dimension_scores"]["V"]),
+                            ("I", "数据生命周期与适用性", result["dimension_scores"]["I"])]
+        ],
+        "angleScores": [
+            {"angle": a, "name": a, "score": v["score"], "judgment": v["judgment"],
+             "evidenceIds": v["evidenceIds"]}
+            for a, v in scores.items()
+        ],
+        "blockingIssues": blocks,
+        "improvementPath": blocker.build_improvement_path(blocks),
+        "evidenceList": ev_list,
+        "overallScore": result["overall_score"],
+        "reportNarrative": "执行摘要：数据链路断裂阻断 AI 消费",
+        "openIssues": [],
+    }
+
+
+class TestDiagnosisExit(unittest.TestCase):
+    """M3-05 出口挂接：契约校验（diagnosis 分支）→ 确认包组装 → 授权。"""
+
+    def test_run_exit_diagnosis_passes(self):
+        with tempfile.TemporaryDirectory() as td:
+            st = make_state(Path(td))
+            output = build_diagnosis_output(st)
+            res = run_exit(output, requires=[], state=st, contract_type="diagnosis")
+            self.assertEqual(res["errors"], [])
+            self.assertFalse(res["blocked"])
+
+    def test_run_exit_blocked_without_improvement_path(self):
+        with tempfile.TemporaryDirectory() as td:
+            st = make_state(Path(td))
+            output = build_diagnosis_output(st)
+            del output["improvementPath"]  # 有阻断问题但缺改进路径 → 条件必填（软阻断）
+            res = run_exit(output, requires=[], state=st, contract_type="diagnosis")
+            # 条件必填缺失 = errors 提示（调用方据此阻止进入确认），与 vision 域
+            # validationPlan 缺失行为一致；硬阻断（blocked）仅针对核心字段缺失
+            self.assertTrue(any("improvementPath" in e for e in res["errors"]))
+
+    def test_run_exit_hard_blocked_missing_core(self):
+        """核心字段缺失（overallScore）→ 硬阻断（blocked=True）。"""
+        with tempfile.TemporaryDirectory() as td:
+            st = make_state(Path(td))
+            output = build_diagnosis_output(st)
+            del output["overallScore"]
+            res = run_exit(output, requires=[], state=st, contract_type="diagnosis")
+            self.assertTrue(any("缺失核心字段：overallScore" in e for e in res["errors"]))
+            self.assertTrue(res["blocked"])
+
+    def test_vision_contract_backward_compat(self):
+        """vision 契约分支不受 diagnosis 扩展影响（回归）。"""
+        output = {
+            "visionStatement": "s", "visionNarrative": "n",
+            "ambitionTable": [{"kpi": "k"}], "ambitionRationale": {"depth": "d", "resource_commitment": "r"},
+            "impactSummary": {"org": "o"},
+            "downstreamInterfaces": {"signatures": ["顾问"]},
+        }
+        self.assertEqual(run_exit(output, requires=[], state={}, contract_type="vision")["errors"], [])
+
+    def test_assemble_diagnosis_package(self):
+        with tempfile.TemporaryDirectory() as td:
+            st = make_state(Path(td))
+            output = build_diagnosis_output(st)
+            md = assemble_diagnosis_package(output, st)
+            for section in ("诊断范围界定", "打分规则快照", "维度打分分布",
+                            "二级角度打分", "阻断性问题清单", "改进路径",
+                            "证据清单", "总体分", "报告叙事"):
+                self.assertIn(f"## {section}", md)
+            # 业务数据来自确认包：不出现 Demo 样例数值
+            self.assertNotIn("2.9 分", md)
+            self.assertNotIn("T+15", md)
+
+    def test_write_diagnosis_package_versioned(self):
+        with tempfile.TemporaryDirectory() as td:
+            st = make_state(Path(td))
+            output = build_diagnosis_output(st)
+            md = assemble_diagnosis_package(output, st)
+            p1 = write_diagnosis_package(Path(td), md, slug="demo")
+            p2 = write_diagnosis_package(Path(td), md, slug="demo")
+            self.assertEqual(p1.name, "diagnosis-confirm-demo-v1.md")
+            self.assertEqual(p2.name, "diagnosis-confirm-demo-v2.md")
+            self.assertTrue(p1.exists() and p2.exists())
+
+    def test_confirm_authorized(self):
+        with tempfile.TemporaryDirectory() as td:
+            st = make_state(Path(td))
+            self.assertEqual(st["status"], "review_ready")
+            res = confirm(st, "pass")
+            self.assertTrue(res["authorized"])
+            self.assertEqual(st["status"], "authorized")
+            # reject 不写 authorized
+            st2 = make_state(Path(td))
+            res2 = confirm(st2, "reject")
+            self.assertFalse(res2["authorized"])
+            self.assertEqual(st2["status"], "review_ready")
 
 
 if __name__ == "__main__":
