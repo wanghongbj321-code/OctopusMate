@@ -8,8 +8,8 @@ import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 
-# 项目根目录（skills/vision-distill/scripts/engine → 4 级）
-ROOT = Path(__file__).resolve().parents[4]
+# 项目根目录（skills/_engine → 2 级）
+ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 

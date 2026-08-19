@@ -47,10 +47,11 @@ OctopusMate/
 ├── .codebuddy-plugin/plugin.json    # 专家上架配置（专家生态规范目录）
 ├── agents/octopus-mate.md           # 主 Agent 薄控制面（五 section）
 ├── skills/
-│   ├── vision-distill/              # 生产：方法引擎（scripts/engine/ 平台公共代码）
-│   ├── vision-gate/                 # 质检：契约校验编排 + 质量检验 + 视觉审计
-│   ├── vision-render/               # 输出：确认包 HTML 渲染 + 13 条不变量审计
-│   └── methods/                     # 方法插件库（octopus-7step / north-star / golden-circle / 脚手架 / _shared 共享模板）
+│   ├── _engine/                      # 平台方法引擎（平台公共代码，跨域共享）
+│   ├── vision-distill/               # 生产：调用平台引擎执行愿景方法
+│   ├── vision-gate/                  # 质检：契约校验编排 + 质量检验 + 视觉审计
+│   ├── vision-render/                # 输出：确认包 HTML 渲染 + 13 条不变量审计
+│   └── methods/                      # 方法插件库（octopus-7step / north-star / golden-circle / 脚手架 / _shared 共享模板）
 ├── schemas/                         # state.json + manifest.schema.json
 ├── tests/                           # 44 用例（契约/引擎/会话/e2e/生命周期/载体/包结构）
 └── workshop/                        # 运行产物（{project_slug}/{topic_slug}/，gitignore）

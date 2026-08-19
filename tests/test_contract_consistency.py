@@ -16,6 +16,39 @@ from contract_consistency import (  # noqa: E402
 FIXTURES = Path(__file__).resolve().parent / "fixtures"
 MANIFEST_SCHEMA = load_json(SCHEMA_DIR / "manifest.schema.json")
 STATE_SCHEMA = load_json(SCHEMA_DIR / "state.json.schema.json")
+TOKEN_SCHEMA = load_json(SCHEMA_DIR / "design-token.schema.json")
+
+
+class TestDesignTokenContract(unittest.TestCase):
+    """design-token ↔ design-token.schema 契约一致性（M0-04 验收）。"""
+
+    def test_valid_token_passes(self):
+        instance = load_json(FIXTURES / "design-token-black-gray.json")
+        self.assertEqual(validate(instance, TOKEN_SCHEMA), [])
+
+    def test_token_requires_meta_and_tokens(self):
+        instance = load_json(FIXTURES / "design-token-black-gray.json")
+        del instance["meta"]
+        self.assertNotEqual(validate(instance, TOKEN_SCHEMA), [])
+
+    def test_token_color_requires_page_bg(self):
+        instance = load_json(FIXTURES / "design-token-black-gray.json")
+        del instance["tokens"]["color"]["pageBg"]
+        errors = validate(instance, TOKEN_SCHEMA)
+        self.assertNotEqual(errors, [])
+        self.assertIn("pageBg", "\n".join(errors))
+
+    def test_token_color_hex_pattern(self):
+        instance = load_json(FIXTURES / "design-token-black-gray.json")
+        instance["tokens"]["color"]["accent"] = "red"
+        errors = validate(instance, TOKEN_SCHEMA)
+        self.assertNotEqual(errors, [])
+        self.assertIn("accent", "\n".join(errors))
+
+    def test_token_rejects_unknown_fields(self):
+        instance = load_json(FIXTURES / "design-token-black-gray.json")
+        instance["tokens"]["extra"] = {}
+        self.assertNotEqual(validate(instance, TOKEN_SCHEMA), [])
 
 
 class TestManifestContract(unittest.TestCase):
@@ -37,10 +70,33 @@ class TestManifestContract(unittest.TestCase):
         self.assertIn("unknownField", joined)
 
     def test_manifest_name_pattern(self):
-        """name 必须为 vision-method-{slug}。"""
+        """name 必须为 vision-method-{slug} 或 diagnosis-method-{slug}（M0-03 扩展）。"""
         instance = load_manifest(FIXTURES / "valid-manifest.yaml")
         instance["name"] = "bad_name"
         self.assertNotEqual(validate(instance, MANIFEST_SCHEMA), [])
+        # vision-method 前缀保持合法
+        instance["name"] = "vision-method-demo"
+        self.assertEqual(validate(instance, MANIFEST_SCHEMA), [])
+
+    def test_diagnosis_manifest_passes(self):
+        """diagnosis-method 分支 + scoring 节（M0-03 扩展）：合法样例校验通过。"""
+        instance = load_manifest(FIXTURES / "valid-diagnosis-manifest.yaml")
+        self.assertEqual(validate(instance, MANIFEST_SCHEMA), [])
+
+    def test_diagnosis_wrong_type_rejected(self):
+        """diagnosis manifest 的 type 必须是 diagnosis-method（不在枚举即拒）。"""
+        instance = load_manifest(FIXTURES / "valid-diagnosis-manifest.yaml")
+        instance["type"] = "wrong-type"
+        self.assertNotEqual(validate(instance, MANIFEST_SCHEMA), [])
+
+    def test_diagnosis_scoring_requires_scale(self):
+        """scoring 节声明时必须含 scale（min/max/step）；缺失被拒。"""
+        instance = load_manifest(FIXTURES / "valid-diagnosis-manifest.yaml")
+        del instance["scoring"]["scale"]
+        self.assertNotEqual(validate(instance, MANIFEST_SCHEMA), [])
+        # 未声明 scoring 节（如 vision 方法）不受影响
+        del instance["scoring"]
+        self.assertEqual(validate(instance, MANIFEST_SCHEMA), [])
 
 
 class TestStateContract(unittest.TestCase):
@@ -98,8 +154,8 @@ class TestAllInstalledMethods(unittest.TestCase):
         from pathlib import Path
 
         ROOT = Path(__file__).resolve().parents[1]
-        sys.path.insert(0, str(ROOT / "skills" / "vision-distill" / "scripts"))
-        from engine.registry import scan_methods
+        sys.path.insert(0, str(ROOT / "skills"))
+        from _engine.registry import scan_methods
 
         valid, errors = scan_methods()
         self.assertEqual(errors, [], f"注册器不应有异常方法：{errors}")

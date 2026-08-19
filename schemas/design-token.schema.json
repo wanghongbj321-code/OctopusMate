@@ -1,0 +1,97 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://octopus-mate.dev/schemas/design-token.schema.json",
+  "title": "Design Token Schema",
+  "description": "视觉模式 token 数据规范（对齐开发计划 §5.2）。模式 = 结构化 token 数据：meta 7 字段（对齐原 frontmatter）+ tokens（color/typography/spacing/radius/layout）。渲染按 token 程序化消费；审计校验无裸值（所有样式引用 token 集）。M0-04 产出，M2-02 10 模式迁移、M2-03 audit 升级消费。",
+  "type": "object",
+  "required": ["meta", "tokens"],
+  "properties": {
+    "meta": {
+      "type": "object",
+      "required": ["id", "zh_name", "visual_system", "layout", "formality", "density", "best_for", "version"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+          "description": "模式标识（kebab-case，对应文件名 NN-{id}）"
+        },
+        "zh_name": { "type": "string", "description": "中文名（渲染前展示候选用）" },
+        "visual_system": { "type": "string", "description": "视觉体系名（英文）" },
+        "layout": { "enum": ["balanced", "flow", "matrix", "conclusion"], "description": "布局模式" },
+        "formality": { "enum": ["high", "medium", "low"], "description": "正式度" },
+        "density": { "enum": ["high", "medium", "low"], "description": "信息密度" },
+        "best_for": { "type": "string", "description": "适用场景（渲染前展示候选用）" },
+        "version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$", "description": "模式版本（SemVer，新增/变更遵循 pratyaya 流程）" }
+      },
+      "additionalProperties": false
+    },
+    "tokens": {
+      "type": "object",
+      "required": ["color", "typography", "spacing", "radius", "layout"],
+      "properties": {
+        "color": {
+          "type": "object",
+          "required": ["pageBg", "blockBg", "ink", "inkStrong", "inkSoft", "inkMuted", "line", "accentLine", "accent", "tableHeadBg", "calloutBg"],
+          "properties": {
+            "pageBg": { "type": "string", "pattern": "^#[0-9A-Fa-f]{6}$", "description": "页面/Canvas 背景" },
+            "blockBg": { "type": "string", "pattern": "^#[0-9A-Fa-f]{6}$", "description": "区块背景" },
+            "ink": { "type": "string", "pattern": "^#[0-9A-Fa-f]{6}$", "description": "主色/主文字" },
+            "inkStrong": { "type": "string", "pattern": "^#[0-9A-Fa-f]{6}$", "description": "深色强调" },
+            "inkSoft": { "type": "string", "pattern": "^#[0-9A-Fa-f]{6}$", "description": "柔和强调" },
+            "inkMuted": { "type": "string", "pattern": "^#[0-9A-Fa-f]{6}$", "description": "辅助文字" },
+            "line": { "type": "string", "pattern": "^#[0-9A-Fa-f]{6}$", "description": "边框" },
+            "accentLine": { "type": "string", "pattern": "^#[0-9A-Fa-f]{6}$", "description": "强调边框（表格 2px 底线）" },
+            "accent": { "type": "string", "pattern": "^#[0-9A-Fa-f]{6}$", "description": "强调色（徽章/序号，可由模式自定义色）" },
+            "tableHeadBg": { "type": "string", "pattern": "^#[0-9A-Fa-f]{6}$", "description": "表格 pale 表头背景" },
+            "calloutBg": { "type": "string", "pattern": "^#[0-9A-Fa-f]{6}$", "description": "引述/So-What 区块背景" }
+          },
+          "additionalProperties": false
+        },
+        "typography": {
+          "type": "object",
+          "required": ["fontFamily", "h1", "h2", "h3", "body", "table", "caption"],
+          "properties": {
+            "fontFamily": { "type": "string", "description": "字体栈（系统字体，离线约束）" },
+            "h1": { "type": "string", "description": "封面标题（如 30px/1.4 500）" },
+            "h2": { "type": "string", "description": "章节标题" },
+            "h3": { "type": "string", "description": "小节标题" },
+            "body": { "type": "string", "description": "正文" },
+            "table": { "type": "string", "description": "表格" },
+            "caption": { "type": "string", "description": "图注" }
+          },
+          "additionalProperties": false
+        },
+        "spacing": {
+          "type": "object",
+          "required": ["section", "card", "cell"],
+          "properties": {
+            "section": { "type": "string", "description": "章节留白（如 22mm）" },
+            "card": { "type": "string", "description": "卡片内边距（如 16px）" },
+            "cell": { "type": "string", "description": "表格单元格内边距（如 8px 12px）" }
+          },
+          "additionalProperties": false
+        },
+        "radius": {
+          "type": "object",
+          "required": ["card", "badge"],
+          "properties": {
+            "card": { "type": "string", "description": "卡片圆角（如 8px）" },
+            "badge": { "type": "string", "description": "徽章圆角（如 12px）" }
+          },
+          "additionalProperties": false
+        },
+        "layout": {
+          "type": "object",
+          "required": ["pageWidth", "coverPadding"],
+          "properties": {
+            "pageWidth": { "type": "string", "description": "页面宽度（如 210mm / 1280px）" },
+            "coverPadding": { "type": "string", "description": "封面内边距（如 20mm 18mm）" }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

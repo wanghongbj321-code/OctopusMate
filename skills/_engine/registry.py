@@ -12,7 +12,7 @@ from .parser import Method, parse_manifest
 # 与 tests/contract_consistency.SKIP_DIRS 保持一致
 SKIP_DIRS = {"templates", "_shared"}
 
-DEFAULT_METHODS_DIR = Path(__file__).resolve().parents[4] / "skills" / "methods"
+DEFAULT_METHODS_DIR = Path(__file__).resolve().parents[2] / "skills" / "methods"
 
 
 def scan_methods(methods_dir: Path | None = None) -> tuple[list[Method], list[tuple[Path, list[str]]]]:

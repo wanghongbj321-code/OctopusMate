@@ -13,7 +13,7 @@ from pathlib import Path
 
 from . import state as state_mod
 
-DEFAULT_WORKSHOP_ROOT = Path(__file__).resolve().parents[4] / "workshop"
+DEFAULT_WORKSHOP_ROOT = Path(__file__).resolve().parents[2] / "workshop"
 
 # kebab-case ASCII：小写字母数字 + 连字符（与 schema pattern 一致）
 SLUG_RE = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")

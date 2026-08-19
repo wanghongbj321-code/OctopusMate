@@ -13,10 +13,10 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
-sys.path.insert(0, str(ROOT / "skills" / "vision-distill" / "scripts"))
+sys.path.insert(0, str(ROOT / "skills"))
 sys.path.insert(0, str(ROOT / "skills" / "vision-render" / "scripts"))
 
-from engine import (  # noqa: E402
+from _engine import (  # noqa: E402
     executor,
     exit as exit_mod,
     open_issues,
