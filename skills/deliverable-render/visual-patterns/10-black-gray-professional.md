@@ -7,6 +7,51 @@ formality: high
 density: medium
 best_for: 正式打印、管理层报告、学术场景、黑白设备展示
 ---
+## Design Token（结构化数据，对齐 schemas/design-token.schema.json）
+
+```yaml
+designToken:
+  meta:
+    id: "black-gray-professional"
+    zh_name: "黑灰专业"
+    visual_system: "Black Gray Professional"
+    layout: "balanced"
+    formality: "high"
+    density: "medium"
+    best_for: "正式打印、管理层报告、学术场景、黑白设备展示"
+    version: "2.3.5"
+  tokens:
+    color:
+      pageBg: "#FFFFFF"
+      blockBg: "#F7F7F7"
+      ink: "#1A1A1A"
+      inkStrong: "#2D2D2D"
+      inkSoft: "#6B6B6B"
+      inkMuted: "#808080"
+      line: "#D4D4D4"
+      accentLine: "#1A1A1A"
+      accent: "#1A1A1A"
+      tableHeadBg: "#F1F1F1"
+      calloutBg: "#FAFAFA"
+    typography:
+      fontFamily: "PingFang SC, Microsoft YaHei, Helvetica Neue, Arial, sans-serif"
+      h1: "30px/1.4 500"
+      h2: "22px/1.4 500"
+      h3: "16px/1.4 500"
+      body: "14px/1.62"
+      table: "12.4px"
+      caption: "12.5px"
+    spacing:
+      section: "22mm"
+      card: "16px"
+      cell: "8px 12px"
+    radius:
+      card: "8px"
+      badge: "12px"
+    layout:
+      pageWidth: "210mm"
+      coverPadding: "20mm 18mm"
+```
 
 # 色板 token
 

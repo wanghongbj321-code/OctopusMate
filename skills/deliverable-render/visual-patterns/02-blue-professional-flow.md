@@ -7,6 +7,51 @@ formality: medium-high
 density: medium-high
 best_for: 流程评审、职责与决策边界展示
 ---
+## Design Token（结构化数据，对齐 schemas/design-token.schema.json）
+
+```yaml
+designToken:
+  meta:
+    id: "blue-professional-flow"
+    zh_name: "蓝色专业·流程"
+    visual_system: "Blue Professional"
+    layout: "flow"
+    formality: "medium-high"
+    density: "medium-high"
+    best_for: "流程评审、职责与决策边界展示"
+    version: "1.0.0"
+  tokens:
+    color:
+      pageBg: "#f2f3f6"
+      blockBg: "#fffdf1"
+      ink: "#17233a"
+      inkMuted: "#667085"
+      line: "#d6dce7"
+      accentLine: "#1e2bfa"
+      accent: "#1e2bfa"
+      tableHeadBg: "#f0f1ff"
+      calloutBg: "#fdfae7"
+      inkStrong: "#2D2D2D"
+      inkSoft: "#6B6B6B"
+    typography:
+      fontFamily: "Inter, \"Microsoft YaHei\", Arial, sans-serif"
+      h1: "30px/1.4 500"
+      h2: "22px/1.4 500"
+      h3: "16px/1.4 500"
+      body: "14px/1.62"
+      table: "12.4px"
+      caption: "12.5px"
+    spacing:
+      section: "22mm"
+      card: "16px"
+      cell: "8px 12px"
+    radius:
+      card: "8px"
+      badge: "12px"
+    layout:
+      pageWidth: "210mm"
+      coverPadding: "20mm 18mm"
+```
 
 # Blue Professional — 流程决策版
 

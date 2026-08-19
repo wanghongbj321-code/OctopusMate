@@ -7,6 +7,51 @@ formality: high
 density: medium-high
 best_for: 机构审阅、正式机构风格、紫色品牌识别
 ---
+## Design Token（结构化数据，对齐 schemas/design-token.schema.json）
+
+```yaml
+designToken:
+  meta:
+    id: "accenture-purple-institutional"
+    zh_name: "埃森哲紫·机构风"
+    visual_system: "Accenture Purple"
+    layout: "balanced"
+    formality: "high"
+    density: "medium-high"
+    best_for: "机构审阅、正式机构风格、紫色品牌识别"
+    version: "1.0.0"
+  tokens:
+    color:
+      pageBg: "#f2f2f2"
+      ink: "#1a1a1a"
+      inkStrong: "#460073"
+      inkSoft: "#7500c0"
+      inkMuted: "#666666"
+      line: "#d0d0d0"
+      accentLine: "#460073"
+      accent: "#460073"
+      tableHeadBg: "#f4e8ff"
+      blockBg: "#F7F7F7"
+      calloutBg: "#FAFAFA"
+    typography:
+      fontFamily: "Arial, \"Microsoft YaHei\", \"PingFang SC\", sans-serif"
+      h1: "30px/1.4 500"
+      h2: "22px/1.4 500"
+      h3: "16px/1.4 500"
+      body: "14px/1.62"
+      table: "12.4px"
+      caption: "12.5px"
+    spacing:
+      section: "22mm"
+      card: "16px"
+      cell: "8px 12px"
+    radius:
+      card: "8px"
+      badge: "12px"
+    layout:
+      pageWidth: "210mm"
+      coverPadding: "20mm 18mm"
+```
 
 # Accenture Purple — 机构版
 

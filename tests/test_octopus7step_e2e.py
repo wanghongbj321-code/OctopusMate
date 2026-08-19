@@ -14,7 +14,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "skills"))
-sys.path.insert(0, str(ROOT / "skills" / "vision-render" / "scripts"))
+sys.path.insert(0, str(ROOT / "skills" / "deliverable-render" / "scripts"))
 
 from _engine import (  # noqa: E402
     executor,
@@ -28,7 +28,7 @@ from audit_html import audit as audit_html  # noqa: E402
 
 MANIFEST = ROOT / "skills" / "methods" / "octopus-7step" / "manifest.yaml"
 # AI 生成确认包的合规基线（版面参照，过审计即代表 LLM 产物质量达标）
-EXAMPLES_HTML = ROOT / "skills" / "vision-render" / "examples" / "vision-confirm-canvas.html"
+EXAMPLES_HTML = ROOT / "skills" / "deliverable-render" / "examples" / "vision-confirm-canvas.html"
 
 
 def build_full_output() -> dict:

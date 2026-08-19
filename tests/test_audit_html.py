@@ -10,7 +10,7 @@ from pathlib import Path
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "skills" / "vision-render" / "scripts"))
+sys.path.insert(0, str(ROOT / "skills" / "deliverable-render" / "scripts"))
 
 from audit_html import audit  # noqa: E402
 
@@ -50,7 +50,7 @@ class TestAuditHtmlPositive(unittest.TestCase):
 
     def test_examples_baseline_passes(self):
         """examples/ 版面参照基线必须持续合规（AI 生成产物质量基准）。"""
-        example = ROOT / "skills" / "vision-render" / "examples" / "vision-confirm-canvas.html"
+        example = ROOT / "skills" / "deliverable-render" / "examples" / "vision-confirm-canvas.html"
         self.assertTrue(example.exists(), "examples 基线应存在")
         violations = audit(example.read_text(encoding="utf-8"))
         self.assertEqual(violations, [], f"examples 基线违反不变量：{violations}")
@@ -98,6 +98,42 @@ class TestAuditHtmlNegative(unittest.TestCase):
 
     def test_background_image_blocked(self):
         self.assertTrue(audit(_inject(VALID_HTML, "div { background-image: url(bg.png); }")))
+
+
+class TestAuditHtmlToken(unittest.TestCase):
+    """M2-03 token 无裸值 + 语义演进（accent 允许自定义色）。"""
+
+    def test_token_bare_color_blocked(self):
+        """token 集外裸值（#FF0000 不在黑灰 token 集）→ 拦截。"""
+        self.assertTrue(audit(_inject(VALID_HTML, "div { color: #FF0000; }")))
+
+    def test_token_inline_value_allowed(self):
+        """内联 token 值（#1A1A1A = ink）允许（token 集内）。"""
+        bad = VALID_HTML.replace("th { background: var(--block-bg);", "th { background: #F7F7F7;")
+        self.assertEqual(audit(bad), [], "内联 token 值应通过")
+
+    def test_accent_custom_color_allowed(self):
+        """语义演进：accent token 允许模式自定义色（如深蓝金 #C9A227）。"""
+        html = VALID_HTML.replace("</style>", "h1 { color: var(--accent); }\n</style>")
+        # 使用带 accent 自定义色的 token 集（深蓝金 accent）
+        colors = {
+            "pageBg": "#FFFFFF", "blockBg": "#F7F7F7", "ink": "#1A1A1A",
+            "inkStrong": "#2D2D2D", "inkSoft": "#6B6B6B", "inkMuted": "#808080",
+            "line": "#D4D4D4", "accentLine": "#0E2A47", "accent": "#C9A227",
+            "tableHeadBg": "#F1F1F1", "calloutBg": "#FAFAFA",
+        }
+        html2 = html.replace("</style>", "h1 { color: #C9A227; }\n</style>")
+        self.assertEqual(audit(html2, token_colors=colors), [], "accent 自定义色应通过语义演进审计")
+
+    def test_pattern_file_token_loaded(self):
+        """--token 模式文件：解析 Design Token 块校验（黑灰模式）。"""
+        pattern = ROOT / "skills" / "deliverable-render" / "visual-patterns" / "10-black-gray-professional.md"
+        self.assertTrue(pattern.exists())
+        self.assertEqual(audit(VALID_HTML, pattern_path=pattern), [])
+
+    def test_bare_hex_short_form(self):
+        """#abc 短 hex 归一化后仍应被 token 无裸值捕获。"""
+        self.assertTrue(audit(_inject(VALID_HTML, "div { color: #f00; }")))
 
 
 if __name__ == "__main__":

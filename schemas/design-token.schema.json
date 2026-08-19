@@ -18,8 +18,8 @@
         "zh_name": { "type": "string", "description": "中文名（渲染前展示候选用）" },
         "visual_system": { "type": "string", "description": "视觉体系名（英文）" },
         "layout": { "enum": ["balanced", "flow", "matrix", "conclusion"], "description": "布局模式" },
-        "formality": { "enum": ["high", "medium", "low"], "description": "正式度" },
-        "density": { "enum": ["high", "medium", "low"], "description": "信息密度" },
+        "formality": { "enum": ["high", "medium-high", "medium", "low"], "description": "正式度" },
+        "density": { "enum": ["high", "medium-high", "medium", "low"], "description": "信息密度" },
         "best_for": { "type": "string", "description": "适用场景（渲染前展示候选用）" },
         "version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$", "description": "模式版本（SemVer，新增/变更遵循 pratyaya 流程）" }
       },

@@ -51,6 +51,52 @@ class TestDesignTokenContract(unittest.TestCase):
         self.assertNotEqual(validate(instance, TOKEN_SCHEMA), [])
 
 
+class TestPatternTokenContract(unittest.TestCase):
+    """视觉模式文件 Design Token 块 ↔ design-token.schema（M2-02 验收）。
+
+    10 个模式文件（visual-patterns/0*.md）的 `## Design Token` YAML 代码块
+    必须全部通过 schema 校验——token 化迁移后持续合规，防止回归。
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        cls.patterns_dir = Path(__file__).resolve().parents[1] / "skills" / "deliverable-render" / "visual-patterns"
+
+    def _extract_token_blocks(self):
+        import re
+
+        import yaml
+
+        blocks = {}
+        for f in sorted(self.patterns_dir.glob("[0-9][0-9]-*.md")):
+            text = f.read_text(encoding="utf-8")
+            m = re.search(r"```yaml\n(designToken:.*?)```", text, re.S)
+            if not m:
+                raise AssertionError(f"{f.name} 缺少 Design Token 代码块")
+            data = yaml.safe_load(m.group(1))
+            blocks[f.name] = data.get("designToken", data)
+        return blocks
+
+    def test_all_patterns_pass_schema(self):
+        blocks = self._extract_token_blocks()
+        self.assertGreaterEqual(len(blocks), 10, "应有 10 个模式文件")
+        failed = []
+        for name, data in blocks.items():
+            errs = validate(data, TOKEN_SCHEMA)
+            if errs:
+                failed.append(f"{name}: {'; '.join(errs[:2])}")
+        self.assertEqual(failed, [], f"模式 Design Token 校验失败：{failed}")
+
+    def test_black_gray_default_preserved(self):
+        """黑灰专业 token 值与 §5.2 一致（不破坏 vision 确认包渲染）。"""
+        blocks = self._extract_token_blocks()
+        bg = blocks.get("10-black-gray-professional.md")
+        self.assertIsNotNone(bg)
+        self.assertEqual(bg["tokens"]["color"]["pageBg"], "#FFFFFF")
+        self.assertEqual(bg["tokens"]["color"]["ink"], "#1A1A1A")
+        self.assertEqual(bg["tokens"]["color"]["line"], "#D4D4D4")
+
+
 class TestManifestContract(unittest.TestCase):
     """manifest ↔ manifest.schema 契约一致性。"""
 

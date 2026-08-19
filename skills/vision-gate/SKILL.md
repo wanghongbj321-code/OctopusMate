@@ -23,6 +23,6 @@ description: 愿景质检 skill——编排出口校验与质量检验：调用�
 ## 边界（§3.2 红线）
 
 - **禁止重复实现校验逻辑**——出口校验一律调用引擎校验器
-- 不做生产与渲染（vision-distill / vision-render 的职责）
+- 不做生产与渲染（vision-distill / deliverable-render 的职责）
 - 不直接写 `workshop/` 产物
 - Gate 只建议不授权；`authorized` 仅可由主 Agent 在顾问确认后写入

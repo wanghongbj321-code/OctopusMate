@@ -7,6 +7,51 @@ formality: high
 density: medium
 best_for: 欧洲机构风格、深蓝灰品牌识别、简洁商务汇报
 ---
+## Design Token（结构化数据，对齐 schemas/design-token.schema.json）
+
+```yaml
+designToken:
+  meta:
+    id: "roland-berger-dark-blue-gray"
+    zh_name: "罗兰贝格深蓝灰"
+    visual_system: "Roland Berger Dark Blue-Gray"
+    layout: "balanced"
+    formality: "high"
+    density: "medium"
+    best_for: "欧洲机构风格、深蓝灰品牌识别、简洁商务汇报"
+    version: "1.0.0"
+  tokens:
+    color:
+      pageBg: "#eff0f1"
+      ink: "#1a1a1a"
+      inkSoft: "#e8f6f8"
+      inkMuted: "#65747d"
+      line: "#ced2d5"
+      accent: "#00aac9"
+      blockBg: "#F7F7F7"
+      inkStrong: "#2D2D2D"
+      accentLine: "#1A1A1A"
+      tableHeadBg: "#F1F1F1"
+      calloutBg: "#FAFAFA"
+    typography:
+      fontFamily: "\"Helvetica Neue\", Arial, \"PingFang SC\", \"Microsoft YaHei\", sans-serif"
+      h1: "30px/1.4 500"
+      h2: "22px/1.4 500"
+      h3: "16px/1.4 500"
+      body: "14px/1.62"
+      table: "12.4px"
+      caption: "12.5px"
+    spacing:
+      section: "22mm"
+      card: "16px"
+      cell: "8px 12px"
+    radius:
+      card: "8px"
+      badge: "12px"
+    layout:
+      pageWidth: "210mm"
+      coverPadding: "20mm 18mm"
+```
 
 # Roland Berger Dark Blue-Gray — 欧洲机构版
 

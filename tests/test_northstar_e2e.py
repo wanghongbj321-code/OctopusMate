@@ -13,7 +13,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "skills"))
-sys.path.insert(0, str(ROOT / "skills" / "vision-render" / "scripts"))
+sys.path.insert(0, str(ROOT / "skills" / "deliverable-render" / "scripts"))
 
 from _engine import (  # noqa: E402
     executor,
@@ -27,7 +27,7 @@ from audit_html import audit as audit_html  # noqa: E402
 
 NORTH_STAR = ROOT / "skills" / "methods" / "north-star" / "manifest.yaml"
 OCTOPUS7 = ROOT / "skills" / "methods" / "octopus-7step" / "manifest.yaml"
-EXAMPLES_HTML = ROOT / "skills" / "vision-render" / "examples" / "vision-confirm-canvas.html"
+EXAMPLES_HTML = ROOT / "skills" / "deliverable-render" / "examples" / "vision-confirm-canvas.html"
 
 
 def build_simplified_output(open_issues: list[dict] | None = None) -> dict:

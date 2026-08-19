@@ -7,6 +7,51 @@ formality: high
 density: medium
 best_for: 战略汇报、增长矩阵风格、结构化战略分析
 ---
+## Design Token（结构化数据，对齐 schemas/design-token.schema.json）
+
+```yaml
+designToken:
+  meta:
+    id: "bcg-green-matrix"
+    zh_name: "波士顿绿·战略矩阵"
+    visual_system: "BCG Green"
+    layout: "balanced"
+    formality: "high"
+    density: "medium"
+    best_for: "战略汇报、增长矩阵风格、结构化战略分析"
+    version: "1.0.0"
+  tokens:
+    color:
+      pageBg: "#f5f8f7"
+      ink: "#1a1a1a"
+      inkStrong: "#0e3e1b"
+      inkMuted: "#5c6b65"
+      line: "#d5e0db"
+      tableHeadBg: "#e7f4ec"
+      blockBg: "#F7F7F7"
+      inkSoft: "#6B6B6B"
+      accentLine: "#1A1A1A"
+      accent: "#1A1A1A"
+      calloutBg: "#FAFAFA"
+    typography:
+      fontFamily: "Georgia, \"Noto Serif SC\", \"Songti SC\", serif"
+      h1: "30px/1.4 500"
+      h2: "22px/1.4 500"
+      h3: "16px/1.4 500"
+      body: "14px/1.62"
+      table: "12.4px"
+      caption: "12.5px"
+    spacing:
+      section: "22mm"
+      card: "16px"
+      cell: "8px 12px"
+    radius:
+      card: "8px"
+      badge: "12px"
+    layout:
+      pageWidth: "210mm"
+      coverPadding: "20mm 18mm"
+```
 
 # BCG Green — 增长矩阵版
 

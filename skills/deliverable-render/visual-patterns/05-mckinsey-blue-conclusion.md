@@ -7,6 +7,51 @@ formality: high
 density: medium
 best_for: 高管汇报、结论先行、数据驱动的 Storyline
 ---
+## Design Token（结构化数据，对齐 schemas/design-token.schema.json）
+
+```yaml
+designToken:
+  meta:
+    id: "mckinsey-blue-conclusion"
+    zh_name: "麦肯锡蓝·结论驱动"
+    visual_system: "McKinsey Blue"
+    layout: "balanced"
+    formality: "high"
+    density: "medium"
+    best_for: "高管汇报、结论先行、数据驱动的 Storyline"
+    version: "1.0.0"
+  tokens:
+    color:
+      pageBg: "#f4f7f8"
+      ink: "#1a1a1a"
+      inkMuted: "#5a6573"
+      line: "#d9e2ec"
+      accent: "#00a9f4"
+      tableHeadBg: "#e8f2f7"
+      blockBg: "#F7F7F7"
+      inkStrong: "#2D2D2D"
+      inkSoft: "#6B6B6B"
+      accentLine: "#1A1A1A"
+      calloutBg: "#FAFAFA"
+    typography:
+      fontFamily: "Georgia, \"Noto Serif SC\", \"Songti SC\", serif"
+      h1: "30px/1.4 500"
+      h2: "22px/1.4 500"
+      h3: "16px/1.4 500"
+      body: "14px/1.62"
+      table: "12.4px"
+      caption: "12.5px"
+    spacing:
+      section: "22mm"
+      card: "16px"
+      cell: "8px 12px"
+    radius:
+      card: "8px"
+      badge: "12px"
+    layout:
+      pageWidth: "210mm"
+      coverPadding: "20mm 18mm"
+```
 
 # McKinsey Blue — 结论驱动版
 

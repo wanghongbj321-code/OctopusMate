@@ -7,6 +7,51 @@ formality: high
 density: medium-high
 best_for: 领导审阅、正式机构型总览
 ---
+## Design Token（结构化数据，对齐 schemas/design-token.schema.json）
+
+```yaml
+designToken:
+  meta:
+    id: "signal-balanced"
+    zh_name: "Signal·均衡"
+    visual_system: "Signal"
+    layout: "balanced"
+    formality: "high"
+    density: "medium-high"
+    best_for: "领导审阅、正式机构型总览"
+    version: "1.0.0"
+  tokens:
+    color:
+      pageBg: "#d9d6cf"
+      blockBg: "#f5f1e8"
+      ink: "#17233a"
+      inkStrong: "#1c2644"
+      inkSoft: "#eee9df"
+      inkMuted: "#667085"
+      line: "#d6dce7"
+      accentLine: "#334261"
+      accent: "#334261"
+      tableHeadBg: "#e6e0d4"
+      calloutBg: "#f0ece3"
+    typography:
+      fontFamily: "Inter, \"Microsoft YaHei\", Arial, sans-serif"
+      h1: "28px/1.3 600"
+      h2: "20px/1.35 600"
+      h3: "15px/1.4 600"
+      body: "13px/1.6"
+      table: "12px"
+      caption: "11.5px"
+    spacing:
+      section: "22mm"
+      card: "16px"
+      cell: "8px 12px"
+    radius:
+      card: "8px"
+      badge: "12px"
+    layout:
+      pageWidth: "210mm"
+      coverPadding: "20mm 18mm"
+```
 
 # Signal — 均衡总览版
 

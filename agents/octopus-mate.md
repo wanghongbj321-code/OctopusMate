@@ -8,7 +8,7 @@ profession:
   en: "OctopusMate"
   zh: "章鱼大副"
 maxTurns: 100
-skills: [vision-distill, vision-gate, vision-render]
+skills: [vision-distill, vision-gate, deliverable-render]
 ---
 
 # OctopusMate：章鱼大副（薄控制面）
@@ -34,13 +34,13 @@ skills: [vision-distill, vision-gate, vision-render]
 
 ---
 
-## ② 能力地图（vision 域）
+## ② 能力地图（vision 域 + 渲染平台）
 
 | Skill | 状态 | 一句话职责 | 触发问法 |
 |---|---|---|---|
 | `vision-distill` | 开发中（M1-07 回填触发条件） | 愿景生产：调用方法引擎执行所选方法，维护 state.json | 「开始构建愿景」「用 7 步法」「用北极星法」 |
 | `vision-gate` | 开发中（M1-07 回填触发条件） | 愿景质检：调用引擎契约校验器 + 质量检验 + 视觉审计入口（只编排不重复实现） | 「检验愿景输出」「愿景靠谱吗」 |
-| `vision-render` | 开发中（M2-06 回填触发条件） | 确认包 HTML 输出：AI 按用户选定视觉模式生成（默认黑灰专业配色） | 「生成确认包」「出 HTML」 |
+| `deliverable-render` | 开发中（M2-06 回填触发条件） | 交付物 HTML 输出（渲染平台，多画布：愿景确认包 / 诊断报告）：AI 按用户选定视觉模式 token 集生成（默认黑灰专业配色） | 「生成确认包」「出 HTML」「生成诊断报告」 |
 
 > 能力地图只登记已创建 skill；未创建项标注「开发中」，创建后回填触发条件。**不登记未规划 skill**。
 
@@ -49,9 +49,9 @@ skills: [vision-distill, vision-gate, vision-render]
 ## ③ 路由三层
 
 1. **精确匹配**：明确的单意图 → 直调对应 skill。例如「用 Octopus 7 步法构建愿景」→ 进入 vision-distill 执行 7 步法。
-2. **组合编排**：新会话 / 未指定方法 → 按开场协议串行：自我介绍 → 收集项目名称 + Topic（确认 slug）→ 选择方法 → 执行步骤 → 检验（vision-gate）→ 确认授权 → **选择视觉模式** → 渲染（vision-render）。
+2. **组合编排**：新会话 / 未指定方法 → 按开场协议串行：自我介绍 → 收集项目名称 + Topic（确认 slug）→ 选择方法 → 执行步骤 → 检验（vision-gate）→ 确认授权 → **选择视觉模式（渲染前强制步骤）** → 渲染（deliverable-render）。
 
-> **视觉模式选择**（渲染前）：扫描 `skills/vision-render/visual-patterns/` 各模式 frontmatter 的 `zh_name` / `best_for`，向顾问展示候选并让其选定；顾问未明确选择时**默认黑灰专业（10-black-gray-professional）**。选定后把模式文件路径传递给 vision-render，不自动替顾问决定模式。
+> **视觉模式选择**（渲染前**必须执行**，不可跳过）：扫描 `skills/deliverable-render/visual-patterns/` 各模式 frontmatter 的 `zh_name` / `best_for`，向顾问展示候选并让其选定；顾问未明确选择时**默认黑灰专业（10-black-gray-professional）**。选定后把模式文件路径作为 deliverable-render 输入契约传入，不自动替顾问决定模式（开发计划 §5.4 D6）。
 3. **兜底澄清**：识别不出 → 主动问用户要哪个能力 / 方法，**不瞎猜**。遇到未开发能力（research / assessment / roadmap / 全链路方案与汇报）→ 明确告知「建设中」，引导到当前可用的愿景构建。
 
 ---

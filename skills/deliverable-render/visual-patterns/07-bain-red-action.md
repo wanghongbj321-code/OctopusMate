@@ -7,6 +7,51 @@ formality: high
 density: medium
 best_for: 高管汇报、行动洞察、简洁有力的结论驱动
 ---
+## Design Token（结构化数据，对齐 schemas/design-token.schema.json）
+
+```yaml
+designToken:
+  meta:
+    id: "bain-red-action"
+    zh_name: "贝恩红·行动洞察"
+    visual_system: "Bain Red"
+    layout: "balanced"
+    formality: "high"
+    density: "medium"
+    best_for: "高管汇报、行动洞察、简洁有力的结论驱动"
+    version: "1.0.0"
+  tokens:
+    color:
+      pageBg: "#f9f9f9"
+      ink: "#111111"
+      inkStrong: "#8a0000"
+      inkMuted: "#6a6a6a"
+      line: "#e5e5e5"
+      blockBg: "#F7F7F7"
+      inkSoft: "#6B6B6B"
+      accentLine: "#1A1A1A"
+      accent: "#1A1A1A"
+      tableHeadBg: "#F1F1F1"
+      calloutBg: "#FAFAFA"
+    typography:
+      fontFamily: "\"Helvetica Neue\", Arial, \"PingFang SC\", \"Microsoft YaHei\", sans-serif"
+      h1: "30px/1.4 500"
+      h2: "22px/1.4 500"
+      h3: "16px/1.4 500"
+      body: "14px/1.62"
+      table: "12.4px"
+      caption: "12.5px"
+    spacing:
+      section: "22mm"
+      card: "16px"
+      cell: "8px 12px"
+    radius:
+      card: "8px"
+      badge: "12px"
+    layout:
+      pageWidth: "210mm"
+      coverPadding: "20mm 18mm"
+```
 
 # Bain Red — 行动洞察版
 
