@@ -1,11 +1,11 @@
 # Changelog · Octopus Mate
 
 > 版本变更记录与专家包修改规范。项目采用语义化版本（SemVer）：`MAJOR.MINOR.PATCH`。
-> 专家包当前版本：**0.2.0**（渲染改造 + VITAL 诊断，待发布）。
+> 专家包当前版本：**0.2.0**（渲染改造 + VITAL 诊断，2026-08-20 发布）。
 
 ## 版本历史
 
-### 0.2.0 — 未发布 · 渲染改造 + VITAL 诊断
+### 0.2.0 — 2026-08-20 · 渲染改造 + VITAL 诊断
 
 > 依据：`internal/docs/debug/渲染改造方案-LLM生成HTML-20260818.md` 与 `internal/docs/dev-plan/VITAL 诊断功能开发计划.md`。渲染方式由代码生成改为 AI 直接生成（对齐 pratyaya canvas-render），多配色真实生效；新增 VITAL 五维诊断功能（第二功能切片）。
 
