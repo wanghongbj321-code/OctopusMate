@@ -97,8 +97,11 @@ def audit(html: str, pattern_path: Path | None = None, token_colors: dict | None
             violations.append(f"发现 token 集外裸值色值：{raw}（须引用选定 token 集内的颜色）")
 
     # --- 13 条 Pan-Mode Invariants 底线 ---
-    if re.search(r"box-shadow\s*:", html):
-        violations.append("发现 box-shadow（不变量 4：禁用）")
+    # box-shadow: none 是显式禁用声明（合规），仅拦截实际阴影值
+    for m in re.finditer(r"box-shadow\s*:\s*([^;]+);", html):
+        if m.group(1).strip().lower() != "none":
+            violations.append(f"发现 box-shadow（不变量 4：禁用）：{m.group(1).strip()}")
+            break
     if re.search(r"linear-gradient|radial-gradient", html, re.I):
         violations.append("发现渐变（不变量 4：禁用复杂渐变）")
 
