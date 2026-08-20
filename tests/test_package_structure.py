@@ -56,6 +56,19 @@ class TestPackageStructure(unittest.TestCase):
             f = (ROOT / rel.lstrip("./")).resolve()
             self.assertTrue(f.is_file(), f"agent 路径不存在：{rel}")
 
+    def test_octopus_faq_skill_complete(self):
+        """octopus-faq skill 结构完整：SKILL.md + references/FAQ.md（官方自我介绍事实源，v0.2.2）。"""
+        faq_dir = ROOT / "skills" / "octopus-faq"
+        self.assertTrue((faq_dir / "SKILL.md").is_file(), "octopus-faq 缺 SKILL.md")
+        self.assertTrue(
+            (faq_dir / "references" / "FAQ.md").is_file(),
+            "octopus-faq 缺 references/FAQ.md（问答库唯一事实源）",
+        )
+        # 口径一致性：FAQ 定位句与 plugin.json displayDescription 不应冲突
+        faq_text = (faq_dir / "references" / "FAQ.md").read_text(encoding="utf-8")
+        self.assertIn("章鱼大副", faq_text)
+        self.assertIn("方向决策永远由顾问拍板", faq_text)
+
     def test_agents_dir_only_has_agent_mds(self):
         """agents/ 目录只允许 Agent MD（有 frontmatter），不放 README 等说明文件（防 P4 回归）。"""
         agents_dir = ROOT / "agents"
