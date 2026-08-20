@@ -3,16 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>{{资产包标题}} · 交付物包入口</title>
-<!--
-  ⚠️ 版面与签名视觉参照（capability-package 画布 · 包入口页）——仅作版式参照，不提供业务内容
-  - 本文件是「企业能力路线图」交付资产包入口页的画布：六阶段导航卡片 + 交付物包说明
-  - 业务内容一律用 {{占位符}} 标注，由 LLM 按六阶段确认包 markdown 生成时填充（不做代码渲染，对齐 internal/docs/debug/渲染重构计划-资产包LLM生成-20260820.md）
-  - 禁止复制本文件中的样例占位文案；禁止引用 Demo 样例数值（演示用能力数/成熟度档位/举措数等，
-    见开发计划 §4.1 / M0-02）
-  - token 只来自用户选定视觉模式文件（visual-patterns/{NN}-{id}.md），本文件不提供 token 候选
-  - 本页与 01~06 六阶段页构成完整包结构（index + 01~06 相对路径），渲染时须保持自包含
--->
+<title>千店千策分销网络转型 · 企业能力路线图交付资产包</title>
+<!-- 由 AI（LLM）按 deliverable-render SKILL.md 生成：业务内容只来自六阶段 confirmed md 结构化数据块；token 来自黑灰专业模式 -->
 <style>
   :root{
     --page-bg:#FFFFFF; --block-bg:#F7F7F7; --ink:#1A1A1A; --ink-deep:#2D2D2D;
@@ -41,87 +33,87 @@
 </head>
 <body>
   <div class="page">
-    <p class="eyebrow">Capability Roadmap · Delivery Package · {{版本}}</p>
-    <h1>{{资产包标题}}</h1>
-    <p class="lead">{{资产包一句话说明：面向{{主题}}的六阶段能力路线图交付物包，从能力模型到企业级路线图，收敛为{{举措总数}}项举措与三阶段路线图。}}</p>
+    <p class="eyebrow">Capability Roadmap · Delivery Package · v1</p>
+    <h1>千店千策分销网络转型 · 企业能力路线图交付资产包</h1>
+    <p class="lead">本包为「构建企业能力路线图」六阶段交付资产包：从能力模型到企业级路线图，收敛为 1 项举措与三阶段路线图，面向千店千策分销网络转型主题。</p>
 
     <nav class="stage-list" aria-label="六阶段交付物目录">
       <a class="stage-card" href="./01-capability-model/index.html">
         <span class="stage-card__head">
           <span class="stage-card__num">01</span>
-          <span class="stage-card__title">{{阶段一标题：构建战略对齐的企业能力模型}}</span>
+          <span class="stage-card__title">构建战略对齐的企业能力模型</span>
         </span>
-        <span class="stage-card__so">{{阶段一句话结论}}</span>
+        <span class="stage-card__so">能力模型覆盖组织运营、战略交付与竞争优势所需能力，可回溯愿景与价值假设（质量门：pass）。</span>
         <span class="stage-card__meta">
-          <span>{{能力模型 · 架构分层}}</span>
-          <span class="stage-card__tag">{{版本}}</span>
+          <span>能力模型 · 架构分层</span>
+          <span class="stage-card__tag">v1</span>
         </span>
       </a>
       <a class="stage-card" href="./02-baseline-maturity/index.html">
         <span class="stage-card__head">
           <span class="stage-card__num">02</span>
-          <span class="stage-card__title">{{阶段二标题：建立能力基线并评估成熟度}}</span>
+          <span class="stage-card__title">建立能力基线并评估成熟度</span>
         </span>
-        <span class="stage-card__so">{{阶段一句话结论}}</span>
+        <span class="stage-card__so">6 个能力域六维基线齐备，成熟度整体 Performing、证据强度 B（质量门：pass）。</span>
         <span class="stage-card__meta">
-          <span>{{基线 · 六维成熟度评估}}</span>
-          <span class="stage-card__tag">{{版本}}</span>
+          <span>基线 · 六维成熟度评估</span>
+          <span class="stage-card__tag">v1</span>
         </span>
       </a>
       <a class="stage-card" href="./03-priority-capabilities/index.html">
         <span class="stage-card__head">
           <span class="stage-card__num">03</span>
-          <span class="stage-card__title">{{阶段三标题：确定重点能力}}</span>
+          <span class="stage-card__title">确定重点能力</span>
         </span>
-        <span class="stage-card__so">{{阶段一句话结论}}</span>
+        <span class="stage-card__so">2 项重点能力（含 1 项条件重点 C5 挂裁决），业务所有权与治理角色明确（质量门：conditional）。</span>
         <span class="stage-card__meta">
-          <span>{{重点矩阵 · 治理角色}}</span>
-          <span class="stage-card__tag">{{版本}}</span>
+          <span>重点矩阵 · 治理角色</span>
+          <span class="stage-card__tag">v1</span>
         </span>
       </a>
       <a class="stage-card" href="./04-future-state/index.html">
         <span class="stage-card__head">
           <span class="stage-card__num">04</span>
-          <span class="stage-card__title">{{阶段四标题：设计未来状态并识别差距}}</span>
+          <span class="stage-card__title">设计未来状态并识别差距</span>
         </span>
-        <span class="stage-card__so">{{阶段一句话结论}}</span>
+        <span class="stage-card__so">2 项六维差距（大 1 / 中 1）可回溯可解释，AI 风险控制字段齐备（质量门：pass）。</span>
         <span class="stage-card__meta">
-          <span>{{未来状态 · 差距热力}}</span>
-          <span class="stage-card__tag">{{版本}}</span>
+          <span>未来状态 · 差距热力</span>
+          <span class="stage-card__tag">v1</span>
         </span>
       </a>
       <a class="stage-card" href="./05-gap-initiatives/index.html">
         <span class="stage-card__head">
           <span class="stage-card__num">05</span>
-          <span class="stage-card__title">{{阶段五标题：识别并排序能力差距举措}}</span>
+          <span class="stage-card__title">识别并排序能力差距举措</span>
         </span>
-        <span class="stage-card__so">{{阶段一句话结论}}</span>
+        <span class="stage-card__so">1 项举措可回溯差距与价值关系，技术举措前置检查完成（质量门：pass）。</span>
         <span class="stage-card__meta">
-          <span>{{举措全景 · 依赖排序}}</span>
-          <span class="stage-card__tag">{{版本}}</span>
+          <span>举措全景 · 依赖排序</span>
+          <span class="stage-card__tag">v1</span>
         </span>
       </a>
       <a class="stage-card" href="./06-capability-roadmap/index.html">
         <span class="stage-card__head">
           <span class="stage-card__num">06</span>
-          <span class="stage-card__title">{{阶段六标题：形成企业级能力路线图}}</span>
+          <span class="stage-card__title">形成企业级能力路线图</span>
         </span>
-        <span class="stage-card__so">{{阶段一句话结论}}</span>
+        <span class="stage-card__so">1 个排序簇、三阶段路线图与 3 个里程碑节点（M/G/D），O7 下游接口六项齐备（质量门：pass）。</span>
         <span class="stage-card__meta">
-          <span>{{战略屋 · 里程碑甘特图}}</span>
-          <span class="stage-card__tag">{{版本}}</span>
+          <span>战略屋 · 里程碑甘特图</span>
+          <span class="stage-card__tag">v1</span>
         </span>
       </a>
     </nav>
 
     <section class="pkg-note">
       <h2>交付物包说明</h2>
-      <p>{{本包为「构建企业能力路线图」交付资产包：六阶段各输出独立 html，包入口串联全部阶段；每页单页自包含（独立 HTML + 内联样式），可单独分发；业务数据来自六阶段确认包 markdown，量化指标均为 Illustrative 需实际调研校准。}}</p>
+      <p>本包为「构建企业能力路线图」交付资产包：六阶段各输出独立 html，包入口串联全部阶段；每页单页自包含（独立 HTML + 内联样式），可单独分发；业务数据来自六阶段确认包 markdown（结构化数据块），量化指标均为 Illustrative 需实际调研校准。</p>
     </section>
 
     <footer class="report-footer">
-      <span>Source: {{项目名称}} · Illustrative exhibit（示例数据需校准）</span>
-      <span>{{日期}} · {{版本}} · Capability Roadmap Delivery Package</span>
+      <span>Source: 能力路线图端到端演练 · Illustrative exhibit（示例数据需校准）</span>
+      <span>2026-08-20 · v1 · Capability Roadmap Delivery Package</span>
     </footer>
   </div>
 </body>

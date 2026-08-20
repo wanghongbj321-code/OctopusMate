@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""deliverable-render HTML 静态审计（M2-03 v2：token 无裸值 + 13 条不变量语义演进）。
+"""deliverable-render HTML 静态审计（M2-03 v2：token 无裸值 + 13 条不变量语义演进；M3-04：capability-package 资产包对账扩展）。
 
-检查项（对齐开发计划 §5.2）：
+检查项（对齐开发计划 §5.2 与 M3-04）：
 1. **token 无裸值**：成品 HTML 中出现的颜色值必须属于选定 token 集
    （CSS 变量引用 var(--x) 或内联 token 值均可）；token 集外出现任何色值
    （含灰度）判为裸值违规——`accent` token 允许模式自定义色（语义演进），
@@ -14,13 +14,18 @@
    - 内联样式离线可打印（无外链样式表/脚本/外部字体/背景图）
 3. 输出 token 合规报告（颜色出现位置统计）
 
-用法：python3 audit_html.py <output.html> [--token <pattern.md>] [--canvas-type <vision-confirm|diagnosis-report>] [--source-md <confirm.md>] [--report]
+capability-package 画布（M3-04）额外执行**资产包对账**：
+- 包结构：index + 01~06 共 7 文件齐全、相对路径、无外链
+- 每页信息对账：与 confirmed md 结构化数据块机器比对
+  （质量门状态 / 实体 id / 派生计数 / 档位·级别关键词）
+- Illustrative 标注校验
+
+用法：python3 audit_html.py <output.html 或 package-dir> [--token <pattern.md>] [--canvas-type <vision-confirm|diagnosis-report|capability-package>] [--source-md <confirm.md 或 modules-dir>] [--report]
   --token: 选定视觉模式文件路径（解析 Design Token 块）；缺省用黑灰 token 集
   --canvas-type: 画布类型。vision-confirm（默认）：SVG 全拦（装饰信号）；
-    diagnosis-report：放行图表 SVG 但强校验（必含 title+role，见 chart-specs.md）
-  --source-md: 诊断确认包路径（diagnosis-confirm-*.md）。提供时额外执行
-    HTML/确认包信息对账（G4：六节 section、分数、证据编号、阻断编号、图表数据）；
-    未提供时只算视觉/token 审计，**不算交付 gate 通过**
+    diagnosis-report / capability-package：放行图表 SVG 但强校验（必含 title+role，见 chart-specs.md）
+  --source-md: 确认包路径（diagnosis-report：诊断确认包 md；capability-package：六阶段任一 confirmed md
+    或 modules 目录）。提供时执行 HTML/确认包信息对账；未提供时只算视觉/token 审计，**不算交付 gate 通过**
 """
 from __future__ import annotations
 
@@ -245,20 +250,240 @@ def _html_has_number(html: str, value: float) -> bool:
     return re.search(rf"(?<![\d.]){re.escape(text)}(?![\d.])", html) is not None
 
 
+# --- M3-04：capability-package 资产包对账 ---
+
+# 资产包 7 文件相对路径（对齐开发计划 §4.1）
+PACKAGE_REL_FILES = (
+    "index.html",
+    "01-capability-model/index.html",
+    "02-baseline-maturity/index.html",
+    "03-priority-capabilities/index.html",
+    "04-future-state/index.html",
+    "05-gap-initiatives/index.html",
+    "06-capability-roadmap/index.html",
+)
+# 阶段 md 文件名前缀 → 阶段页子目录
+_MD_PREFIX_TO_STEP = {
+    "capability-model": "01",
+    "baseline-maturity": "02",
+    "priority-capabilities": "03",
+    "future-state": "04",
+    "gap-initiatives": "05",
+    "capability-roadmap": "06",
+}
+_STEP_DIR = {
+    "01": "01-capability-model", "02": "02-baseline-maturity",
+    "03": "03-priority-capabilities", "04": "04-future-state",
+    "05": "05-gap-initiatives", "06": "06-capability-roadmap",
+}
+
+
+def _find_step_sources(source_md: Path) -> list[tuple[str, Path]]:
+    """解析 --source-md：文件（单阶段）或目录（modules，自动匹配六阶段 confirmed md）。
+
+    返回 [(step, md_path)]；按文件名前缀映射阶段页子目录。
+    """
+    results: list[tuple[str, Path]] = []
+    if source_md.is_dir():
+        for p in sorted(source_md.glob("*.md")):
+            name = p.name
+            prefix = name.split("-", 1)[0] if "-" in name else ""
+            # 匹配 capability-model-{slug}-v{N}.md 等（前缀即阶段 md 前缀）
+            for pre, step in _MD_PREFIX_TO_STEP.items():
+                if name.startswith(pre + "-"):
+                    results.append((step, p))
+                    break
+        return results
+    # 单文件：按文件名前缀识别阶段
+    for pre, step in _MD_PREFIX_TO_STEP.items():
+        if source_md.name.startswith(pre + "-"):
+            results.append((step, source_md))
+            break
+    return results
+
+
+def _package_expected_tokens(data: dict, step: str) -> list[str]:
+    """从结构化数据块提取「必须出现在对应页 html」的 token 列表。
+
+    - 质量门状态（qualityGate）
+    - 实体 id（能力域 / 能力 / 举措 / 里程碑 / 能力引用）
+    - 派生计数（能力域数、能力数、重点数、举措数、里程碑数等）
+    - 档位 / 级别 / 类型关键词（成熟度档位、差距级别、M/G/D、O7 六项）
+    """
+    tokens: list[str] = []
+    block = data.get(step and {
+        "01": "capabilityModel", "02": "maturityBaseline", "03": "priorityCapabilities",
+        "04": "futureStateGaps", "05": "gapInitiatives", "06": "enterpriseRoadmap",
+    }.get(step, ""), {}) or {}
+
+    qg = block.get("qualityGate")
+    if qg:
+        tokens.append(str(qg))
+
+    if step == "01":
+        clusters = block.get("clusters") or []
+        tokens.append(str(len(clusters)))                      # 能力域数
+        caps_total = sum(len(c.get("capabilities") or []) for c in clusters)
+        tokens.append(str(caps_total))                         # L2 能力数
+        for c in clusters:
+            tokens.append(str(c.get("id", "")))                # 能力域编号
+            tokens.append(str(c.get("classification", "")))    # 分类词
+    elif step == "02":
+        caps = block.get("capabilities") or []
+        tokens.append(str(len(caps)))                          # 能力域数
+        for c in caps:
+            tokens.append(str(c.get("id", "")))
+            tokens.append(str(c.get("maturity", "")))          # 档位词
+            tokens.append(str(c.get("evidenceStrength", "")))  # 证据强度
+    elif step == "03":
+        plist = block.get("priorityList") or []
+        tokens.append(str(len(plist)))                         # 重点能力数
+        for p in plist:
+            tokens.append(str(p.get("capabilityId", "")))
+        cond = sum(1 for p in plist if p.get("conditional") is True)
+        if cond:
+            tokens.append(str(cond))                           # 条件重点数
+        excluded = block.get("excluded") or []
+        tokens.append(str(len(excluded)))                      # 非重点数
+        for e in excluded:
+            tokens.append(str(e.get("capabilityId", "")))
+    elif step == "04":
+        gaps = block.get("gaps") or []
+        tokens.append(str(len(gaps)))                          # 差距数
+        for g in gaps:
+            tokens.append(str(g.get("capabilityId", "")))
+            tokens.append(str(g.get("level", "")))             # 大/中/小
+        for prof in block.get("gapProfiles") or []:
+            tokens.append(str(prof.get("profile", ""))[:12])   # 差距画像摘要（前 12 字匹配）
+    elif step == "05":
+        inits = block.get("initiatives") or []
+        tokens.append(str(len(inits)))                         # 举措数
+        for it in inits:
+            tokens.append(str(it.get("id", "")))
+        tokens.append(str(len(block.get("techPreChecks") or [])))  # 前置检查数
+    elif step == "06":
+        milestones = block.get("milestones") or []
+        tokens.append(str(len(milestones)))                    # 里程碑数
+        mtypes = {m.get("type", "") for m in milestones}
+        for t in ("M", "G", "D"):
+            if t in mtypes:
+                tokens.append(t)                               # 节点类型标注
+        for m in milestones:
+            tokens.append(str(m.get("id", "")))
+        tokens.append(str(len(block.get("sortClusters") or [])))  # 排序簇数
+        for ph in block.get("phases") or []:
+            tokens.append(str(ph.get("phase", "")))            # 阶段词
+        o7 = data.get("downstreamInterfaces") or {}
+        for key, label in (("endToEndSolution", "端到端方案"), ("targetOperatingModel", "目标运营模式"),
+                           ("detailedImplementationPlan", "详细实施计划"), ("benefitCase", "Benefit Case"),
+                           ("enterpriseArchitecture", "企业架构"), ("portfolioGovernance", "组合治理")):
+            if key in o7 and not _blank(o7.get(key)):
+                tokens.append(label)
+    return [t for t in tokens if t]
+
+
+def _blank(value) -> bool:
+    if value is None:
+        return True
+    if isinstance(value, str):
+        return not value.strip()
+    if isinstance(value, (list, dict)):
+        return len(value) == 0
+    return False
+
+
+def check_capability_package(package_dir: Path, source_md: Path, token_colors: dict) -> list[str]:
+    """M3-04：资产包对账（包结构 + 每页信息机器比对 + Illustrative + token 无裸值 + 13 条不变量）。
+
+    - package_dir：`capability-roadmap-package-{slug}-v{N}/` 目录
+    - source_md：六阶段任一 confirmed md，或 modules 目录（自动匹配六阶段）
+    - 返回违规清单（空 = 通过）
+    """
+    from _engine import roadmap as roadmap_mod
+
+    package_dir = Path(package_dir)
+    violations: list[str] = []
+
+    # 1. 包结构：7 文件齐全
+    missing = [rel for rel in PACKAGE_REL_FILES if not (package_dir / rel).exists()]
+    if missing:
+        violations.append(f"资产包缺文件：{missing}")
+        return violations  # 结构不全，后续对账无意义
+
+    # 2. 每页视觉审计 + 相对路径/无外链 + Illustrative 标注
+    for rel in PACKAGE_REL_FILES:
+        html = (package_dir / rel).read_text(encoding="utf-8")
+        violations.extend(f"{rel}: {v}" for v in audit(html, token_colors=token_colors, allow_chart_svg=True))
+        # 相对路径 / 无外链（http/https/绝对路径 / 绝对根路径）
+        for m in re.finditer(r'(?:href|src)\s*=\s*["\']([^"\']+)["\']', html):
+            u = m.group(1)
+            if re.match(r"^(https?:)?//|^/[a-zA-Z]", u):
+                violations.append(f"{rel}: 发现外链/绝对路径资源引用：{u}")
+        if "Illustrative" not in html:
+            violations.append(f"{rel}: 缺 Illustrative 标注（量化指标须标注 Illustrative · 需实际调研校准）")
+
+    # 3. 信息对账：解析 source md 结构化数据块 → 与对应页 html 机器比对
+    sources = _find_step_sources(Path(source_md))
+    if not sources:
+        violations.append(f"--source-md 无法识别六阶段产物：{source_md}")
+    for step, md_path in sources:
+        ra = roadmap_mod.read_roadmap_artifact(md_path)
+        if not ra.valid:
+            violations.append(f"{md_path.name}: 非有效 confirmed md（{ra.errors[:3]}）")
+            continue
+        data = roadmap_mod.extract_data_block(ra.artifact.body)
+        if not data:
+            violations.append(f"{md_path.name}: 缺结构化数据块，无法对账")
+            continue
+        rel = f"{_STEP_DIR[step]}/index.html"
+        html = (package_dir / rel).read_text(encoding="utf-8")
+        for token in _package_expected_tokens(data, step):
+            if token and token not in html:
+                violations.append(f"{rel}: 信息对账不一致，缺 {token!r}（结构化数据块 {md_path.name}）")
+    return violations
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="deliverable-render HTML 静态审计")
-    parser.add_argument("html_file", help="成品 HTML 路径")
+    parser.add_argument("html_file", help="成品 HTML 路径（capability-package 画布传资产包目录）")
     parser.add_argument("--token", help="选定视觉模式文件路径（Design Token 块）")
-    parser.add_argument("--canvas-type", choices=["vision-confirm", "diagnosis-report"],
-                        default="vision-confirm", help="画布类型（diagnosis-report 放行图表 SVG）")
-    parser.add_argument("--source-md", help="诊断确认包路径（G4：HTML/确认包信息对账；缺省只做视觉审计）")
+    parser.add_argument("--canvas-type", choices=["vision-confirm", "diagnosis-report", "capability-package"],
+                        default="vision-confirm", help="画布类型（diagnosis-report/capability-package 放行图表 SVG）")
+    parser.add_argument("--source-md", help="确认包路径（diagnosis-report：确认包 md；capability-package：六阶段任一 confirmed md 或 modules 目录；缺省只做视觉审计）")
     parser.add_argument("--report", action="store_true", help="输出 token 合规报告")
     args = parser.parse_args()
 
-    html = Path(args.html_file).read_text(encoding="utf-8")
     token_colors = _load_token_colors(Path(args.token) if args.token else None)
-    violations = audit(html, token_colors=token_colors,
-                       allow_chart_svg=args.canvas_type == "diagnosis-report")
+    allow_chart_svg = args.canvas_type != "vision-confirm"
+
+    # capability-package：包目录对账（含每页 audit）
+    if args.canvas_type == "capability-package":
+        pkg = Path(args.html_file)
+        if not pkg.is_dir():
+            print(f"[FAIL] capability-package 画布须传资产包目录（index + 01~06）：{pkg}")
+            return 1
+        violations = check_capability_package(pkg, Path(args.source_md) if args.source_md else pkg.parent, token_colors)
+        if args.report:
+            for rel in PACKAGE_REL_FILES:
+                html = (pkg / rel).read_text(encoding="utf-8")
+                print(token_report(html, token_colors))
+        if args.source_md:
+            if not violations:
+                print(f"[INFO] --source-md 对账通过：资产包 {pkg.name} 与六阶段 confirmed md 内容一致（7 文件 / 相对路径 / 信息比对 / Illustrative）")
+        else:
+            print("[INFO] 未提供 --source-md：只算视觉/token 审计，**不计为交付 gate 通过**（M3-04）")
+        if violations:
+            print(f"[FAIL] {pkg} 资产包对账失败（{len(violations)} 条）：")
+            for v in violations:
+                print(f"  - {v}")
+            return 1
+        print(f"[PASS] {pkg}：资产包对账通过（7 文件 + 相对路径 + 信息比对 + Illustrative + token 无裸值 + 13 条不变量"
+              + (" + 确认包信息对账" if args.source_md else "") + ")")
+        return 0
+
+    # 单文件画布（vision-confirm / diagnosis-report）
+    html = Path(args.html_file).read_text(encoding="utf-8")
+    violations = audit(html, token_colors=token_colors, allow_chart_svg=allow_chart_svg)
 
     if args.report:
         print(token_report(html, token_colors))

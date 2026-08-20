@@ -6,7 +6,7 @@
 <title>{{阶段六标题}} · {{主题名称}}</title>
 <!--
   ⚠️ 版面与签名视觉参照（capability-package 画布 · 企业级能力路线图）——仅作版式参照，不提供业务内容
-  - 业务内容一律用 {{占位符}} 标注，渲染时由 deliverable-render 按阶段确认包 markdown 映射填充
+  - 业务内容一律用 {{占位符}} 标注，由 LLM 按阶段确认包 markdown 生成时填充（不做代码渲染）
   - 禁止复制本文件中的样例占位文案；禁止引用 Demo 样例数值（见开发计划 §4.3 / M0-02）
   - token 只来自用户选定视觉模式文件，本文件不提供 token 候选
 -->
@@ -237,7 +237,7 @@
           <rect x="790" y="602" width="160" height="46" fill="#FFFFFF" stroke="#D4D4D4"></rect>
           <text x="870" y="622" font-size="11" font-weight="700" fill="#1A1A1A" text-anchor="middle">{{C6 子能力四}}</text>
           <text x="870" y="640" font-size="10" fill="#6B6B6B" text-anchor="middle">{{子能力说明}}</text>
-          <text x="612" y="676" font-size="10.5" fill="#808080" text-anchor="middle">Sample 图：阶段色块（阶段 1/2/3）以灰度示意，表达阶段推进（试点 → 规模 → 沉淀），语义色与阶段举措渲染时由 {{capability-roadmap 确认包 md · 战略屋章节}} 数据确定</text>
+          <text x="612" y="676" font-size="10.5" fill="#808080" text-anchor="middle">Sample 图：阶段色块（阶段 1/2/3）以灰度示意，表达阶段推进（试点 → 规模 → 沉淀），语义色与阶段举措由 {{capability-roadmap 确认包 md · 战略屋章节}} 数据确定（LLM 生成）</text>
         </svg><div class="logic-grid">
           <article class="logic-node"><span class="node-label">愿景与使命层</span><strong>{{愿景内容}}</strong><p>{{愿景说明}}</p></article>
           <article class="logic-node"><span class="node-label">价值结果层</span><strong>{{价值结果}}</strong><p>{{价值结果说明}}</p></article>
