@@ -14,10 +14,13 @@
    - 内联样式离线可打印（无外链样式表/脚本/外部字体/背景图）
 3. 输出 token 合规报告（颜色出现位置统计）
 
-用法：python3 audit_html.py <output.html> [--token <pattern.md>] [--canvas-type <vision-confirm|diagnosis-report>] [--report]
+用法：python3 audit_html.py <output.html> [--token <pattern.md>] [--canvas-type <vision-confirm|diagnosis-report>] [--source-md <confirm.md>] [--report]
   --token: 选定视觉模式文件路径（解析 Design Token 块）；缺省用黑灰 token 集
   --canvas-type: 画布类型。vision-confirm（默认）：SVG 全拦（装饰信号）；
     diagnosis-report：放行图表 SVG 但强校验（必含 title+role，见 chart-specs.md）
+  --source-md: 诊断确认包路径（diagnosis-confirm-*.md）。提供时额外执行
+    HTML/确认包信息对账（G4：六节 section、分数、证据编号、阻断编号、图表数据）；
+    未提供时只算视觉/token 审计，**不算交付 gate 通过**
 """
 from __future__ import annotations
 
@@ -25,6 +28,11 @@ import argparse
 import re
 import sys
 from pathlib import Path
+
+# 复用引擎对账解析（skills/_engine/reconcile.py；脚本位于 skills/deliverable-render/scripts/）
+_ENGINE_DIR = Path(__file__).resolve().parents[2]
+if str(_ENGINE_DIR) not in sys.path:
+    sys.path.insert(0, str(_ENGINE_DIR))
 
 # 默认黑灰 token 集（§5.2，与 10-black-gray-professional.md 一致）
 DEFAULT_TOKENS = {
@@ -171,12 +179,79 @@ def token_report(html: str, token_colors: dict[str, str]) -> str:
     return "\n".join(lines)
 
 
+def check_diagnosis_consistency(html: str, confirm_md_path: Path) -> list[str]:
+    """G4-04：HTML 与确认包信息对账（§8.3）。
+
+    检查项：
+    1. 六节编号 section（01 执行摘要 / 02 诊断方法与打分框架 / 03 总体诊断结论 /
+       04 分维诊断详情 / 05 阻断性问题专题 / 06 附录证据清单）无缺节
+    2. 分数一致：确认包各角度分/维度分/总体分数值出现在 HTML（图表与表格数据来源）
+    3. 证据编号一致：确认包证据编号 ⊆ HTML 出现编号（附录清单）
+    4. 阻断编号一致：确认包阻断编号 ⊆ HTML 出现编号（阻断专题）
+    5. 三张图表 SVG 数据来自确认包（SVG ≥3 且数据由 2/4 覆盖检查）
+
+    返回违规清单（空 = 通过）。
+    """
+    from _engine import files as files_mod
+    from _engine import reconcile as reconcile_mod
+
+    violations: list[str] = []
+    art = files_mod.read_artifact(confirm_md_path)
+    if not art.valid or art.meta is None:
+        return [f"确认包无效：{art.errors}（不能作为 HTML 对账事实源）"]
+    if art.meta.get("status") != "confirmed":
+        return ["确认包非 confirmed 状态，不能作为 HTML 对账事实源"]
+    body = art.body
+
+    # 1. 六节编号 section
+    sec_titles = {"01": "执行摘要", "02": "诊断方法与打分框架", "03": "总体诊断结论",
+                  "04": "分维诊断详情", "05": "阻断性问题专题", "06": "附录"}
+    missing_sections = []
+    for num, title in sec_titles.items():
+        if not re.search(rf'sec-num">{num}</span>\s*<h2>{re.escape(title)}</h2>', html):
+            missing_sections.append(f"{num} {title}")
+    if missing_sections:
+        violations.append(f"HTML 缺诊断报告 section：{missing_sections}")
+
+    # 2. 分数一致（角度分 + 总体分数值出现在 HTML）
+    scores = reconcile_mod._parse_pkg_angle_scores(body)
+    missing_scores = [f"{a}={s}" for a, s in scores.items() if not _html_has_number(html, s)]
+    if missing_scores:
+        violations.append(f"HTML 缺失确认包角度分值：{missing_scores}")
+
+    # 3. 证据编号
+    ev_ids = reconcile_mod._parse_pkg_evidence_ids(body)
+    missing_ev = [e for e in sorted(ev_ids) if e not in html]
+    if missing_ev:
+        violations.append(f"HTML 缺失确认包证据编号：{missing_ev}")
+
+    # 4. 阻断编号
+    blk_ids = reconcile_mod._parse_pkg_blocker_ids(body)
+    missing_blk = [b for b in sorted(blk_ids) if b not in html]
+    if missing_blk:
+        violations.append(f"HTML 缺失确认包阻断编号：{missing_blk}")
+
+    # 5. 三张图表 SVG
+    svg_count = len(re.findall(r"<svg", html, re.I))
+    if svg_count < 3:
+        violations.append(f"诊断报告图表 SVG 不足 3 张（实际 {svg_count}；雷达图/问题树/链路图）")
+
+    return violations
+
+
+def _html_has_number(html: str, value: float) -> bool:
+    """HTML 中是否出现独立数值（如 3.0 / 3.5），避免子串误匹配（13.05 含 3.0）。"""
+    text = f"{value:g}" if float(value) == int(value) else f"{value:.1f}"
+    return re.search(rf"(?<![\d.]){re.escape(text)}(?![\d.])", html) is not None
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="deliverable-render HTML 静态审计")
     parser.add_argument("html_file", help="成品 HTML 路径")
     parser.add_argument("--token", help="选定视觉模式文件路径（Design Token 块）")
     parser.add_argument("--canvas-type", choices=["vision-confirm", "diagnosis-report"],
                         default="vision-confirm", help="画布类型（diagnosis-report 放行图表 SVG）")
+    parser.add_argument("--source-md", help="诊断确认包路径（G4：HTML/确认包信息对账；缺省只做视觉审计）")
     parser.add_argument("--report", action="store_true", help="输出 token 合规报告")
     args = parser.parse_args()
 
@@ -188,12 +263,27 @@ def main() -> int:
     if args.report:
         print(token_report(html, token_colors))
 
-    if violations:
-        print(f"[FAIL] {args.html_file} 违反 {len(violations)} 条规则：")
-        for v in violations:
-            print(f"  - {v}")
+    # G4-03：HTML/确认包信息对账（仅 --source-md 提供时执行）
+    consistency_violations: list[str] | None = None
+    if args.source_md:
+        consistency_violations = check_diagnosis_consistency(html, Path(args.source_md))
+        if not consistency_violations:
+            print(f"[INFO] --source-md 对账通过：HTML 与 {Path(args.source_md).name} 内容一致（六节 section / 分数 / 证据编号 / 阻断编号 / 图表数据）")
+    else:
+        print("[INFO] 未提供 --source-md：只算视觉/token 审计，**不计为交付 gate 通过**（G4）")
+
+    if violations or consistency_violations:
+        if violations:
+            print(f"[FAIL] {args.html_file} 违反 {len(violations)} 条规则：")
+            for v in violations:
+                print(f"  - {v}")
+        if consistency_violations:
+            print(f"[FAIL] {args.html_file} 与确认包信息对账失败：")
+            for v in consistency_violations:
+                print(f"  - {v}")
         return 1
-    print(f"[PASS] {args.html_file}：token 无裸值 + 13 条 Pan-Mode Invariants 静态审计通过")
+    print(f"[PASS] {args.html_file}：token 无裸值 + 13 条 Pan-Mode Invariants 静态审计"
+          + (" + 确认包信息对账" if args.source_md else "") + "通过")
     return 0
 
 

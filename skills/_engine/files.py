@@ -795,6 +795,66 @@ def _confirm_source_refs(state: dict) -> list[str]:
     return refs
 
 
+def write_render_options_artifact(
+    session_dir: Path,
+    data: dict,
+    confirmation: dict,
+    state: dict | None = None,
+) -> Path:
+    """G4-01：写入 confirmed render-options artifact（渲染配置，§8.2）。
+
+    - 生成 `modules/render-options-{topic_slug}-v{N}.md`
+    - source_refs 指向正式确认包（diagnosis.confirm.current@v{C}）
+    - data: {"canvasType": str, "tokenId": str, "tokenPath": str}
+      记录用户确认的视觉模式（配色选择不会被 AI 默认值绕过——G4 出口标准）
+    """
+    session_dir = Path(session_dir)
+    if state is None:
+        state = load_state_json(session_dir) or {}
+    topic_slug = state.get("topic_slug", "")
+    if not topic_slug:
+        raise ValueError("state.json 缺少 topic_slug，无法命名 render-options")
+
+    confirm_v = _current_version(state, "diagnosis.confirm.current")
+    if confirm_v is None:
+        raise ValueError("缺少 formal confirmed 确认包（diagnosis.confirm.current），无法写入 render-options")
+    source_refs = [f"diagnosis.confirm.current@v{confirm_v}"]
+
+    body = _render_options_md_body(state, data)
+    version = next_version(session_dir / "modules", f"render-options-{topic_slug}")
+    return _write_artifact(
+        session_dir, topic_slug,
+        artifact_type="render-options",
+        artifact_id="render.options.current",
+        version=version,
+        source_refs=source_refs,
+        body=body,
+        confirmation=confirmation,
+        state=state,
+        filename=f"render-options-{topic_slug}-v{version}.md",
+    )
+
+
+def _render_options_md_body(state: dict, data: dict) -> str:
+    """渲染配置 md 正文（方案 §8.2 结构契约）。"""
+    proj, topic = state.get("project_name", ""), state.get("topic_name", "")
+    lines = [
+        f"# 渲染配置：{proj} · {topic}",
+        "",
+        "## 视觉模式",
+        "| 项 | 值 |",
+        "|---|---|",
+        f"| canvasType | {data.get('canvasType', 'diagnosis-report')} |",
+        f"| token 集 | {data.get('tokenId', '')} |",
+        f"| token 路径 | {data.get('tokenPath', '')} |",
+        "",
+        "## 人类可读确认摘要",
+        "- 确认方式：渲染前展示配色候选 → 用户明确选择",
+        "- 确认内容摘要：见 frontmatter confirmation.confirmation_text",
+    ]
+    return "\n".join(lines)
+
+
 # --- G1-05 打分规则来源合并（AI 引导层支撑：partial upload 不静默补齐） ---
 
 def merge_scoring_rules(user_config: dict | None, default_config: dict) -> dict:
@@ -887,8 +947,8 @@ STAGE_REQUIRED: dict[str, list[str]] = {
                 "diagnosis.dimension.l.current", "diagnosis.overview.current"],
     # "exit:aggregate": [... + blockers ...],                                              # G3-01
     # "exit:confirm": ["diagnosis.confirm.current"],                                       # G3-04
-    # "state:finalized": ["diagnosis.confirm.current", "render.options.current"],         # G4-02
-    # "render:deliver": ["diagnosis.confirm.current", "render.options.current"],          # G4-03
+    "state:finalized": ["diagnosis.confirm.current", "render.options.current"],          # G4-02
+    "render:deliver": ["diagnosis.confirm.current", "render.options.current"],           # G4-03
 }
 
 
