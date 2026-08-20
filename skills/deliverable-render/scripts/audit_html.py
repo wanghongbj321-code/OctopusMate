@@ -241,7 +241,7 @@ def check_diagnosis_consistency(html: str, confirm_md_path: Path) -> list[str]:
 
 def _html_has_number(html: str, value: float) -> bool:
     """HTML 中是否出现独立数值（如 3.0 / 3.5），避免子串误匹配（13.05 含 3.0）。"""
-    text = f"{value:g}" if float(value) == int(value) else f"{value:.1f}"
+    text = f"{value:.1f}"  # 统一一位小数（3.0 → "3.0"，3.5 → "3.5"）
     return re.search(rf"(?<![\d.]){re.escape(text)}(?![\d.])", html) is not None
 
 
