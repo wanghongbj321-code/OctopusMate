@@ -967,11 +967,18 @@ def package_version(state: dict) -> int | None:
 # --- M4-05 出口三段式（§6.6） ---
 
 def _load_audit_html():
-    """延迟加载 audit_html 模块（Python 只审计不参与生成；M3-04 对账闸门）。"""
+    """延迟加载 audit_html 模块（Python 只审计不参与生成；M3-04 对账闸门）。
+
+    路径：roadmap.py 位于 skills/_engine/ → engine_dir=skills/_engine、
+    skills_dir=skills、scripts_dir=skills/deliverable-render/scripts、
+    root_dir=项目根（audit_html 内部 `from _engine import roadmap` 依赖 skills 在 sys.path）。
+    """
     import sys as _sys
-    skills_dir = Path(__file__).resolve().parents[2]
+    engine_dir = Path(__file__).resolve().parent          # skills/_engine
+    skills_dir = engine_dir.parent                        # skills
     scripts_dir = skills_dir / "deliverable-render" / "scripts"
-    for p in (skills_dir, scripts_dir):
+    root_dir = skills_dir.parent                          # 项目根
+    for p in (root_dir, skills_dir, scripts_dir):
         if str(p) not in _sys.path:
             _sys.path.insert(0, str(p))
     import audit_html  # noqa: E402
@@ -1042,8 +1049,10 @@ def render_preflight(
         return {"ok": False, "errors": errors, "package_dir": package_dir,
                 "package_version": version, "audit": audit_violations, "registered": False}
 
+    # manifest 登记相对 session 根的路径（schema：path 为相对 workshop/{slug}/{topic}/ 路径）
+    rel_pkg = package_dir.relative_to(session_dir) if package_dir.is_absolute() else package_dir
     register_package_artifact(
-        state, package_dir, version, status="draft",
+        state, rel_pkg, version, status="draft",
         package_hash_value=pkg_hash, source_refs=_all_step_refs(state))
     files.save_state_json(session_dir, state)
     return {"ok": True, "errors": [], "package_dir": package_dir,

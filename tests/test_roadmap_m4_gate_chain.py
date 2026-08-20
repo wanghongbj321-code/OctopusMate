@@ -83,7 +83,9 @@ def _write_all_six(session_dir: Path, state: dict) -> None:
 def _copy_demo_session(tmp: Path) -> tuple[Path, dict]:
     """拷贝 M3 演练 session（六阶段 confirmed md + LLM 资产包）为出口三段式 fixture。
 
-    demo state 未 begin()（无 method 字段），补 method 供 required_before 路由；
+    demo state 经 M5-02 演练后含 finalized package + render-options + exit_authorization；
+    清空让测试从干净 review_ready 状态开始（测试隔离，不依赖 demo 当前演进状态）。
+    demo 未 begin()（无 method 字段），补 method 供 required_before 路由；
     六阶段 md 与资产包内容同源，对账可全过。
     """
     session_dir = tmp / "session"
@@ -91,6 +93,9 @@ def _copy_demo_session(tmp: Path) -> tuple[Path, dict]:
     state = files.load_state_json(session_dir)
     state["method"] = "roadmap-method-capability"
     state["status"] = "review_ready"
+    state["artifacts"].pop("roadmap.package.current", None)
+    state["artifacts"].pop("roadmap.renderOptions.current", None)
+    state.pop("exit_authorization", None)
     files.save_state_json(session_dir, state)
     return session_dir, state
 

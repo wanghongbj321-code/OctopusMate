@@ -3,8 +3,8 @@
   "project_name": "能力路线图端到端演练",
   "topic_slug": "e2e-topic",
   "topic_name": "千店千策分销网络转型",
-  "updated_at": "2026-08-20T15:32:14.446833+00:00",
-  "status": "review_ready",
+  "updated_at": "2026-08-20T16:20:17.857146+00:00",
+  "status": "finalized",
   "steps": {},
   "open_issues": [],
   "artifacts": {
@@ -93,8 +93,58 @@
       "confirmed_at": "2026-08-20T14:00:00+08:00",
       "confirmed_by": "user",
       "interaction_ref": "transcript:12:用户明确确认采用本版能力模型草稿"
+    },
+    "roadmap.renderOptions.current": {
+      "path": "modules/render-options-e2e-topic-v1.md",
+      "version": 1,
+      "status": "confirmed",
+      "content_hash": "sha256:61039d1227551a7b72703cb52e45eacd9737cbb640baf40af4c4c5e98c71a359",
+      "depends_on": [
+        "roadmap.capabilityModel.current@v1",
+        "roadmap.maturityBaseline.current@v1",
+        "roadmap.priorityCapabilities.current@v1",
+        "roadmap.futureStateGaps.current@v1",
+        "roadmap.gapInitiatives.current@v1",
+        "roadmap.enterpriseRoadmap.current@v1"
+      ],
+      "created_at": "2026-08-20T16:18:16.433181+00:00",
+      "confirmed_at": "2026-08-20T14:00:00+08:00",
+      "confirmed_by": "user",
+      "interaction_ref": "transcript:12:用户明确确认采用本版能力模型草稿"
+    },
+    "roadmap.package.current": {
+      "path": "output/capability-roadmap-package-e2e-topic-v1",
+      "version": 1,
+      "status": "finalized",
+      "content_hash": "sha256:11114ee880e5fcad58083b675e0b9f5a26d173716677294ac11af84a92bbda76",
+      "depends_on": [
+        "roadmap.capabilityModel.current@v1",
+        "roadmap.maturityBaseline.current@v1",
+        "roadmap.priorityCapabilities.current@v1",
+        "roadmap.futureStateGaps.current@v1",
+        "roadmap.gapInitiatives.current@v1",
+        "roadmap.enterpriseRoadmap.current@v1"
+      ],
+      "source_refs": [
+        "roadmap.capabilityModel.current@v1",
+        "roadmap.maturityBaseline.current@v1",
+        "roadmap.priorityCapabilities.current@v1",
+        "roadmap.futureStateGaps.current@v1",
+        "roadmap.gapInitiatives.current@v1",
+        "roadmap.enterpriseRoadmap.current@v1"
+      ],
+      "package_hash": "sha256:8029bd7e510f5c60539bd774824f3452f9959e836a496bfafc9ef17eca8dd638",
+      "created_at": "2026-08-20T16:18:16.485279+00:00"
     }
   },
   "scoring_config": null,
-  "scoring_config_history": []
+  "scoring_config_history": [],
+  "method": "roadmap-method-capability",
+  "exit_authorization": {
+    "confirmed_by": "user",
+    "interaction_ref": "transcript:60:用户明确授权出口确认摘要与 draft 资产包（M5-02 演练）",
+    "confirmed_at": "2026-08-21T00:10:00+08:00",
+    "authorization_text": "用户明确授权采用本版资产包交付（M5-02 演练）",
+    "recorded_at": "2026-08-20T16:18:16.533345+00:00"
+  }
 }
