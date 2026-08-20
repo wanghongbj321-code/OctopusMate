@@ -22,7 +22,10 @@ try:
 except ImportError:  # pragma: no cover
     yaml = None
 
-# --- G0-01 六类 artifact 白名单 ---
+# --- G0-01 artifact 白名单 ---
+# roadmap 六阶段（roadmap-step01 ~ roadmap-step06）随 M2 产物契约落地（差距清单 G1），
+# gate 白名单扩展（required/stale 链）在 M4 接入；M2 提供白名单 + 命名 + 写函数 + 契约校验器
+# （见 `_engine/roadmap.py` 与开发计划 M2）。
 
 ARTIFACT_TYPES = {
     "diagnosis-scoring",
@@ -31,6 +34,12 @@ ARTIFACT_TYPES = {
     "diagnosis-blockers",
     "diagnosis-confirm",
     "render-options",
+    "roadmap-step01",
+    "roadmap-step02",
+    "roadmap-step03",
+    "roadmap-step04",
+    "roadmap-step05",
+    "roadmap-step06",
 }
 
 # artifact_type → 文件命名模板（{topic_slug}-v{N} 统一后缀）
@@ -41,6 +50,12 @@ _ARTIFACT_FILENAME = {
     "diagnosis-blockers": "diagnosis-blockers-{topic_slug}-v{N}.md",
     "diagnosis-confirm": "diagnosis-confirm-{topic_slug}-v{N}.md",      # 正式版
     "render-options": "render-options-{topic_slug}-v{N}.md",
+    "roadmap-step01": "capability-model-{topic_slug}-v{N}.md",
+    "roadmap-step02": "baseline-maturity-{topic_slug}-v{N}.md",
+    "roadmap-step03": "priority-capabilities-{topic_slug}-v{N}.md",
+    "roadmap-step04": "future-state-{topic_slug}-v{N}.md",
+    "roadmap-step05": "gap-initiatives-{topic_slug}-v{N}.md",
+    "roadmap-step06": "capability-roadmap-{topic_slug}-v{N}.md",
 }
 _CONFIRM_DRAFT_FILENAME = "diagnosis-confirm-{topic_slug}-draft-v{N}.md"
 
