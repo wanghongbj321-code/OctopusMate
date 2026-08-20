@@ -1,0 +1,112 @@
+# 合法 roadmap manifest 样例（对齐开发计划 §4.2 输出契约 + 方法论 v1.2 六步骤）
+# 用于契约一致性测试：验证 roadmap-method 分支 + fileGate + 七项核心输出契约
+name: roadmap-method-capability
+version: 1.0.0
+type: roadmap-method
+displayName: "构建企业能力路线图（测试样例）"
+description: "六阶段企业能力路线图构建方法：01 能力模型 → 02 基线与成熟度 → 03 重点能力 → 04 未来状态与差距 → 05 差距举措 → 06 企业级路线图（测试夹具）"
+fileGate: true
+
+steps:
+  - id: "01"
+    name: "构建战略对齐的企业能力模型"
+    question: "实现已确认方向、最终业务结果和中间收益，需要哪些完整企业能力？"
+    operations:
+      - "建立企业价值与能力连接（T1）"
+      - "识别完整单项能力并构造能力集群，定义 Mission/Purpose（T2）"
+      - "执行建模规范检查（T2A）与价值流校验（T2B）"
+    outputs:
+      - "价值-能力连接（T1）"
+      - "能力模型清单（T2）"
+    gate:
+      coreCheck: "能力模型完整性 / 战略对齐"
+      pass: "能力模型完整且对齐愿景/雄心/价值假设，建模规范与价值流校验通过"
+      conditional: "部分能力 Mission/Purpose/分类理由/价值流校验证据不足 → 登记未决项"
+  - id: "02"
+    name: "建立能力基线并评估成熟度"
+    question: "每项能力当前处于什么状态？相对基本要求和市场基准处于什么成熟度？"
+    operations:
+      - "建立六维当前状态基线（T3）"
+      - "独立形成基本要求和市场基准（T4）"
+      - "判断成熟度（T5）并记录证据强度与校准（T5A）"
+    outputs:
+      - "六维当前状态基线（T3）"
+      - "基本要求与市场基准表（T4）"
+      - "成熟度判断表（T5）+ 证据强度与校准表（T5A）"
+    gate:
+      coreCheck: "基线证据 / 基准独立性"
+      pass: "六维基线完整、基准独立形成、成熟度有 A/B 级证据且已完成校准"
+      conditional: "部分事实、外部基准或校准证据缺失 → 登记未决项"
+  - id: "03"
+    name: "确定重点能力"
+    question: "哪些能力对总体方向最关键，且应由谁承担业务所有权？"
+    operations:
+      - "双视角判断合并形成企业级重点能力清单（T6）"
+      - "明确业务所有权与治理角色，执行价值流校验"
+      - "条件重点能力登记未决项；记录非重点排除理由"
+    outputs:
+      - "重点能力判断表（T6）"
+      - "重点能力清单（含条件重点）+ 非重点排除理由"
+    gate:
+      coreCheck: "战略关键性 / 业务所有权"
+      pass: "重点能力战略回溯完整、业务所有权与治理角色明确"
+      conditional: "局部证据、价值流校验或所有权待确认 → 登记未决项"
+  - id: "04"
+    name: "设计重点能力未来状态并识别差距"
+    question: "重点能力未来应达到什么状态？当前与未来之间的差距是什么？"
+    operations:
+      - "设计六维未来状态并标注未来要求来源（T7）"
+      - "检查 AI 规模化条件（T8）与 AI 风险可信控制（T8A）"
+    outputs:
+      - "六维未来状态与差距表（T7）"
+      - "AI 规模化条件检查表（T8）+ AI 风险与可信控制映射表（T8A）"
+    gate:
+      coreCheck: "未来状态可回溯 / 差距可解释"
+      pass: "六维未来状态与差距完整、可回溯可解释，AI 风险控制字段齐备"
+      conditional: "部分未来要求来源待补证或组织承受力待确认 → 登记未决项"
+  - id: "05"
+    name: "识别并排序能力差距举措"
+    question: "需要哪些举措弥合重点能力差距？单项能力内部应如何排序？"
+    operations:
+      - "建立举措映射（T9）并在单项能力内部排序"
+      - "检查技术举措前置条件（T9B）；记录跨能力取舍依据（T9A）"
+    outputs:
+      - "能力差距举措表（T9）"
+      - "跨能力取舍记录表（T9A）+ 技术举措前置条件检查表（T9B）"
+    gate:
+      coreCheck: "差距回溯 / 依赖可见"
+      pass: "举措-差距-价值-依赖-验证-取舍六维映射齐备，前置检查表必填"
+      conditional: "成本、复杂度或验证方式待补 → 登记未决项"
+  - id: "06"
+    name: "形成企业级能力路线图"
+    question: "如何将各重点能力内部举措整合为支撑转型愿景和雄心的企业级能力路线图？"
+    operations:
+      - "跨能力汇总与排序，分阶段组织多年路线图（T10）"
+      - "纳入持续治理（T11）、定义成果度量（T11A）、检查四层一致性（T11B）"
+      - "输出下游接口摘要（O7）"
+    outputs:
+      - "企业级能力路线图表（T10）"
+      - "依赖与治理清单（T11）+ 度量复审表（T11A）+ 四层一致性检查表（T11B）"
+      - "下游接口摘要（O7）"
+    gate:
+      coreCheck: "路线图完整性 / 依赖与资源可承受"
+      pass: "排序簇齐备、里程碑 M/G/D 结构完整、四层一致性结论与下游接口摘要必填"
+      conditional: "局部资源、成本或治理安排待确认 → 登记未决项"
+
+aiConstraints:
+  - "每阶段产物 AI 只提供草稿，必须用户明确确认（confirmed_by=user）才可进入下一步"
+  - "不新增评分权重、成熟度公式、依赖算法、投资组合模型或阶段门计算规则"
+
+outputContract:
+  requires:
+    - capabilityModel
+    - maturityBaseline
+    - priorityCapabilities
+    - futureStateGaps
+    - gapInitiatives
+    - enterpriseRoadmap
+    - downstreamInterfaces
+  optional:
+    - openIssues
+    - aiElements
+    - changeControl

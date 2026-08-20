@@ -953,7 +953,19 @@ STAGE_REQUIRED: dict[str, list[str]] = {
 
 
 def required_before(stage: str, method=None, state: dict | None = None) -> list[str]:
-    """G0-04：返回 stage 的 required artifact_id 集合。"""
+    """G0-04：返回 stage 的 required artifact_id 集合。
+
+    roadmap 方法（M1 起）：六阶段 required 链在 M4 接入（G4，见
+    `构建企业能力路线图-功能开发计划.md` M4-03）；M1 阶段 STAGE_REQUIRED
+    无 roadmap 键 → 返回空 = 不阻断（保持向后兼容，与 vision 一致）。
+    诊断方法沿用 diagnosis 域 STAGE_REQUIRED 映射。
+    """
+    if method is None and state:
+        method_name = state.get("method", "")
+        if method_name.startswith("roadmap-method-"):
+            return []  # M4 接入六阶段链；M1 不阻断
+    if method is not None and getattr(method, "type", "") == "roadmap-method":
+        return []  # M4 接入六阶段链；M1 不阻断
     if stage not in STAGE_REQUIRED:
         # 未知 stage：file gate 不阻断（保持向后兼容，vision 等未开启方法无影响）
         return []
@@ -997,7 +1009,7 @@ def check_required(stage: str, state: dict, session_dir: Path) -> dict:
     session_dir = Path(session_dir)
     manifest = state.get("artifacts", {})
     missing, invalid, stale, mismatched = [], [], [], []
-    for artifact_id in required_before(stage):
+    for artifact_id in required_before(stage, state=state):
         entry = manifest.get(artifact_id)
         if entry is None:
             missing.append(artifact_id)

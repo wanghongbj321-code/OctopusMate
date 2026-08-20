@@ -144,6 +144,130 @@ class TestManifestContract(unittest.TestCase):
         del instance["scoring"]
         self.assertEqual(validate(instance, MANIFEST_SCHEMA), [])
 
+    def test_roadmap_manifest_passes(self):
+        """roadmap-method 分支（M1-01 扩展）：合法样例校验通过。"""
+        instance = load_manifest(FIXTURES / "valid-roadmap-manifest.yaml")
+        self.assertEqual(validate(instance, MANIFEST_SCHEMA), [])
+
+    def test_roadmap_wrong_type_rejected(self):
+        """roadmap manifest 的 type 必须是 roadmap-method（不在枚举即拒）。"""
+        instance = load_manifest(FIXTURES / "valid-roadmap-manifest.yaml")
+        instance["type"] = "wrong-type"
+        self.assertNotEqual(validate(instance, MANIFEST_SCHEMA), [])
+
+    def test_roadmap_name_pattern(self):
+        """roadmap 方法 name 必须为 roadmap-method-{slug}（M1-01 name pattern 扩展）。"""
+        instance = load_manifest(FIXTURES / "valid-roadmap-manifest.yaml")
+        instance["name"] = "bad_name"
+        self.assertNotEqual(validate(instance, MANIFEST_SCHEMA), [])
+        instance["name"] = "roadmap-method-capability"
+        self.assertEqual(validate(instance, MANIFEST_SCHEMA), [])
+
+    def test_roadmap_output_contract_fields(self):
+        """roadmap 输出契约字段（capabilityModel 等七项核心）必须被 schema 接受（M1-01 enum 扩展）。"""
+        instance = load_manifest(FIXTURES / "valid-roadmap-manifest.yaml")
+        # 七项核心字段合法
+        self.assertEqual(validate(instance, MANIFEST_SCHEMA), [])
+        # 未加入 schema enum 的字段被拒
+        instance["outputContract"]["requires"].append("unknownRoadmapField")
+        self.assertNotEqual(validate(instance, MANIFEST_SCHEMA), [])
+
+
+class TestRoadmapOutputContract(unittest.TestCase):
+    """M1-04 能力路线图输出契约校验（contract.validate_output，roadmap 分支）。"""
+
+    def _full_output(self) -> dict:
+        """七项核心字段齐全的合法 roadmap 产出。"""
+        return {
+            "capabilityModel": {
+                "clusters": ["C1"],
+                "capabilities": [{"id": "C1", "level": "L1", "mission": "为门店配置适合的策略"}],
+                "classification": {"C1": "Strategic"},
+                "modelingCheck": [{"item": "命名", "result": "pass"}],
+                "valueStreamCheck": [{"valueStream": "门店精准供给", "conclusion": "覆盖完整"}],
+            },
+            "maturityBaseline": {
+                "baselines": [{"capability": "C1", "six_dimensions": {"Insights": "数据分散"}}],
+                "benchmarks": [{"capability": "C1", "source": "行业报告"}],
+                "maturity": [{"capability": "C1", "level": "Lagging", "evidence": "A"}],
+                "calibration": [{"capability": "C1", "conclusion": "口径一致"}],
+            },
+            "priorityCapabilities": {
+                "list": [{"capability": "C1", "owner": "营销负责人", "priority": True}],
+                "exclusions": [{"capability": "C3", "reason": "非关键差距"}],
+                "conditional": [],
+            },
+            "futureStateGaps": {
+                "futureStates": [{"capability": "C1", "dimension": "Technology", "future": "策略引擎"}],
+                "gaps": [{"capability": "C1", "level": "大", "explanation": "结构性差距"}],
+                "aiConditions": [{"check": "现代数据基础", "gap": "数据分散"}],
+                "riskControls": [{"object": "策略推荐", "risk": "高", "controls": "人工复核"}],
+            },
+            "gapInitiatives": {
+                "initiatives": [{"capability": "C1", "gap": "Technology", "action": "建设策略引擎"}],
+                "sorting": [{"capability": "C1", "order": ["数据标准化", "策略引擎"]}],
+                "preChecks": [{"initiative": "策略引擎", "conclusion": "数据先行"}],
+                "tradeoffs": [{"initiative": "策略引擎", "decision": "前置"}],
+            },
+            "enterpriseRoadmap": {
+                "clusters": [{"name": "底座关键路径", "initiatives": ["主数据治理"]}],
+                "phases": [{"phase": "夯实基本盘", "goal": "弥补关键缺口", "initiatives": ["数据底座"]}],
+                "milestones": [{"id": "M1", "type": "M", "name": "试点验证"}],
+                "metrics": [{"phase": "夯实基本盘", "metric": "铺货率", "owner": "业务负责人"}],
+                "consistency": [{"layer": "Strategy", "result": "pass"}],
+            },
+            "downstreamInterfaces": {
+                "endToEndSolution": "不适用（阶段三）",
+                "targetOperatingModel": "待补",
+                "detailedImplementationPlan": "不适用（P5 边界）",
+                "benefitCase": "待补",
+                "enterpriseArchitecture": "待补",
+                "portfolioGovernance": "组合治理接口",
+            },
+        }
+
+    def test_roadmap_full_output_passes(self):
+        """七项核心字段齐全 → roadmap 契约校验通过。"""
+        from _engine.contract import validate_output
+
+        errors = validate_output(self._full_output(), requires=[], contract_type="roadmap")
+        self.assertEqual(errors, [])
+
+    def test_roadmap_missing_core_field_blocked(self):
+        """缺核心字段（如 gapInitiatives / enterpriseRoadmap）→ 阻断并提示缺失清单。"""
+        from _engine.contract import validate_output, check_blocked
+
+        output = self._full_output()
+        del output["enterpriseRoadmap"]
+        del output["gapInitiatives"]
+        errors = validate_output(output, requires=[], contract_type="roadmap")
+        self.assertTrue(any("缺失核心字段" in e for e in errors), errors)
+        self.assertIn("enterpriseRoadmap", "\n".join(errors))
+        self.assertIn("gapInitiatives", "\n".join(errors))
+        self.assertTrue(check_blocked(errors))
+
+    def test_roadmap_requires_declared_fields(self):
+        """manifest 声明的 requires（七项核心）叠加校验：缺失被阻断。"""
+        from _engine.contract import validate_output
+
+        requires = [
+            "capabilityModel", "maturityBaseline", "priorityCapabilities",
+            "futureStateGaps", "gapInitiatives", "enterpriseRoadmap",
+            "downstreamInterfaces",
+        ]
+        output = self._full_output()
+        self.assertEqual(validate_output(output, requires=requires, contract_type="roadmap"), [])
+        del output["downstreamInterfaces"]
+        errors = validate_output(output, requires=requires, contract_type="roadmap")
+        self.assertTrue(any("缺失" in e for e in errors), errors)
+
+    def test_roadmap_unknown_contract_type(self):
+        """未知契约类型被拒绝。"""
+        from _engine.contract import validate_output
+
+        errors = validate_output({}, contract_type="unknown")
+        self.assertTrue(any("未知契约类型" in e for e in errors), errors)
+
 
 class TestStateContract(unittest.TestCase):
     """state.json ↔ state.json.schema 契约一致性（M0-04 验收）。"""
@@ -208,6 +332,7 @@ class TestAllInstalledMethods(unittest.TestCase):
         names = {m.name for m in valid}
         for expected in ("vision-method-octopus-7step", "vision-method-north-star", "vision-method-golden-circle"):
             self.assertIn(expected, names, f"方法 {expected} 应出现在注册器列表")
+        self.assertIn("roadmap-method-capability", names, "roadmap-method-capability 应出现在注册器列表（M1-01）")
 
 
 if __name__ == "__main__":

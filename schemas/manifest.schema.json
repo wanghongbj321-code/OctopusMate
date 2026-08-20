@@ -1,8 +1,8 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://octopus-mate.dev/schemas/manifest.schema.json",
-  "title": "Method Manifest (vision-method / diagnosis-method)",
-  "description": "方法插件 manifest.yaml 规范（对齐开发计划 §6.2 示例与 §4 输出契约字段全集）。每个方法是一个标准 Skill 包，manifest 声明步骤/gate/AI 约束/输出契约覆盖范围；非法 manifest 被注册器拒绝并返回字段级错误。v2（M0-03）：type 支持 diagnosis-method 分支，新增 scoring 节（打分规则声明，运行时由顾问确认覆盖）。",
+  "title": "Method Manifest (vision-method / diagnosis-method / roadmap-method)",
+  "description": "方法插件 manifest.yaml 规范（对齐开发计划 §6.2 示例与 §4 输出契约字段全集）。每个方法是一个标准 Skill 包，manifest 声明步骤/gate/AI 约束/输出契约覆盖范围；非法 manifest 被注册器拒绝并返回字段级错误。v3（M1-01）：type 支持 roadmap-method 分支（构建企业能力路线图，六步骤），沿用 fileGate 声明与 outputContract 扩展字段（capabilityModel / maturityBaseline / priorityCapabilities / futureStateGaps / gapInitiatives / enterpriseRoadmap）。",
   "type": "object",
   "required": [
     "name",
@@ -14,8 +14,8 @@
   "properties": {
     "name": {
       "type": "string",
-      "pattern": "^(vision|diagnosis)-method-[a-z0-9]+(-[a-z0-9]+)*$",
-      "description": "方法标识，必须为 vision-method-{slug} 或 diagnosis-method-{slug}（kebab-case）"
+      "pattern": "^(vision|diagnosis|roadmap)-method-[a-z0-9]+(-[a-z0-9]+)*$",
+      "description": "方法标识，必须为 vision-method-{slug} / diagnosis-method-{slug} / roadmap-method-{slug}（kebab-case）"
     },
     "version": {
       "type": "string",
@@ -23,8 +23,8 @@
       "description": "语义化版本号 MAJOR.MINOR.PATCH"
     },
     "type": {
-      "enum": ["vision-method", "diagnosis-method"],
-      "description": "方法类型：vision-method=愿景构建方法；diagnosis-method=诊断方法（如 VITAL）"
+      "enum": ["vision-method", "diagnosis-method", "roadmap-method"],
+      "description": "方法类型：vision-method=愿景构建方法；diagnosis-method=诊断方法（如 VITAL）；roadmap-method=能力路线图方法（如 capability-roadmap，六阶段）"
     },
     "displayName": {
       "type": "string",
@@ -154,7 +154,13 @@
               "evidenceList",
               "improvementPath",
               "overallScore",
-              "reportNarrative"
+              "reportNarrative",
+              "capabilityModel",
+              "maturityBaseline",
+              "priorityCapabilities",
+              "futureStateGaps",
+              "gapInitiatives",
+              "enterpriseRoadmap"
             ]
           },
           "description": "本方法承诺必填的契约字段（缺失核心字段阻断进入确认）"
@@ -181,7 +187,13 @@
               "evidenceList",
               "improvementPath",
               "overallScore",
-              "reportNarrative"
+              "reportNarrative",
+              "capabilityModel",
+              "maturityBaseline",
+              "priorityCapabilities",
+              "futureStateGaps",
+              "gapInitiatives",
+              "enterpriseRoadmap"
             ]
           },
           "description": "本方法可选的契约字段"
