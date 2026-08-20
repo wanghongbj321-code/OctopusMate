@@ -55,8 +55,20 @@ def save_state(path: Path, state: dict) -> None:
         f.write("\n")
 
 
-def transition(state: dict, new_status: str, authorized: bool = False) -> None:
-    """状态迁移；authorized 状态仅可在顾问确认后由主 Agent 写入。"""
+def transition(
+    state: dict,
+    new_status: str,
+    authorized: bool = False,
+    session_dir: str | Path | None = None,
+) -> None:
+    """状态迁移；authorized 状态仅可在顾问确认后由主 Agent 写入。
+
+    G4-02（文件级 gate 流程）：进入 finalized 前，若已走 confirmed md 链
+    （artifacts 含 diagnosis.scoring.current），必须通过 `files.check_required("state:finalized")`
+    ——formal confirmed 确认包 + confirmed render-options md 均存在且未 stale；
+    无 render-options md 时不允许 finalized（配色选择不会被 AI 默认值绕过）。
+    旧流程（vision / 无 scoring artifact）行为不变。
+    """
     if new_status not in VALID_STATUSES:
         raise ValueError(f"非法状态：{new_status!r}（合法：{sorted(VALID_STATUSES)}）")
     current = state["status"]
@@ -71,6 +83,18 @@ def transition(state: dict, new_status: str, authorized: bool = False) -> None:
         raise ValueError(
             "authorized 状态仅可由主 Agent 在顾问确认后写入（用户授权节点 = 出口确认环节）"
         )
+    if new_status == "finalized" and "diagnosis.scoring.current" in (state.get("artifacts") or {}):
+        if session_dir is None:
+            raise ValueError(
+                "finalized 前置校验需要 session_dir（formal confirm + render-options 路径）"
+            )
+        from . import files as files_mod
+
+        result = files_mod.check_required("state:finalized", state, Path(session_dir))
+        if not result["ok"]:
+            raise ValueError(
+                f"finalized 前置校验未通过（{result}）：需 formal confirmed 确认包 + confirmed render-options md"
+            )
     state["status"] = new_status
 
 

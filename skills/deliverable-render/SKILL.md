@@ -79,12 +79,17 @@ init.md render 角色的统一落地（vision-render 更名升级，多画布）
 python3 skills/deliverable-render/scripts/audit_html.py \
   workshop/{project_slug}/{topic_slug}/output/vision-confirm-{slug}-v{N}.html
 
-# diagnosis-report（放行图表 SVG，强校验 title/role）
+# diagnosis-report（放行图表 SVG，强校验 title/role；G4：必须带 --source-md 确认包对账）
 python3 skills/deliverable-render/scripts/audit_html.py --canvas-type=diagnosis-report \
+  --source-md workshop/{project_slug}/{topic_slug}/modules/diagnosis-confirm-{slug}-v{N}.md \
   workshop/{project_slug}/{topic_slug}/output/diagnosis-report-{slug}-v{N}.html
 ```
 
-脚本检查 token 无裸值（颜色/字体/间距必须引用选定 token 集）+ 13 条 Pan-Mode Invariants 语义演进底线 + 内联样式离线可打印；diagnosis-report 画布另校验图表 SVG 无障碍（title + role）。返回非零状态时**阻断交付**，按失败项修订同一版本 HTML 后重跑；不得绕过、删除检查或手工改写审计结果。
+脚本检查 token 无裸值（颜色/字体/间距必须引用选定 token 集）+ 13 条 Pan-Mode Invariants 语义演进底线 + 内联样式离线可打印；diagnosis-report 画布另校验图表 SVG 无障碍（title + role）。**G4 文件级 gate**：diagnosis-report 渲染必须带 `--source-md <确认包>` 执行 HTML/确认包信息对账（六节编号 section / 分数 / 证据编号 / 阻断编号 / 三张图表 SVG 数据来源）；**未提供 `--source-md` 时只算视觉/token 审计，不计为交付 gate 通过**。返回非零状态时**阻断交付**，按失败项修订同一版本 HTML 后重跑；不得绕过、删除检查或手工改写审计结果。
+
+**渲染前提（G4 文件级 gate，引擎强制）**：
+- `state.transition(finalized)` 前必须存在：正式 confirmed 确认包 + confirmed `render-options-{slug}-v{N}.md`（配色选择记录，用户已确认 token 集）；缺 render-options md 时 finalized/render 被引擎阻断（配色不会被 AI 默认值绕过）
+- render-options md 由引擎 `_engine/files.py write_render_options_artifact()` 写入，记录 canvasType / token 集 / token 路径 / confirmation / hash
 
 **阶段 2 · 浏览器视觉验收**（必须，正式交付前）：
 

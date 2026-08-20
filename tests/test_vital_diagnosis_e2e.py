@@ -262,7 +262,13 @@ class TestVitalDiagnosisE2E(unittest.TestCase):
         result = confirm(state, "pass", session_dir=topic_dir)
         self.assertTrue(result["authorized"])
         self.assertEqual(state["status"], "authorized")
-        state_mod.transition(state, "finalized", authorized=True)
+        # G4：渲染配置确认 → confirmed render-options md（配色选择留痕，finalized 前置 gate）
+        files.write_render_options_artifact(topic_dir, {
+            "canvasType": "diagnosis-report",
+            "tokenId": "10-black-gray-professional",
+            "tokenPath": "skills/deliverable-render/visual-patterns/10-black-gray-professional.md",
+        }, SCORING_CONFIRMATION, state=state)
+        state_mod.transition(state, "finalized", authorized=True, session_dir=topic_dir)
 
         return topic_dir, state, output
 
