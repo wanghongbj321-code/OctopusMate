@@ -1,6 +1,6 @@
 ---
 name: deliverable-render
-description: 交付物 HTML 输出 skill（渲染平台，多画布类型）——读取已确认（finalized）状态的 markdown 唯一事实源，按用户选定的视觉模式 token 集（默认黑灰专业 10-black-gray-professional）**由 AI 直接生成**内联 CSS 的单文件 HTML 交付物，并通过 token 无裸值静态审计（13 条 Pan-Mode Invariants 语义演进）+ 浏览器视觉验收。支持画布类型：vision-confirm（愿景确认包）/ diagnosis-report（诊断报告）。收到「生成确认包」「出 HTML」「生成诊断报告」请求时使用。
+description: 交付物 HTML 输出 skill（渲染平台，多画布类型）——读取已确认（finalized）状态的 markdown 唯一事实源，按用户选定的视觉模式 token 集（配色必须经用户确认并记录 render-options md；vision 域未选时兜底黑灰专业）**由 AI 直接生成**内联 CSS 的单文件 HTML 交付物，并通过 token 无裸值静态审计（13 条 Pan-Mode Invariants 语义演进）+ 浏览器视觉验收。支持画布类型：vision-confirm（愿景确认包）/ diagnosis-report（诊断报告）。收到「生成确认包」「出 HTML」「生成诊断报告」请求时使用。
 ---
 
 # deliverable-render：交付物 HTML 输出（AI 生成，渲染平台）
@@ -11,7 +11,7 @@ init.md render 角色的统一落地（vision-render 更名升级，多画布）
 
 - 出口确认环节完成、顾问授权（authorized → finalized）后
 - 顾问要求「生成确认包 / 出 HTML / 生成诊断报告」
-- 由主 Agent 在渲染配色显式选择后调用（传入选定 token 集路径，未选默认黑灰）
+- 由主 Agent 在渲染配色显式选择后调用（传入选定 token 集路径；diagnosis 域必须已有 confirmed render-options md，无则 finalized 被引擎阻断；vision 域未选时兜底黑灰）
 
 ## 输入契约
 

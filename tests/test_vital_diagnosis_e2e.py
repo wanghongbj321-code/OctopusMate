@@ -28,6 +28,7 @@ from _engine.exit import (  # noqa: E402
 )
 from _engine.parser import parse_manifest  # noqa: E402
 from audit_html import audit as audit_html  # noqa: E402
+from audit_html import check_diagnosis_consistency  # noqa: E402
 
 VITAL_MANIFEST = ROOT / "skills" / "methods" / "vital-diagnosis" / "manifest.yaml"
 CANVAS_HTML = ROOT / "skills" / "deliverable-render" / "examples" / "diagnosis-report-canvas.html"
@@ -292,6 +293,30 @@ class TestVitalDiagnosisE2E(unittest.TestCase):
         """确认包渲染审计闸门：canvas 合规基线过 audit（代表 LLM 产物质量达标）。"""
         canvas = CANVAS_HTML.read_text(encoding="utf-8")
         self.assertEqual(audit_html(canvas), [], "诊断报告 canvas 应通过 token 无裸值 + 不变量审计")
+
+    def test_render_delivery_gate(self):
+        """G5-02：HTML 交付对账（渲染后 HTML 与确认包一致才算交付 gate 通过）。"""
+        topic_dir, _, _ = self._run_session()
+        formal = topic_dir / "modules" / "diagnosis-confirm-data-platform-diagnosis-v1.md"
+        self.assertTrue(formal.exists())
+        body = files.read_artifact(formal).body
+        scores = reconcile._parse_pkg_angle_scores(body)
+        ev = reconcile._parse_pkg_evidence_ids(body)
+        blk = reconcile._parse_pkg_blocker_ids(body)
+        secs = "\n".join(
+            f'<section><div class="sec-head"><span class="sec-num">{n}</span><h2>{t}</h2></div></section>'
+            for n, t in [("01", "执行摘要"), ("02", "诊断方法与打分框架"), ("03", "总体诊断结论"),
+                         ("04", "分维诊断详情"), ("05", "阻断性问题专题"), ("06", "附录")])
+        html = (
+            f"<html><body>{secs}"
+            f"<div class='s'>{''.join(f'<td>{s}</td>' for s in scores.values())}</div>"
+            f"<div class='e'>{''.join(f'<td>{e}</td>' for e in ev)}</div>"
+            f"<div class='b'>{''.join(f'<td>{b}</td>' for b in blk)}</div>"
+            f"<svg title='radar' role='img'></svg><svg title='tree' role='img'></svg>"
+            f"<svg title='link' role='img'></svg></body></html>"
+        )
+        violations = check_diagnosis_consistency(html, formal)
+        self.assertEqual(violations, [], violations)
 
     def test_demo_artifacts_written(self):
         """演练产物写入 artifacts/demo/vital-diagnosis-e2e/（确认包 md + HTML）。

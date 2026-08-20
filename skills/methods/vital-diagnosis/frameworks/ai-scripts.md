@@ -116,5 +116,7 @@
 ## 出口（平台层，非方法步骤）
 
 - 调用引擎契约校验（diagnosis 分支）：核心字段必填 + blockingIssues 存在 → improvementPath 必填
-- 顾问确认授权（authorized 受控写入）→ deliverable-render 渲染（canvasType=diagnosis-report，默认黑灰，渲染前展示配色候选）
+- 确认包由中间 confirmed md 聚合（draft → 顾问确认 → formal），对账通过后授权（G3：`_engine/exit.py confirm(state, decision, session_dir=...)` 前置校验 formal 包 + confirmation + 对账）
+- **渲染配色（G4）**：渲染前必须经用户确认视觉模式并写入 confirmed render-options md（`_engine/files.py write_render_options_artifact`）——无 render-options md 时 `transition(finalized)` 被引擎阻断；**不允许 AI 以"默认黑灰"自行选定**
+- 渲染交付（deliverable-render，canvasType=diagnosis-report）必须带 `--source-md <确认包>` 执行 HTML 信息对账；无 source-md 只算视觉审计、不计交付 gate 通过
 - 诊断报告业务数据只来自确认包，**禁止引用 Demo 样例数值**
