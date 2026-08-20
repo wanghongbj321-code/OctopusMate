@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{阶段二标题}} · {{主题名称}}</title>
+<!--
+  ⚠️ 版面与签名视觉参照（capability-package 画布 · 基线与成熟度）——仅作版式参照，不提供业务内容
+  - 业务内容一律用 {{占位符}} 标注，由 LLM 按阶段确认包 markdown 生成时填充（不做代码渲染）
+  - 禁止复制本文件中的样例占位文案；禁止引用 Demo 样例数值（见开发计划 §4.3 / M0-02）
+  - token 只来自用户选定视觉模式文件，本文件不提供 token 候选
+-->
+<style>
+  :root{
+    --page-bg:#FFFFFF; --block-bg:#F7F7F7; --ink:#1A1A1A; --ink-deep:#2D2D2D;
+    --ink-soft:#6B6B6B; --ink-muted:#808080; --border:#D4D4D4; --accent:#1A1A1A;
+    --table-head:#F1F1F1; --callout:#FAFAFA;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:var(--page-bg);color:var(--ink);line-height:1.6;}
+  .page{width:min(1280px,calc(100vw - 48px));margin:0 auto;padding:28px 0 64px;}
+  .report-header{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:24px;align-items:start;padding-bottom:18px;border-bottom:1px solid var(--border);}
+  .report-kicker,.eyebrow{margin:0;color:var(--ink-soft);font-size:11px;font-weight:700;letter-spacing:.2em;line-height:1.4;text-transform:uppercase;}
+  .report-title{margin:6px 0 0;color:var(--ink);font-size:15px;font-weight:700;}
+  .report-subtitle{margin:2px 0 0;color:var(--ink-soft);font-size:12px;}
+  .report-meta{display:grid;gap:8px;color:var(--ink-soft);font-size:12px;text-align:right;}
+  .hero{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(300px,.6fr);gap:28px;padding:34px 0 24px;border-bottom:1px solid var(--border);}
+  h1{margin:10px 0 0;color:var(--ink);font-size:26px;font-weight:700;line-height:1.4;}
+  h2{color:var(--ink);font-size:20px;font-weight:700;line-height:1.4;}
+  h3{color:var(--ink);font-size:15px;font-weight:600;line-height:1.4;}
+  .lead{margin:14px 0 0;max-width:900px;color:var(--ink-deep);font-size:14px;line-height:1.75;}
+  .so-what{padding:16px;border:1px solid var(--border);border-left:3px solid var(--ink);background:var(--block-bg);font-size:13px;color:var(--ink-deep);}
+  .so-what h2{font-size:15px;}
+  .so-what p{margin:8px 0 0;}
+  .nav-strip{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px;}
+  .nav-strip a{padding:5px 8px;border:1px solid var(--border);color:var(--ink-soft);font-size:12px;text-decoration:none;}
+  .summary-strip{display:grid;grid-template-columns:repeat(3,minmax(0,1fr)) auto;gap:10px;margin-top:22px;}
+  .summary-card{padding:13px;border:1px solid var(--border);background:var(--block-bg);font-size:12px;color:var(--ink-soft);}
+  .summary-card strong{display:block;color:var(--ink);font-size:13px;line-height:1.5;}
+  .summary-card p{margin:6px 0 0;}
+  .summary-tag{padding:13px;border:1px solid var(--ink);font-size:12px;color:var(--ink-soft);}
+  .summary-tag strong{display:block;color:var(--ink);font-size:26px;line-height:1.2;}
+  .section{padding-top:34px;}
+  .section-head{display:grid;grid-template-columns:minmax(0,1fr) minmax(260px,.34fr);gap:24px;align-items:end;margin-bottom:14px;}
+  .section-head p{margin:6px 0 0;color:var(--ink-soft);font-size:13px;}
+  .section-note{margin:0;padding:11px;border:1px solid var(--border);background:var(--block-bg);color:var(--ink-deep);font-size:12px;}
+  .logic-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;}
+  .logic-node{padding:13px;border:1px solid var(--border);background:var(--block-bg);}
+  .logic-node strong{display:block;margin-top:8px;color:var(--ink);font-size:14px;line-height:1.45;}
+  .logic-node p{margin:6px 0 0;color:var(--ink-soft);font-size:12px;}
+  .node-label{display:inline-block;color:var(--ink-muted);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;}
+  .arch-row{display:grid;grid-template-columns:170px minmax(0,1fr);gap:10px;margin-bottom:10px;}
+  .arch-label{padding:13px;border:1px solid var(--ink);font-size:13px;font-weight:700;color:var(--ink);}
+  .arch-cells{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;}
+  .domain{padding:13px;border:1px solid var(--border);background:var(--block-bg);}
+  .domain-top{display:flex;justify-content:space-between;gap:10px;}
+  .domain-code{padding:3px 6px;border:1px solid var(--ink);font-size:11px;font-weight:700;}
+  .domain p{margin:8px 0 0;color:var(--ink-soft);font-size:12px;}
+  .classification{display:block;margin-top:10px;color:var(--ink-muted);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;}
+  .table-wrap{overflow-x:auto;border:1px solid var(--border);background:var(--page-bg);}
+  table{width:100%;min-width:900px;border-collapse:collapse;}
+  th,td{padding:10px 12px;border-bottom:1px solid var(--border);text-align:left;vertical-align:top;font-size:13px;line-height:1.5;}
+  th{color:var(--ink);background:var(--table-head);border-bottom:2px solid var(--ink);font-weight:700;}
+  td{color:var(--ink-deep);}
+  caption{padding:9px 12px 5px;text-align:left;color:var(--ink-soft);font-size:12px;font-weight:700;}
+  .quality-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;}
+  .quality-card{min-height:120px;padding:13px;border:1px solid var(--border);background:var(--block-bg);}
+  .quality-card h3{font-size:14px;}
+  .quality-card p{margin:8px 0 0;color:var(--ink-soft);font-size:12px;}
+  .status{display:inline-block;margin-bottom:8px;padding-bottom:2px;color:var(--ink);border-bottom:1px solid var(--ink);font-size:12px;font-weight:700;}
+  details.panel{margin-top:12px;border:1px solid var(--border);background:var(--block-bg);}
+  details.panel summary{padding:11px 13px;color:var(--ink);font-size:13px;font-weight:700;cursor:pointer;}
+  details.panel .panel-body{padding:0 13px 13px;color:var(--ink-deep);font-size:13px;}
+  .action-table{margin-top:12px;}
+  .pill{display:inline-block;padding:3px 6px;border:1px solid var(--ink);color:var(--ink);background:var(--page-bg);font-size:12px;white-space:nowrap;}
+  .report-footer{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;margin-top:40px;padding-top:13px;border-top:1px solid var(--border);color:var(--ink-muted);font-size:11px;}
+  @media (max-width:980px){
+    .hero,.report-header,.section-head,.arch-row{grid-template-columns:1fr;}
+    .summary-strip,.logic-grid,.arch-cells,.quality-grid{grid-template-columns:1fr;}
+    .report-meta{text-align:left;}
+  }
+  @media print{.page{width:auto;padding:0;}.nav-strip{display:none;}}
+</style>
+</head>
+<body>
+  <div class="page">
+    <header class="report-header">
+      <div>
+        <p class="report-kicker">Capability Roadmap · Stage 02 · {{版本}}</p>
+        <p class="report-title">{{项目名称}} · {{主题名称}}</p>
+        <p class="report-subtitle">{{阶段交付物名称}} · Illustrative exhibit</p>
+      </div>
+      <div class="report-meta" aria-label="交付物元信息">
+        <span>阶段：02</span>
+        <span>对象：基线与成熟度</span>
+        <span>状态：{{质量门状态}}</span>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero">
+        <div>
+          <p class="eyebrow">Executive Message</p>
+          <h1>{{阶段二主结论标题}}</h1>
+          <p class="lead">{{阶段二一句话说明}}</p>
+          <nav class="nav-strip" aria-label="页面导航">
+            <a href="#logic">评估逻辑</a><a href="#heatmap">成熟度热力</a><a href="#baseline">六维基线</a><a href="#evidence">证据强度</a><a href="#quality">质量门</a>
+          </nav>
+        </div>
+        <aside class="so-what">
+          <h2>So what</h2>
+          <p>{{管理含义：管理层不应把成熟度最低项简单等同于优先项；关键是判断哪些能力会阻断规模化。}}</p>
+        </aside>
+      </section>
+
+      <section class="summary-strip" aria-label="核心支撑论点">
+        <article class="summary-card">
+          <span class="node-label">支撑论点 1</span>
+          <strong>{{支撑论点一标题}}</strong>
+          <p>{{支撑论点一说明}}</p>
+        </article>
+        <article class="summary-card">
+          <span class="node-label">支撑论点 2</span>
+          <strong>{{支撑论点二标题}}</strong>
+          <p>{{支撑论点二说明}}</p>
+        </article>
+        <article class="summary-card">
+          <span class="node-label">支撑论点 3</span>
+          <strong>{{支撑论点三标题}}</strong>
+          <p>{{支撑论点三说明}}</p>
+        </article>
+        <div class="summary-tag">
+          <strong>{{关键数字}}</strong>
+          <span>{{关键数字说明}}</span>
+        </div>
+      </section>
+
+      <section class="section" id="logic">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">01 · Assessment Logic</p>
+            <h2>{{成熟度判定逻辑标题}}</h2>
+            <p>{{成熟度判定逻辑说明}}</p>
+          </div>
+          <p class="section-note">{{输出判断}}</p>
+        </div>
+        <div class="logic-grid">
+          <article class="logic-node"><span class="node-label">能力对象</span><strong>{{能力对象}}</strong><p>{{能力对象说明}}</p></article>
+          <article class="logic-node"><span class="node-label">当前基线</span><strong>{{六维事实记录}}</strong><p>{{当前基线说明}}</p></article>
+          <article class="logic-node"><span class="node-label">独立基准</span><strong>{{最低要求 / 市场正常 / 领先实践}}</strong><p>{{独立基准说明}}</p></article>
+          <article class="logic-node"><span class="node-label">证据强度</span><strong>{{A / B / C}}</strong><p>{{证据强度说明}}</p></article>
+          <article class="logic-node"><span class="node-label">成熟度判断</span><strong>{{Lagging / Performing / Leading}}</strong><p>{{成熟度判断说明}}</p></article>
+        </div>
+      </section>
+      <section class="section" id="heatmap">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">02 · Maturity Heatmap</p>
+            <h2>{{成熟度热力标题}}</h2>
+            <p>{{成熟度热力说明}}</p>
+          </div>
+          <p class="section-note">{{输出判断}}</p>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <caption>{{成熟度热力矩阵 · 能力域 × 六维 + 综合成熟度 + 证据强度 · Illustrative}}</caption>
+            <thead><tr><th>能力域</th><th>Mission</th><th>Insights</th><th>Process</th><th>Technology</th><th>Talent</th><th>Governance</th><th>综合成熟度</th><th>证据强度</th></tr></thead>
+            <tbody>
+              <tr><td>{{能力域A}}</td><td>{{成熟度}}</td><td>{{成熟度}}</td><td>{{成熟度}}</td><td>{{成熟度}}</td><td>{{成熟度}}</td><td>{{成熟度}}</td><td>{{综合成熟度}}</td><td>{{证据强度}}</td></tr>
+              <tr><td colspan="9">{{…其余能力域行…}}</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p style="margin:10px 0 0;color:var(--ink-soft);font-size:12px;">{{可视化：六维基线 36 格与热力矩阵逐格对应；Lagging 深灰实底 / Performing 浅灰 / Leading 粗黑框；综合成熟度为整体判断，不设加权公式。}}</p>
+      </section>
+      <section class="section" id="baseline">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">03 · Six-Dimension Baseline</p>
+            <h2>{{六维基线标题}}</h2>
+            <p>{{六维基线说明}}</p>
+          </div>
+          <p class="section-note">{{输出判断}}</p>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <caption>{{六维当前状态基线 · 能力域 × 六维（36 格，与热力矩阵逐格对应）}}</caption>
+            <thead><tr><th>能力域</th><th>Mission</th><th>Insights</th><th>Process</th><th>Technology</th><th>Talent</th><th>Governance</th></tr></thead>
+            <tbody>
+              <tr><td>{{能力域A}}</td><td>{{基线事实}}</td><td>{{基线事实}}</td><td>{{基线事实}}</td><td>{{基线事实}}</td><td>{{基线事实}}</td><td>{{基线事实}}</td></tr>
+              <tr><td colspan="7">{{…其余能力域行…}}</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+      <section class="section" id="evidence">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">04 · Evidence And Benchmark</p>
+            <h2>{{证据与基准标题}}</h2>
+            <p>{{证据与基准说明}}</p>
+          </div>
+          <p class="section-note">{{输出判断}}</p>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <caption>{{基准适用性与证据缺口 · 来源与年份为 Illustrative 参照，需实际调研核实}}</caption>
+            <thead><tr><th>能力域</th><th>主要基准参照</th><th>来源与年份</th><th>适用性判断</th><th>当前证据缺口</th><th>后续验证方式</th></tr></thead>
+            <tbody>
+              <tr><td>{{能力域}}</td><td>{{基准参照}}</td><td>{{来源与年份}}</td><td>{{适用性判断}}</td><td>{{证据缺口}}</td><td>{{验证方式}}</td></tr>
+              <tr><td colspan="6">{{…其余行…}}</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+      <section class="section" id="quality">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">Quality Gate</p>
+            <h2>{{质量门标题：阶段 02 建议"{{质量门状态}}"}}</h2>
+            <p>{{质量门说明}}</p>
+          </div>
+          <p class="section-note">{{下一步重点}}</p>
+        </div>
+        <div class="quality-grid">
+          <article class="quality-card"><span class="status">{{状态}}</span><h3>{{检查项}}</h3><p>{{检查说明}}</p></article>
+          <article class="quality-card"><span class="status">{{状态}}</span><h3>{{检查项}}</h3><p>{{检查说明}}</p></article>
+          <article class="quality-card"><span class="status">{{状态}}</span><h3>{{检查项}}</h3><p>{{检查说明}}</p></article>
+          <article class="quality-card"><span class="status">{{状态}}</span><h3>{{检查项}}</h3><p>{{检查说明}}</p></article>
+          <article class="quality-card"><span class="status">{{状态}}</span><h3>{{检查项}}</h3><p>{{检查说明}}</p></article>
+          
+        </div>
+      </section>
+
+      <details class="panel" open>
+        <summary>{{未决条件清单（{{未决项数量}} 项，登记于本阶段）· 按方法论 T12 跟踪}}</summary>
+        <div class="panel-body">
+          <div class="table-wrap">
+            <table>
+              <caption>{{未决项列表}}</caption>
+              <thead>
+                <tr><th>编号</th><th>来源/原编号</th><th>未决内容</th><th>影响面</th><th>证据强度</th><th>责任人</th><th>拟裁决方式</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>{{U-xx}}</td><td>{{来源/原编号}}</td><td>{{未决内容}}</td><td>{{影响面}}</td><td>{{证据强度}}</td><td>{{责任人}}</td><td>{{拟裁决方式}}</td></tr>
+                <tr><td colspan="7">{{…其余未决项…}}</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </details>
+
+      <div class="table-wrap action-table">
+        <table>
+          <caption>下一步行动 · 行动 + owner + 时限</caption>
+          <thead><tr><th>下一步行动</th><th>责任 owner</th><th>时限</th></tr></thead>
+          <tbody>
+            <tr><td>{{下一步行动}}</td><td>{{责任 owner}}</td><td>{{时限}}</td></tr>
+            <tr><td colspan="3">{{…其余行动…}}</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </main>
+
+    <footer class="report-footer">
+      <span>Source: {{项目名称}} · Illustrative exhibit（示例数据需校准）</span>
+      <span>{{日期}} · {{版本}} · Capability Roadmap Demo · 02</span>
+    </footer>
+  </div>
+</body>
+</html>

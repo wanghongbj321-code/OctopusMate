@@ -1,4 +1,4 @@
-"""输出契约校验器：出口结构校验（M1-06 愿景 + M1-05 诊断分支扩展）。
+"""输出契约校验器：出口结构校验（M1-06 愿景 + M1-05 诊断 + M1-04 能力路线图分支扩展）。
 
 对齐开发计划 §4 输出契约设计原则（vision 域）与诊断报告契约（diagnosis 域）：
 - 平台底线核心字段必填（保证下游可消费）：
@@ -6,6 +6,10 @@
     ambitionRationale / impactSummary
   · diagnosis: diagnosisScope / scoringConfig / dimensionScores /
     angleScores / evidenceList / overallScore / reportNarrative
+  · roadmap: capabilityModel / maturityBaseline / priorityCapabilities /
+    futureStateGaps / gapInitiatives / enterpriseRoadmap / downstreamInterfaces
+    （构建企业能力路线图 §4.2 七项核心字段必填，保证资产包六页均有数据源，
+    且阶段二到阶段三的 O7 接口有明确裁决；O7 允许明确写不适用/待补但不可缺失）
 - 条件必填：
   · vision: 存在"降级为假设"的未决项时 validationPlan 必须给出验证路径
   · diagnosis: blockingIssues 存在时 improvementPath 必须给出（阻断性问题
@@ -34,8 +38,18 @@ CORE_REQUIRED_DIAGNOSIS = {
     "reportNarrative",
 }
 
-# 契约字段全集（§4 vision 契约 + 诊断报告契约）
-CONTRACT_FIELDS = CORE_REQUIRED_VISION | CORE_REQUIRED_DIAGNOSIS | {
+CORE_REQUIRED_ROADMAP = {
+    "capabilityModel",          # O1 战略对齐的企业能力模型
+    "maturityBaseline",         # O2 能力基线与成熟度
+    "priorityCapabilities",     # O3 企业级重点能力
+    "futureStateGaps",          # O4 未来状态与差距
+    "gapInitiatives",           # O5 能力差距举措
+    "enterpriseRoadmap",        # O6 企业级能力路线图
+    "downstreamInterfaces",     # O7 下游接口摘要（端到端方案/目标运营模式/详细实施计划/Benefit Case/企业架构/组合治理；允许写不适用/待补但不可缺失）
+}
+
+# 契约字段全集（§4 vision 契约 + 诊断报告契约 + 能力路线图契约）
+CONTRACT_FIELDS = CORE_REQUIRED_VISION | CORE_REQUIRED_DIAGNOSIS | CORE_REQUIRED_ROADMAP | {
     "openIssues",
     "validationPlan",
     "changeControl",
@@ -48,6 +62,7 @@ CONTRACT_FIELDS = CORE_REQUIRED_VISION | CORE_REQUIRED_DIAGNOSIS | {
 CORE_REQUIRED_BY_TYPE = {
     "vision": CORE_REQUIRED_VISION,
     "diagnosis": CORE_REQUIRED_DIAGNOSIS,
+    "roadmap": CORE_REQUIRED_ROADMAP,
 }
 
 
@@ -72,7 +87,8 @@ def validate_output(
     - output: 方法产出的契约字段字典
     - requires: manifest.outputContract.requires 声明（可为 None）
     - open_issues: 当前会话未决清单（vision 域用于 validationPlan 条件必填判定）
-    - contract_type: "vision"（默认，愿景契约）/ "diagnosis"（诊断报告契约）
+    - contract_type: "vision"（默认，愿景契约）/ "diagnosis"（诊断报告契约）/
+      "roadmap"（能力路线图契约，七项核心字段必填）
     """
     errors: list[str] = []
     output = output or {}

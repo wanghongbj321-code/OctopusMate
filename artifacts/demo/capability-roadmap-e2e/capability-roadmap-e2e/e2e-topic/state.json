@@ -1,0 +1,150 @@
+{
+  "project_slug": "capability-roadmap-e2e",
+  "project_name": "能力路线图端到端演练",
+  "topic_slug": "e2e-topic",
+  "topic_name": "千店千策分销网络转型",
+  "updated_at": "2026-08-20T16:20:17.857146+00:00",
+  "status": "finalized",
+  "steps": {},
+  "open_issues": [],
+  "artifacts": {
+    "roadmap.capabilityModel.current": {
+      "path": "modules/capability-model-e2e-topic-v1.md",
+      "version": 1,
+      "status": "confirmed",
+      "content_hash": "sha256:e5177a4dba0f861165efc8729eb0f509dd0aab174e65c2a16a11cf3c13c5a3c6",
+      "depends_on": [],
+      "created_at": "2026-08-20T15:32:14.426467+00:00",
+      "confirmed_at": "2026-08-20T14:00:00+08:00",
+      "confirmed_by": "user",
+      "interaction_ref": "transcript:12:用户明确确认采用本版能力模型草稿"
+    },
+    "roadmap.maturityBaseline.current": {
+      "path": "modules/baseline-maturity-e2e-topic-v1.md",
+      "version": 1,
+      "status": "confirmed",
+      "content_hash": "sha256:8fe65fee0b7ef87f29793dc0811c3d6074c4df886b56d59614f67e6309355923",
+      "depends_on": [
+        "roadmap.capabilityModel.current@v1"
+      ],
+      "created_at": "2026-08-20T15:32:14.431470+00:00",
+      "confirmed_at": "2026-08-20T14:00:00+08:00",
+      "confirmed_by": "user",
+      "interaction_ref": "transcript:12:用户明确确认采用本版能力模型草稿"
+    },
+    "roadmap.priorityCapabilities.current": {
+      "path": "modules/priority-capabilities-e2e-topic-v1.md",
+      "version": 1,
+      "status": "confirmed",
+      "content_hash": "sha256:ac396f216142c7b3afc8b7d75130479155b31c1b823f02ed64952ee5b4841edc",
+      "depends_on": [
+        "roadmap.capabilityModel.current@v1",
+        "roadmap.maturityBaseline.current@v1"
+      ],
+      "created_at": "2026-08-20T15:32:14.436962+00:00",
+      "confirmed_at": "2026-08-20T14:00:00+08:00",
+      "confirmed_by": "user",
+      "interaction_ref": "transcript:12:用户明确确认采用本版能力模型草稿"
+    },
+    "roadmap.futureStateGaps.current": {
+      "path": "modules/future-state-e2e-topic-v1.md",
+      "version": 1,
+      "status": "confirmed",
+      "content_hash": "sha256:4edba115612e553a6445e9a3ef55ca1864a4a290bdfa7fb6c755ab5e1f6e5113",
+      "depends_on": [
+        "roadmap.capabilityModel.current@v1",
+        "roadmap.maturityBaseline.current@v1",
+        "roadmap.priorityCapabilities.current@v1"
+      ],
+      "created_at": "2026-08-20T15:32:14.440032+00:00",
+      "confirmed_at": "2026-08-20T14:00:00+08:00",
+      "confirmed_by": "user",
+      "interaction_ref": "transcript:12:用户明确确认采用本版能力模型草稿"
+    },
+    "roadmap.gapInitiatives.current": {
+      "path": "modules/gap-initiatives-e2e-topic-v1.md",
+      "version": 1,
+      "status": "confirmed",
+      "content_hash": "sha256:9a458db7461e8e52b1621939803cb5edef137511f514ddd1ef799bdcdb6ba209",
+      "depends_on": [
+        "roadmap.capabilityModel.current@v1",
+        "roadmap.maturityBaseline.current@v1",
+        "roadmap.priorityCapabilities.current@v1",
+        "roadmap.futureStateGaps.current@v1"
+      ],
+      "created_at": "2026-08-20T15:32:14.443124+00:00",
+      "confirmed_at": "2026-08-20T14:00:00+08:00",
+      "confirmed_by": "user",
+      "interaction_ref": "transcript:12:用户明确确认采用本版能力模型草稿"
+    },
+    "roadmap.enterpriseRoadmap.current": {
+      "path": "modules/capability-roadmap-e2e-topic-v1.md",
+      "version": 1,
+      "status": "confirmed",
+      "content_hash": "sha256:02fba4cc4afdaf5f152154d40e730cef52dc4984d21074e5785d95c47f93ceb2",
+      "depends_on": [
+        "roadmap.capabilityModel.current@v1",
+        "roadmap.maturityBaseline.current@v1",
+        "roadmap.priorityCapabilities.current@v1",
+        "roadmap.futureStateGaps.current@v1",
+        "roadmap.gapInitiatives.current@v1"
+      ],
+      "created_at": "2026-08-20T15:32:14.446830+00:00",
+      "confirmed_at": "2026-08-20T14:00:00+08:00",
+      "confirmed_by": "user",
+      "interaction_ref": "transcript:12:用户明确确认采用本版能力模型草稿"
+    },
+    "roadmap.renderOptions.current": {
+      "path": "modules/render-options-e2e-topic-v1.md",
+      "version": 1,
+      "status": "confirmed",
+      "content_hash": "sha256:61039d1227551a7b72703cb52e45eacd9737cbb640baf40af4c4c5e98c71a359",
+      "depends_on": [
+        "roadmap.capabilityModel.current@v1",
+        "roadmap.maturityBaseline.current@v1",
+        "roadmap.priorityCapabilities.current@v1",
+        "roadmap.futureStateGaps.current@v1",
+        "roadmap.gapInitiatives.current@v1",
+        "roadmap.enterpriseRoadmap.current@v1"
+      ],
+      "created_at": "2026-08-20T16:18:16.433181+00:00",
+      "confirmed_at": "2026-08-20T14:00:00+08:00",
+      "confirmed_by": "user",
+      "interaction_ref": "transcript:12:用户明确确认采用本版能力模型草稿"
+    },
+    "roadmap.package.current": {
+      "path": "output/capability-roadmap-package-e2e-topic-v1",
+      "version": 1,
+      "status": "finalized",
+      "content_hash": "sha256:11114ee880e5fcad58083b675e0b9f5a26d173716677294ac11af84a92bbda76",
+      "depends_on": [
+        "roadmap.capabilityModel.current@v1",
+        "roadmap.maturityBaseline.current@v1",
+        "roadmap.priorityCapabilities.current@v1",
+        "roadmap.futureStateGaps.current@v1",
+        "roadmap.gapInitiatives.current@v1",
+        "roadmap.enterpriseRoadmap.current@v1"
+      ],
+      "source_refs": [
+        "roadmap.capabilityModel.current@v1",
+        "roadmap.maturityBaseline.current@v1",
+        "roadmap.priorityCapabilities.current@v1",
+        "roadmap.futureStateGaps.current@v1",
+        "roadmap.gapInitiatives.current@v1",
+        "roadmap.enterpriseRoadmap.current@v1"
+      ],
+      "package_hash": "sha256:8029bd7e510f5c60539bd774824f3452f9959e836a496bfafc9ef17eca8dd638",
+      "created_at": "2026-08-20T16:18:16.485279+00:00"
+    }
+  },
+  "scoring_config": null,
+  "scoring_config_history": [],
+  "method": "roadmap-method-capability",
+  "exit_authorization": {
+    "confirmed_by": "user",
+    "interaction_ref": "transcript:60:用户明确授权出口确认摘要与 draft 资产包（M5-02 演练）",
+    "confirmed_at": "2026-08-21T00:10:00+08:00",
+    "authorization_text": "用户明确授权采用本版资产包交付（M5-02 演练）",
+    "recorded_at": "2026-08-20T16:18:16.533345+00:00"
+  }
+}

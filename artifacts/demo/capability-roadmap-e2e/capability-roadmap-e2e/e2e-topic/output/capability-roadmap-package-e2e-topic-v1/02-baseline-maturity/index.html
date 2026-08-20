@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>02 建立能力基线并评估成熟度 · 千店千策分销网络转型</title>
+<!-- 由 AI（LLM）按 deliverable-render SKILL.md 生成：业务内容只来自 baseline-maturity-e2e-topic-v1.md 结构化数据块；版面参照画布 02-baseline-maturity -->
+<style>
+  :root{
+    --page-bg:#FFFFFF; --block-bg:#F7F7F7; --ink:#1A1A1A; --ink-deep:#2D2D2D;
+    --ink-soft:#6B6B6B; --ink-muted:#808080; --border:#D4D4D4; --accent:#1A1A1A;
+    --table-head:#F1F1F1; --callout:#FAFAFA;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:var(--page-bg);color:var(--ink);line-height:1.6;}
+  .page{width:min(1280px,calc(100vw - 48px));margin:0 auto;padding:28px 0 64px;}
+  .report-header{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:24px;align-items:start;padding-bottom:18px;border-bottom:1px solid var(--border);}
+  .report-kicker,.eyebrow{margin:0;color:var(--ink-soft);font-size:11px;font-weight:700;letter-spacing:.2em;line-height:1.4;text-transform:uppercase;}
+  .report-title{margin:6px 0 0;color:var(--ink);font-size:15px;font-weight:700;}
+  .report-subtitle{margin:2px 0 0;color:var(--ink-soft);font-size:12px;}
+  .report-meta{display:grid;gap:8px;color:var(--ink-soft);font-size:12px;text-align:right;}
+  .hero{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(300px,.6fr);gap:28px;padding:34px 0 24px;border-bottom:1px solid var(--border);}
+  h1{margin:10px 0 0;color:var(--ink);font-size:26px;font-weight:700;line-height:1.4;}
+  h2{color:var(--ink);font-size:20px;font-weight:700;line-height:1.4;}
+  h3{color:var(--ink);font-size:15px;font-weight:600;line-height:1.4;}
+  .lead{margin:14px 0 0;max-width:900px;color:var(--ink-deep);font-size:14px;line-height:1.75;}
+  .so-what{padding:16px;border:1px solid var(--border);border-left:3px solid var(--ink);background:var(--block-bg);font-size:13px;color:var(--ink-deep);}
+  .so-what h2{font-size:15px;}
+  .so-what p{margin:8px 0 0;}
+  .nav-strip{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px;}
+  .nav-strip a{padding:5px 8px;border:1px solid var(--border);color:var(--ink-soft);font-size:12px;text-decoration:none;}
+  .summary-strip{display:grid;grid-template-columns:repeat(3,minmax(0,1fr)) auto;gap:10px;margin-top:22px;}
+  .summary-card{padding:13px;border:1px solid var(--border);background:var(--block-bg);font-size:12px;color:var(--ink-soft);}
+  .summary-card strong{display:block;color:var(--ink);font-size:13px;line-height:1.5;}
+  .summary-card p{margin:6px 0 0;}
+  .summary-tag{padding:13px;border:1px solid var(--ink);font-size:12px;color:var(--ink-soft);}
+  .summary-tag strong{display:block;color:var(--ink);font-size:26px;line-height:1.2;}
+  .section{padding-top:34px;}
+  .section-head{display:grid;grid-template-columns:minmax(0,1fr) minmax(260px,.34fr);gap:24px;align-items:end;margin-bottom:14px;}
+  .section-head p{margin:6px 0 0;color:var(--ink-soft);font-size:13px;}
+  .section-note{margin:0;padding:11px;border:1px solid var(--border);background:var(--block-bg);color:var(--ink-deep);font-size:12px;}
+  .logic-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;}
+  .logic-node{padding:13px;border:1px solid var(--border);background:var(--block-bg);}
+  .logic-node strong{display:block;margin-top:8px;color:var(--ink);font-size:14px;line-height:1.45;}
+  .logic-node p{margin:6px 0 0;color:var(--ink-soft);font-size:12px;}
+  .node-label{display:inline-block;color:var(--ink-muted);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;}
+  .table-wrap{overflow-x:auto;border:1px solid var(--border);background:var(--page-bg);}
+  table{width:100%;min-width:900px;border-collapse:collapse;}
+  th,td{padding:10px 12px;border-bottom:1px solid var(--border);text-align:left;vertical-align:top;font-size:13px;line-height:1.5;}
+  th{color:var(--ink);background:var(--table-head);border-bottom:2px solid var(--ink);font-weight:700;}
+  td{color:var(--ink-deep);}
+  caption{padding:9px 12px 5px;text-align:left;color:var(--ink-soft);font-size:12px;font-weight:700;}
+  td.perf{background:var(--block-bg);}
+  td.lagg{background:var(--ink-deep);color:var(--page-bg);}
+  .quality-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;}
+  .quality-card{min-height:120px;padding:13px;border:1px solid var(--border);background:var(--block-bg);}
+  .quality-card h3{font-size:14px;}
+  .quality-card p{margin:8px 0 0;color:var(--ink-soft);font-size:12px;}
+  .status{display:inline-block;margin-bottom:8px;padding-bottom:2px;color:var(--ink);border-bottom:1px solid var(--ink);font-size:12px;font-weight:700;}
+  details.panel{margin-top:12px;border:1px solid var(--border);background:var(--block-bg);}
+  details.panel summary{padding:11px 13px;color:var(--ink);font-size:13px;font-weight:700;cursor:pointer;}
+  details.panel .panel-body{padding:0 13px 13px;color:var(--ink-deep);font-size:13px;}
+  .action-table{margin-top:12px;}
+  .pill{display:inline-block;padding:3px 6px;border:1px solid var(--ink);color:var(--ink);background:var(--page-bg);font-size:12px;white-space:nowrap;}
+  .report-footer{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;margin-top:40px;padding-top:13px;border-top:1px solid var(--border);color:var(--ink-muted);font-size:11px;}
+  @media (max-width:980px){
+    .hero,.report-header,.section-head{grid-template-columns:1fr;}
+    .summary-strip,.logic-grid,.quality-grid{grid-template-columns:1fr;}
+    .report-meta{text-align:left;}
+  }
+  @media print{.page{width:auto;padding:0;}.nav-strip{display:none;}}
+</style>
+</head>
+<body>
+  <div class="page">
+    <header class="report-header">
+      <div>
+        <p class="report-kicker">Capability Roadmap · 02 · v1</p>
+        <p class="report-title">能力路线图端到端演练 · 千店千策分销网络转型</p>
+        <p class="report-subtitle">能力基线与成熟度评估交付物 · Illustrative exhibit</p>
+      </div>
+      <div class="report-meta" aria-label="交付物元信息">
+        <span>阶段：02</span>
+        <span>对象：6 个能力域六维基线</span>
+        <span>状态：pass</span>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero">
+        <div>
+          <p class="eyebrow">Executive Message</p>
+          <h1>6 个能力域六维基线齐备，成熟度整体 Performing</h1>
+          <p class="lead">基于六维当前状态基线（Mission/Insights/Process/Technology/Talent/Governance）与独立市场基准的整体判断，6 个能力域综合成熟度均为 Performing，证据强度 B，已完成跨能力口径校准。</p>
+          <nav class="nav-strip" aria-label="页面导航">
+            <a href="#logic">评估逻辑</a><a href="#heat">成熟度热力</a><a href="#baseline">六维基线</a><a href="#benchmark">基准</a><a href="#maturity">成熟度判断</a><a href="#quality">质量门</a>
+          </nav>
+        </div>
+        <aside class="so-what">
+          <h2>So what</h2>
+          <p>成熟度判断为整体判断、不设加权评分公式（方法论规则 4）——单维 Lagging 不自动拉低综合成熟度，成熟度信息仅作重点能力排序的补充诊断。</p>
+        </aside>
+      </section>
+
+      <section class="summary-strip" aria-label="核心支撑论点">
+        <article class="summary-card">
+          <span class="node-label">支撑论点 1</span>
+          <strong>六维基线完整</strong>
+          <p>6 个能力域 × 6 维当前状态基线齐备（T3），能力域集合来自阶段 01 确认能力模型。</p>
+        </article>
+        <article class="summary-card">
+          <span class="node-label">支撑论点 2</span>
+          <strong>基准独立形成</strong>
+          <p>强制要求/正常专业要求/同行基准/普遍实践/领先实践独立建立，不受本企业愿景预先筛选（T4）。</p>
+        </article>
+        <article class="summary-card">
+          <span class="node-label">支撑论点 3</span>
+          <strong>证据强度可追溯</strong>
+          <p>成熟度判断证据强度 B（多方一致访谈/工作坊共识），冲突证据与后续验证方式已记录（T5A）。</p>
+        </article>
+        <div class="summary-tag">
+          <strong>6</strong>
+          <span>能力域 · 全 Performing</span>
+        </div>
+      </section>
+
+      <section class="section" id="logic">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">02 · Maturity Logic</p>
+            <h2>成熟度判定逻辑链</h2>
+            <p>三类证据交叉校准，而非访谈印象或市场热点。</p>
+          </div>
+          <p class="section-note">输出判断：基线+基准+证据强度 → 整体判断成熟度</p>
+        </div>
+        <div class="logic-grid">
+          <article class="logic-node">
+            <span class="node-label">能力对象</span>
+            <strong>6 个能力域</strong>
+            <p>来自阶段 01 能力模型</p>
+          </article>
+          <article class="logic-node">
+            <span class="node-label">当前基线</span>
+            <strong>六维事实记录</strong>
+            <p>Mission/Insights/Process/Technology/Talent/Governance</p>
+          </article>
+          <article class="logic-node">
+            <span class="node-label">独立基准</span>
+            <strong>最低要求 / 市场正常 / 领先实践</strong>
+            <p>强制要求、同行基准、领先实践</p>
+          </article>
+          <article class="logic-node">
+            <span class="node-label">证据强度</span>
+            <strong>B 级</strong>
+            <p>多方一致访谈/工作坊共识</p>
+          </article>
+          <article class="logic-node" style="border:1px solid var(--ink);">
+            <span class="node-label">成熟度判断</span>
+            <strong>Performing</strong>
+            <p>整体判断，无加权公式</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="section" id="heat">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">02 · Maturity Heat</p>
+            <h2>成熟度热力矩阵</h2>
+            <p>行 = 能力域，列 = 六维 + 综合成熟度 + 证据强度，逐格对应六维基线表（T3/T5）。</p>
+          </div>
+          <p class="section-note">输出判断：全 Performing，无 Leading 档（标注"无领先档"）</p>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <caption>成熟度热力矩阵 · 能力域数 × 6 维 + 综合 + 证据</caption>
+            <thead>
+              <tr><th>能力域</th><th>Mission</th><th>Insights</th><th>Process</th><th>Technology</th><th>Talent</th><th>Governance</th><th>综合成熟度</th><th>证据强度</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>C1 能力域 1</td><td class="perf">mission 当前状态 1</td><td class="perf">insights 当前状态 1</td><td class="perf">process 当前状态 1</td><td class="perf">technology 当前状态 1</td><td class="perf">talent 当前状态 1</td><td class="perf">governance 当前状态 1</td><td class="perf">Performing</td><td>B</td></tr>
+              <tr><td>C2 能力域 2</td><td class="perf">mission 当前状态 2</td><td class="perf">insights 当前状态 2</td><td class="perf">process 当前状态 2</td><td class="perf">technology 当前状态 2</td><td class="perf">talent 当前状态 2</td><td class="perf">governance 当前状态 2</td><td class="perf">Performing</td><td>B</td></tr>
+              <tr><td>C3 能力域 3</td><td class="perf">mission 当前状态 3</td><td class="perf">insights 当前状态 3</td><td class="perf">process 当前状态 3</td><td class="perf">technology 当前状态 3</td><td class="perf">talent 当前状态 3</td><td class="perf">governance 当前状态 3</td><td class="perf">Performing</td><td>B</td></tr>
+              <tr><td>C4 能力域 4</td><td class="perf">mission 当前状态 4</td><td class="perf">insights 当前状态 4</td><td class="perf">process 当前状态 4</td><td class="perf">technology 当前状态 4</td><td class="perf">talent 当前状态 4</td><td class="perf">governance 当前状态 4</td><td class="perf">Performing</td><td>B</td></tr>
+              <tr><td>C5 能力域 5</td><td class="perf">mission 当前状态 5</td><td class="perf">insights 当前状态 5</td><td class="perf">process 当前状态 5</td><td class="perf">technology 当前状态 5</td><td class="perf">talent 当前状态 5</td><td class="perf">governance 当前状态 5</td><td class="perf">Performing</td><td>B</td></tr>
+              <tr><td>C6 能力域 6</td><td class="perf">mission 当前状态 6</td><td class="perf">insights 当前状态 6</td><td class="perf">process 当前状态 6</td><td class="perf">technology 当前状态 6</td><td class="perf">talent 当前状态 6</td><td class="perf">governance 当前状态 6</td><td class="perf">Performing</td><td>B</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p style="margin:8px 0 0;color:var(--ink-soft);font-size:12px;">视觉语义：Lagging 深灰实底 / Performing 浅灰底 / Leading 粗黑框；当前无领先档，综合列标注"无领先档"。</p>
+      </section>
+
+      <section class="section" id="baseline">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">02 · Six-Dimension Baseline</p>
+            <h2>六维当前状态基线</h2>
+            <p>先组织当前状态事实，再与行业标杆和未来状态比较（T3）。</p>
+          </div>
+          <p class="section-note">输出判断：能力域集合来自阶段 01 confirmed 能力模型</p>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <caption>六维当前状态基线 · 摘录 C1/C6（其余同构）</caption>
+            <thead>
+              <tr><th>能力</th><th>Mission</th><th>Insights</th><th>Process</th><th>Technology</th><th>Talent</th><th>Governance</th><th>证据来源</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>C1</td><td>mission 当前状态 1</td><td>insights 当前状态 1</td><td>process 当前状态 1</td><td>technology 当前状态 1</td><td>talent 当前状态 1</td><td>governance 当前状态 1</td><td>访谈/工作坊</td></tr>
+              <tr><td>C6</td><td>mission 当前状态 6</td><td>insights 当前状态 6</td><td>process 当前状态 6</td><td>technology 当前状态 6</td><td>talent 当前状态 6</td><td>governance 当前状态 6</td><td>访谈/工作坊</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="section" id="benchmark">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">02 · Benchmark</p>
+            <h2>基本要求与市场基准</h2>
+            <p>独立形成，不受本企业愿景预先筛选（T4）。</p>
+          </div>
+          <p class="section-note">输出判断：行业/规模/模式相似，适用性成立</p>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <caption>基本要求与市场基准表 · 摘录</caption>
+            <thead>
+              <tr><th>能力</th><th>强制/最低要求</th><th>正常专业要求</th><th>同行统计基准</th><th>市场正常实践</th><th>市场领先实践</th><th>基准来源</th><th>适用性说明</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>C1</td><td>强制要求</td><td>正常专业要求</td><td>同行基准</td><td>普遍实践</td><td>领先实践</td><td>行业标准</td><td>行业/规模/模式相似</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="section" id="maturity">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">02 · Maturity & Calibration</p>
+            <h2>成熟度判断与证据校准</h2>
+            <p>以 Mission、六维基线和独立市场基准为依据整体判断（T5/T5A）。</p>
+          </div>
+          <p class="section-note">输出判断：综合成熟度口径=整体判断，不设加权评分公式</p>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <caption>成熟度判断表（T5）· 摘录</caption>
+            <thead>
+              <tr><th>能力</th><th>成熟度</th><th>判断理由</th><th>证据强度</th><th>证据缺口</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>C1</td><td><span class="pill">Performing</span></td><td>整体判断</td><td>B</td><td>—</td></tr>
+              <tr><td>C6</td><td><span class="pill">Performing</span></td><td>整体判断</td><td>B</td><td>—</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="table-wrap" style="margin-top:12px;">
+          <table>
+            <caption>证据强度与校准表（T5A）· 摘录</caption>
+            <thead>
+              <tr><th>能力</th><th>判断项</th><th>证据强度</th><th>冲突证据</th><th>校准结论</th><th>后续验证</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>C1</td><td>成熟度</td><td>B</td><td>—</td><td>口径一致</td><td>回测</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="section" id="quality">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">02 · Quality Gate</p>
+            <h2>阶段 02 建议"pass"</h2>
+            <p>核心判定项：基线证据 / 基准独立性。</p>
+          </div>
+          <p class="section-note">下一步重点：在进入阶段 03 前无阻断项</p>
+        </div>
+        <div class="quality-grid">
+          <article class="quality-card"><span class="status">通过</span><h3>六维基线完整</h3><p>能力域数 × 6 维完整，能力域集合来自阶段 01 确认模型</p></article>
+          <article class="quality-card"><span class="status">通过</span><h3>基准独立性</h3><p>基准不受本企业愿景预先筛选，适用性说明齐备</p></article>
+          <article class="quality-card"><span class="status">通过</span><h3>证据强度</h3><p>成熟度有 B 级证据支撑，冲突证据与验证方式记录</p></article>
+          <article class="quality-card"><span class="status">通过</span><h3>跨能力校准</h3><p>Lagging/Performing/Leading 判定口径一致，无标准漂移</p></article>
+          <article class="quality-card"><span class="status">通过</span><h3>综合口径</h3><p>整体判断不设加权评分公式，单维不决定整体</p></article>
+          <article class="quality-card"><span class="status">通过</span><h3>未决项</h3><p>无证据缺口未决项</p></article>
+        </div>
+      </section>
+
+      <details class="panel" open>
+        <summary>未决条件清单（0 项，登记于阶段 02）· 按方法论 T12 跟踪</summary>
+        <div class="panel-body">
+          <div class="table-wrap">
+            <table>
+              <caption>未决项列表</caption>
+              <thead>
+                <tr><th>编号</th><th>来源/原编号</th><th>未决内容</th><th>影响面</th><th>证据强度</th><th>责任人</th><th>拟裁决方式</th></tr>
+              </thead>
+              <tbody>
+                <tr><td colspan="7">本阶段无未决项</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </details>
+
+      <div class="table-wrap action-table">
+        <table>
+          <caption>下一步行动 · 行动 + owner + 时限</caption>
+          <thead><tr><th>下一步行动</th><th>责任 owner</th><th>时限</th></tr></thead>
+          <tbody>
+            <tr><td>进入阶段 03：基于双视角判断确定重点能力（含条件重点裁决安排）</td><td>销售 VP / 供应链 VP</td><td>阶段 03 前</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </main>
+
+    <footer class="report-footer">
+      <span>Source: 能力路线图端到端演练 · Illustrative exhibit（示例数据需校准）</span>
+      <span>2026-08-20 · v1 · Capability Roadmap Demo · 02</span>
+    </footer>
+  </div>
+</body>
+</html>

@@ -12,14 +12,31 @@ DEMO_DIR = ROOT / "artifacts" / "demo"
 class TestDocCarrier(unittest.TestCase):
     """A8 载体合规：交付物统一 HTML + 每个 HTML 有对应 MD 唯一事实源 + 中间产物 MD。"""
 
+    @staticmethod
+    def _package_dirs(d: Path) -> list[Path]:
+        """capability-roadmap 资产包目录（多文件包：index + 01~06 共 7 文件）。"""
+        return [p for p in d.rglob("capability-roadmap-package-*") if p.is_dir()]
+
     def test_each_html_has_md_source(self):
-        """每个 HTML 确认包有对应的 markdown 唯一事实源（vision-confirm / diagnosis-confirm）。"""
+        """每个 HTML 确认包有对应的 markdown 唯一事实源
+        （vision-confirm / diagnosis-confirm 单文件；capability-roadmap-package 多文件包）。"""
         for d in (d for d in DEMO_DIR.iterdir() if d.is_dir()):
             htmls = sorted(d.glob("vision-confirm-*.html")) + sorted(d.glob("diagnosis-confirm-*.html"))
-            self.assertGreater(len(htmls), 0, f"{d.name} 应至少含一个 HTML 确认包")
+            pkgs = self._package_dirs(d)
+            self.assertGreater(len(htmls) + len(pkgs), 0, f"{d.name} 应至少含一个 HTML 交付物")
             for html in htmls:
                 md_name = html.stem + ".md"
                 self.assertTrue((d / md_name).exists(), f"{d.name}/{md_name} 应存在（HTML 唯一事实源）")
+            # capability-package：7 文件包 + 六阶段 confirmed md 唯一事实源（M3-05）
+            for pkg in pkgs:
+                for rel in ("index.html", "01-capability-model/index.html", "02-baseline-maturity/index.html",
+                            "03-priority-capabilities/index.html", "04-future-state/index.html",
+                            "05-gap-initiatives/index.html", "06-capability-roadmap/index.html"):
+                    self.assertTrue((pkg / rel).exists(), f"{pkg.relative_to(ROOT)} 缺 {rel}")
+                session_dir = pkg.parent.parent if pkg.parent.name == "output" else None
+                modules = sorted((session_dir / "modules").glob("*.md")) if session_dir else []
+                self.assertGreaterEqual(len(modules), 6,
+                                        f"{pkg.relative_to(ROOT)} 应存在六阶段 confirmed md 唯一事实源（modules/）")
 
     def test_intermediate_products_are_markdown(self):
         """artifacts 内不放置中间产物（演练产物只有 HTML 确认包 + 唯一 MD 事实源），不污染规范。
@@ -31,7 +48,13 @@ class TestDocCarrier(unittest.TestCase):
     def test_html_uses_inline_styles_no_external_resources(self):
         """交付物 HTML 内联 CSS，无外部样式表/脚本（离线可打印）。"""
         for d in (d for d in DEMO_DIR.iterdir() if d.is_dir()):
-            for html in list(d.glob("vision-confirm-*.html")) + list(d.glob("diagnosis-confirm-*.html")):
+            htmls = list(d.glob("vision-confirm-*.html")) + list(d.glob("diagnosis-confirm-*.html"))
+            for pkg in self._package_dirs(d):
+                htmls += [pkg / rel for rel in
+                          ("index.html", "01-capability-model/index.html", "02-baseline-maturity/index.html",
+                           "03-priority-capabilities/index.html", "04-future-state/index.html",
+                           "05-gap-initiatives/index.html", "06-capability-roadmap/index.html")]
+            for html in htmls:
                 content = html.read_text(encoding="utf-8")
                 self.assertIn("<style>", content, f"{html.name} 应含内联 <style>")
                 self.assertNotIn('<link rel="stylesheet"', content, "交付物不得依赖外部样式表")

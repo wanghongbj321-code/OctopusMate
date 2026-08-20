@@ -1,7 +1,7 @@
 {
   "name": "octopus-mate",
-  "version": "0.2.2",
-  "description": "OctopusMate: AI transformation consulting mate — transformation vision building via the Octopus 7-Step and North Star metric methods, plus VITAL five-dimension status diagnosis (22 angles, 1-5 scoring, blocker identification), all driven by a shared method engine; direction always decided by the consultant.",
+  "version": "0.3.0",
+  "description": "OctopusMate: AI transformation consulting mate — transformation vision building via the Octopus 7-Step and North Star metric methods, VITAL five-dimension status diagnosis (22 angles, 1-5 scoring, blocker identification), and enterprise capability roadmap building (six stages, deliverable package), all driven by a shared method engine with file-level gates and user-strong-confirmation; direction and authorization always decided by the consultant.",
   "agents": [
     "./agents/octopus-mate.md"
   ],
@@ -11,10 +11,13 @@
     "./skills/vision-gate",
     "./skills/diagnosis-distill",
     "./skills/diagnosis-gate",
+    "./skills/roadmap-distill",
+    "./skills/roadmap-gate",
     "./skills/deliverable-render",
     "./skills/methods/octopus-7step",
     "./skills/methods/north-star",
-    "./skills/methods/vital-diagnosis"
+    "./skills/methods/vital-diagnosis",
+    "./skills/methods/capability-roadmap"
   ],
   "expertType": "agent",
   "agentName": "octopus-mate",

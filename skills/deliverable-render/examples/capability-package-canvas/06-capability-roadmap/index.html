@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{阶段六标题}} · {{主题名称}}</title>
+<!--
+  ⚠️ 版面与签名视觉参照（capability-package 画布 · 企业级能力路线图）——仅作版式参照，不提供业务内容
+  - 业务内容一律用 {{占位符}} 标注，由 LLM 按阶段确认包 markdown 生成时填充（不做代码渲染）
+  - 禁止复制本文件中的样例占位文案；禁止引用 Demo 样例数值（见开发计划 §4.3 / M0-02）
+  - token 只来自用户选定视觉模式文件，本文件不提供 token 候选
+-->
+<style>
+  :root{
+    --page-bg:#FFFFFF; --block-bg:#F7F7F7; --ink:#1A1A1A; --ink-deep:#2D2D2D;
+    --ink-soft:#6B6B6B; --ink-muted:#808080; --border:#D4D4D4; --accent:#1A1A1A;
+    --table-head:#F1F1F1; --callout:#FAFAFA;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:var(--page-bg);color:var(--ink);line-height:1.6;}
+  .page{width:min(1280px,calc(100vw - 48px));margin:0 auto;padding:28px 0 64px;}
+  .report-header{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:24px;align-items:start;padding-bottom:18px;border-bottom:1px solid var(--border);}
+  .report-kicker,.eyebrow{margin:0;color:var(--ink-soft);font-size:11px;font-weight:700;letter-spacing:.2em;line-height:1.4;text-transform:uppercase;}
+  .report-title{margin:6px 0 0;color:var(--ink);font-size:15px;font-weight:700;}
+  .report-subtitle{margin:2px 0 0;color:var(--ink-soft);font-size:12px;}
+  .report-meta{display:grid;gap:8px;color:var(--ink-soft);font-size:12px;text-align:right;}
+  .hero{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(300px,.6fr);gap:28px;padding:34px 0 24px;border-bottom:1px solid var(--border);}
+  h1{margin:10px 0 0;color:var(--ink);font-size:26px;font-weight:700;line-height:1.4;}
+  h2{color:var(--ink);font-size:20px;font-weight:700;line-height:1.4;}
+  h3{color:var(--ink);font-size:15px;font-weight:600;line-height:1.4;}
+  .lead{margin:14px 0 0;max-width:900px;color:var(--ink-deep);font-size:14px;line-height:1.75;}
+  .so-what{padding:16px;border:1px solid var(--border);border-left:3px solid var(--ink);background:var(--block-bg);font-size:13px;color:var(--ink-deep);}
+  .so-what h2{font-size:15px;}
+  .so-what p{margin:8px 0 0;}
+  .nav-strip{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px;}
+  .nav-strip a{padding:5px 8px;border:1px solid var(--border);color:var(--ink-soft);font-size:12px;text-decoration:none;}
+  .summary-strip{display:grid;grid-template-columns:repeat(3,minmax(0,1fr)) auto;gap:10px;margin-top:22px;}
+  .summary-card{padding:13px;border:1px solid var(--border);background:var(--block-bg);font-size:12px;color:var(--ink-soft);}
+  .summary-card strong{display:block;color:var(--ink);font-size:13px;line-height:1.5;}
+  .summary-card p{margin:6px 0 0;}
+  .summary-tag{padding:13px;border:1px solid var(--ink);font-size:12px;color:var(--ink-soft);}
+  .summary-tag strong{display:block;color:var(--ink);font-size:26px;line-height:1.2;}
+  .section{padding-top:34px;}
+  .section-head{display:grid;grid-template-columns:minmax(0,1fr) minmax(260px,.34fr);gap:24px;align-items:end;margin-bottom:14px;}
+  .section-head p{margin:6px 0 0;color:var(--ink-soft);font-size:13px;}
+  .section-note{margin:0;padding:11px;border:1px solid var(--border);background:var(--block-bg);color:var(--ink-deep);font-size:12px;}
+  .logic-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;}
+  .logic-node{padding:13px;border:1px solid var(--border);background:var(--block-bg);}
+  .logic-node strong{display:block;margin-top:8px;color:var(--ink);font-size:14px;line-height:1.45;}
+  .logic-node p{margin:6px 0 0;color:var(--ink-soft);font-size:12px;}
+  .node-label{display:inline-block;color:var(--ink-muted);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;}
+  .arch-row{display:grid;grid-template-columns:170px minmax(0,1fr);gap:10px;margin-bottom:10px;}
+  .arch-label{padding:13px;border:1px solid var(--ink);font-size:13px;font-weight:700;color:var(--ink);}
+  .arch-cells{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;}
+  .domain{padding:13px;border:1px solid var(--border);background:var(--block-bg);}
+  .domain-top{display:flex;justify-content:space-between;gap:10px;}
+  .domain-code{padding:3px 6px;border:1px solid var(--ink);font-size:11px;font-weight:700;}
+  .domain p{margin:8px 0 0;color:var(--ink-soft);font-size:12px;}
+  .classification{display:block;margin-top:10px;color:var(--ink-muted);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;}
+  .table-wrap{overflow-x:auto;border:1px solid var(--border);background:var(--page-bg);}
+  table{width:100%;min-width:900px;border-collapse:collapse;}
+  th,td{padding:10px 12px;border-bottom:1px solid var(--border);text-align:left;vertical-align:top;font-size:13px;line-height:1.5;}
+  th{color:var(--ink);background:var(--table-head);border-bottom:2px solid var(--ink);font-weight:700;}
+  td{color:var(--ink-deep);}
+  caption{padding:9px 12px 5px;text-align:left;color:var(--ink-soft);font-size:12px;font-weight:700;}
+  .quality-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;}
+  .quality-card{min-height:120px;padding:13px;border:1px solid var(--border);background:var(--block-bg);}
+  .quality-card h3{font-size:14px;}
+  .quality-card p{margin:8px 0 0;color:var(--ink-soft);font-size:12px;}
+  .status{display:inline-block;margin-bottom:8px;padding-bottom:2px;color:var(--ink);border-bottom:1px solid var(--ink);font-size:12px;font-weight:700;}
+  details.panel{margin-top:12px;border:1px solid var(--border);background:var(--block-bg);}
+  details.panel summary{padding:11px 13px;color:var(--ink);font-size:13px;font-weight:700;cursor:pointer;}
+  details.panel .panel-body{padding:0 13px 13px;color:var(--ink-deep);font-size:13px;}
+  .action-table{margin-top:12px;}
+  .pill{display:inline-block;padding:3px 6px;border:1px solid var(--ink);color:var(--ink);background:var(--page-bg);font-size:12px;white-space:nowrap;}
+  .report-footer{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;margin-top:40px;padding-top:13px;border-top:1px solid var(--border);color:var(--ink-muted);font-size:11px;}
+  @media (max-width:980px){
+    .hero,.report-header,.section-head,.arch-row{grid-template-columns:1fr;}
+    .summary-strip,.logic-grid,.arch-cells,.quality-grid{grid-template-columns:1fr;}
+    .report-meta{text-align:left;}
+  }
+  @media print{.page{width:auto;padding:0;}.nav-strip{display:none;}}
+</style>
+</head>
+<body>
+  <div class="page">
+    <header class="report-header">
+      <div>
+        <p class="report-kicker">Capability Roadmap · Stage 06 · {{版本}}</p>
+        <p class="report-title">{{项目名称}} · {{主题名称}}</p>
+        <p class="report-subtitle">{{阶段交付物名称}} · Illustrative exhibit</p>
+      </div>
+      <div class="report-meta" aria-label="交付物元信息">
+        <span>阶段：06</span>
+        <span>对象：企业级能力路线图</span>
+        <span>状态：{{质量门状态}}</span>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero">
+        <div>
+          <p class="eyebrow">Executive Message</p>
+          <h1>{{阶段六主结论标题}}</h1>
+          <p class="lead">{{阶段六一句话说明}}</p>
+          <nav class="nav-strip" aria-label="页面导航">
+            <a href="#sorting">企业级排序</a><a href="#house">战略屋</a><a href="#gantt">里程碑甘特图</a><a href="#phase">三阶段</a><a href="#metrics">度量复审</a><a href="#consistency">四层一致性</a><a href="#quality">质量门</a>
+          </nav>
+        </div>
+        <aside class="so-what">
+          <h2>So what</h2>
+          <p>{{管理含义：路线图不是项目时间表；管理层应看到排序簇取舍、里程碑 M/G/D 与持续治理，且路线图随决策门裁决滚动更新。}}</p>
+        </aside>
+      </section>
+
+      <section class="summary-strip" aria-label="核心支撑论点">
+        <article class="summary-card">
+          <span class="node-label">支撑论点 1</span>
+          <strong>{{支撑论点一标题}}</strong>
+          <p>{{支撑论点一说明}}</p>
+        </article>
+        <article class="summary-card">
+          <span class="node-label">支撑论点 2</span>
+          <strong>{{支撑论点二标题}}</strong>
+          <p>{{支撑论点二说明}}</p>
+        </article>
+        <article class="summary-card">
+          <span class="node-label">支撑论点 3</span>
+          <strong>{{支撑论点三标题}}</strong>
+          <p>{{支撑论点三说明}}</p>
+        </article>
+        <div class="summary-tag">
+          <strong>{{关键数字}}</strong>
+          <span>{{关键数字说明}}</span>
+        </div>
+      </section>
+
+      <section class="section" id="sorting">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">01 · Enterprise Sorting</p>
+            <h2>{{企业级排序标题}}</h2>
+            <p>{{企业级排序说明}}</p>
+          </div>
+          <p class="section-note">{{输出判断}}</p>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <caption>{{企业级排序证据 · 排序簇 × 代表举措 × 价值贡献 × 依赖成熟度 × 资源风险约束 × 路线图取舍 · Illustrative}}</caption>
+            <thead><tr><th>排序簇</th><th>代表举措</th><th>价值贡献</th><th>依赖成熟度</th><th>资源/风险约束</th><th>路线图取舍</th></tr></thead>
+            <tbody>
+              <tr><td>{{排序簇}}</td><td>{{代表举措}}</td><td>{{价值贡献}}</td><td>{{依赖成熟度}}</td><td>{{资源/风险约束}}</td><td>{{前置/并行/延后/移出}}</td></tr>
+              <tr><td colspan="6">{{…其余排序簇行…}}</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+      <section class="section" id="house">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">02 · Capability Blueprint</p>
+            <h2>{{战略屋式能力蓝图标题}}</h2>
+            <p>{{战略屋式能力蓝图说明}}</p>
+          </div>
+          <p class="section-note">{{阅读方式}}</p>
+        </div>
+                <svg viewBox="0 0 1123 720" role="img" aria-label="战略屋式能力蓝图（Sample：结构示意，内容占位）">
+          <title>战略屋式能力蓝图</title>
+          <desc>自上而下四层：愿景与使命 → 价值结果 → 业务能力（C1/C2/C4/C5，条件能力虚线）→ 基础能力（C6）；阶段色块表达三阶段建设建议，渲染时按确认包数据确定。</desc>
+          <text x="40" y="96" font-size="13" font-weight="700" fill="#1A1A1A">愿景与使命</text>
+          <text x="40" y="196" font-size="13" font-weight="700" fill="#1A1A1A">价值结果</text>
+          <text x="40" y="420" font-size="13" font-weight="700" fill="#1A1A1A">业务能力</text>
+          <text x="40" y="640" font-size="13" font-weight="700" fill="#1A1A1A">基础能力</text>
+          <path d="M612,40 L994,160 L230,160 Z" fill="#F7F7F7" stroke="#1A1A1A" stroke-width="1.2"></path>
+          <text x="612" y="110" font-size="24" font-weight="700" fill="#1A1A1A" text-anchor="middle">{{愿景主题}}</text>
+          <text x="612" y="140" font-size="13" fill="#2D2D2D" text-anchor="middle">{{愿景副标题}}</text>
+          <rect x="230" y="184" width="170" height="56" fill="#FFFFFF" stroke="#1A1A1A" stroke-width="2"></rect>
+          <text x="315" y="208" font-size="13" font-weight="700" fill="#1A1A1A" text-anchor="middle">{{价值结果一}}</text>
+          <text x="315" y="228" font-size="11" fill="#6B6B6B" text-anchor="middle">{{价值结果一说明}}</text>
+          <rect x="428" y="184" width="170" height="56" fill="#FFFFFF" stroke="#1A1A1A" stroke-width="2"></rect>
+          <text x="513" y="208" font-size="13" font-weight="700" fill="#1A1A1A" text-anchor="middle">{{价值结果二}}</text>
+          <text x="513" y="228" font-size="11" fill="#6B6B6B" text-anchor="middle">{{价值结果二说明}}</text>
+          <rect x="626" y="184" width="170" height="56" fill="#FFFFFF" stroke="#1A1A1A" stroke-width="2"></rect>
+          <text x="711" y="208" font-size="13" font-weight="700" fill="#1A1A1A" text-anchor="middle">{{价值结果三}}</text>
+          <text x="711" y="228" font-size="11" fill="#6B6B6B" text-anchor="middle">{{价值结果三说明}}</text>
+          <rect x="824" y="184" width="170" height="56" fill="#FFFFFF" stroke="#1A1A1A" stroke-width="2"></rect>
+          <text x="909" y="208" font-size="13" font-weight="700" fill="#1A1A1A" text-anchor="middle">{{价值结果四}}</text>
+          <text x="909" y="228" font-size="11" fill="#6B6B6B" text-anchor="middle">{{价值结果四说明}}</text>
+          <rect x="230" y="260" width="170" height="280" fill="#FFFFFF" stroke="#D4D4D4"></rect>
+          <text x="315" y="284" font-size="13" font-weight="700" fill="#1A1A1A" text-anchor="middle">{{C1 能力域名}}</text>
+          <rect x="242" y="300" width="146" height="60" fill="#F7F7F7" stroke="#D4D4D4"></rect>
+          <text x="315" y="322" font-size="10.5" font-weight="700" fill="#2D2D2D" text-anchor="middle">阶段 1 · {{举措}}</text>
+          <rect x="242" y="368" width="146" height="60" fill="#F1F1F1" stroke="#D4D4D4"></rect>
+          <text x="315" y="390" font-size="10.5" font-weight="700" fill="#2D2D2D" text-anchor="middle">阶段 2 · {{举措}}</text>
+          <rect x="242" y="436" width="146" height="60" fill="#FAFAFA" stroke="#D4D4D4"></rect>
+          <text x="315" y="458" font-size="10.5" font-weight="700" fill="#2D2D2D" text-anchor="middle">阶段 3 · {{举措}}</text>
+          <text x="315" y="520" font-size="11" fill="#808080" text-anchor="middle">{{阶段推进说明}}</text>
+          <rect x="428" y="260" width="170" height="280" fill="#FFFFFF" stroke="#D4D4D4"></rect>
+          <text x="513" y="284" font-size="13" font-weight="700" fill="#1A1A1A" text-anchor="middle">{{C2 能力域名}}</text>
+          <rect x="440" y="300" width="146" height="60" fill="#F7F7F7" stroke="#D4D4D4"></rect>
+          <text x="513" y="322" font-size="10.5" font-weight="700" fill="#2D2D2D" text-anchor="middle">阶段 1 · {{举措}}</text>
+          <rect x="440" y="368" width="146" height="60" fill="#F1F1F1" stroke="#D4D4D4"></rect>
+          <text x="513" y="390" font-size="10.5" font-weight="700" fill="#2D2D2D" text-anchor="middle">阶段 2 · {{举措}}</text>
+          <rect x="440" y="436" width="146" height="60" fill="#FAFAFA" stroke="#D4D4D4"></rect>
+          <text x="513" y="458" font-size="10.5" font-weight="700" fill="#2D2D2D" text-anchor="middle">阶段 3 · {{举措}}</text>
+          <text x="513" y="520" font-size="11" fill="#808080" text-anchor="middle">{{阶段推进说明}}</text>
+          <rect x="626" y="260" width="170" height="280" fill="#FFFFFF" stroke="#D4D4D4"></rect>
+          <text x="711" y="284" font-size="13" font-weight="700" fill="#1A1A1A" text-anchor="middle">{{C4 能力域名}}</text>
+          <rect x="638" y="300" width="146" height="60" fill="#F7F7F7" stroke="#D4D4D4"></rect>
+          <text x="711" y="322" font-size="10.5" font-weight="700" fill="#2D2D2D" text-anchor="middle">阶段 1 · {{举措}}</text>
+          <rect x="638" y="368" width="146" height="60" fill="#F1F1F1" stroke="#D4D4D4"></rect>
+          <text x="711" y="390" font-size="10.5" font-weight="700" fill="#2D2D2D" text-anchor="middle">阶段 2 · {{举措}}</text>
+          <rect x="638" y="436" width="146" height="60" fill="#FAFAFA" stroke="#D4D4D4"></rect>
+          <text x="711" y="458" font-size="10.5" font-weight="700" fill="#2D2D2D" text-anchor="middle">阶段 3 · {{举措}}</text>
+          <text x="711" y="520" font-size="11" fill="#808080" text-anchor="middle">{{阶段推进说明}}</text>
+          <rect x="824" y="260" width="170" height="280" fill="#FFFFFF" stroke="#6B6B6B" stroke-width="1.5" stroke-dasharray="5 3"></rect>
+          <text x="909" y="284" font-size="13" font-weight="700" fill="#1A1A1A" text-anchor="middle">{{C5 能力域名}}</text>
+          <rect x="836" y="300" width="146" height="60" fill="#FFFFFF" stroke="#808080" stroke-dasharray="4 3"></rect>
+          <text x="909" y="322" font-size="10.5" font-weight="700" fill="#6B6B6B" text-anchor="middle">条件能力</text>
+          <text x="909" y="348" font-size="11" fill="#6B6B6B" text-anchor="middle">{{若裁决通过 · 举措}}</text>
+          <rect x="836" y="368" width="146" height="60" fill="#FFFFFF" stroke="#808080" stroke-dasharray="4 3"></rect>
+          <text x="909" y="390" font-size="10.5" font-weight="700" fill="#6B6B6B" text-anchor="middle">{{若裁决通过 · 举措}}</text>
+          <rect x="836" y="436" width="146" height="60" fill="#FFFFFF" stroke="#808080" stroke-dasharray="4 3"></rect>
+          <text x="909" y="458" font-size="10.5" font-weight="700" fill="#6B6B6B" text-anchor="middle">{{若裁决通过 · 举措}}</text>
+          <text x="909" y="520" font-size="11" fill="#808080" text-anchor="middle">待 U-01 裁决</text>
+          <rect x="230" y="572" width="764" height="88" fill="#F7F7F7" stroke="#1A1A1A" stroke-width="1.5"></rect>
+          <text x="612" y="592" font-size="13" font-weight="700" fill="#1A1A1A" text-anchor="middle">{{C6 数据、AI 与治理基础}}</text>
+          <rect x="244" y="602" width="160" height="46" fill="#FFFFFF" stroke="#D4D4D4"></rect>
+          <text x="324" y="622" font-size="11" font-weight="700" fill="#1A1A1A" text-anchor="middle">{{C6 子能力一}}</text>
+          <text x="324" y="640" font-size="10" fill="#6B6B6B" text-anchor="middle">{{子能力说明}}</text>
+          <rect x="426" y="602" width="160" height="46" fill="#FFFFFF" stroke="#D4D4D4"></rect>
+          <text x="506" y="622" font-size="11" font-weight="700" fill="#1A1A1A" text-anchor="middle">{{C6 子能力二}}</text>
+          <text x="506" y="640" font-size="10" fill="#6B6B6B" text-anchor="middle">{{子能力说明}}</text>
+          <rect x="608" y="602" width="160" height="46" fill="#FFFFFF" stroke="#D4D4D4"></rect>
+          <text x="688" y="622" font-size="11" font-weight="700" fill="#1A1A1A" text-anchor="middle">{{C6 子能力三}}</text>
+          <text x="688" y="640" font-size="10" fill="#6B6B6B" text-anchor="middle">{{子能力说明}}</text>
+          <rect x="790" y="602" width="160" height="46" fill="#FFFFFF" stroke="#D4D4D4"></rect>
+          <text x="870" y="622" font-size="11" font-weight="700" fill="#1A1A1A" text-anchor="middle">{{C6 子能力四}}</text>
+          <text x="870" y="640" font-size="10" fill="#6B6B6B" text-anchor="middle">{{子能力说明}}</text>
+          <text x="612" y="676" font-size="10.5" fill="#808080" text-anchor="middle">Sample 图：阶段色块（阶段 1/2/3）以灰度示意，表达阶段推进（试点 → 规模 → 沉淀），语义色与阶段举措由 {{capability-roadmap 确认包 md · 战略屋章节}} 数据确定（LLM 生成）</text>
+        </svg><div class="logic-grid">
+          <article class="logic-node"><span class="node-label">愿景与使命层</span><strong>{{愿景内容}}</strong><p>{{愿景说明}}</p></article>
+          <article class="logic-node"><span class="node-label">价值结果层</span><strong>{{价值结果}}</strong><p>{{价值结果说明}}</p></article>
+          <article class="logic-node"><span class="node-label">业务能力层</span><strong>{{C1 / C2 / C4 / C5}}</strong><p>{{业务能力说明}}</p></article>
+          <article class="logic-node"><span class="node-label">基础能力层</span><strong>{{C6}}</strong><p>{{基础能力说明}}</p></article>
+          <article class="logic-node"><span class="node-label">建设阶段色带</span><strong>{{三阶段建设建议}}</strong><p>{{底色色带表达阶段推进}}</p></article>
+        </div>
+      </section>
+      <section class="section" id="gantt">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">03 · Milestone Gantt</p>
+            <h2>{{里程碑甘特图标题}}</h2>
+            <p>{{里程碑甘特图说明}}</p>
+          </div>
+          <p class="section-note">{{只标记里程碑，不表达项目级排期（P5）}}</p>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <caption>{{里程碑清单 · 建设里程碑 M / 阶段门 G / 决策门 D · Illustrative 相对时间轴}}</caption>
+            <thead><tr><th>节点类型</th><th>节点</th><th>阶段</th><th>内容</th><th>依赖</th><th>治理作用</th></tr></thead>
+            <tbody>
+              <tr><td>{{M/G/D}}</td><td>{{M0/G1/D1}}</td><td>{{阶段}}</td><td>{{内容}}</td><td>{{依赖}}</td><td>{{治理作用}}</td></tr>
+              <tr><td colspan="6">{{…其余里程碑行…}}</td></tr>
+            </tbody>
+          </table>
+        </div>
+                <svg viewBox="0 0 1123 560" role="img" aria-label="里程碑甘特图（Sample：结构示意，内容占位）">
+          <title>里程碑甘特图</title>
+          <desc>相对时间轴（36 个月，三阶段）；节点类型：建设里程碑 M（圆）/ 阶段门 G（方块）/ 决策门 D（菱形）；节点位置与标签渲染时按确认包数据确定。</desc>
+          <rect x="240" y="0" width="286.7" height="5" fill="#2D2D2D"></rect>
+          <rect x="526.7" y="0" width="286.6" height="5" fill="#6B6B6B"></rect>
+          <rect x="813.3" y="0" width="286.7" height="5" fill="#808080"></rect>
+          <rect x="240" y="56" width="286.7" height="432" fill="#F7F7F7"></rect>
+          <rect x="526.7" y="56" width="286.6" height="432" fill="#F1F1F1"></rect>
+          <rect x="813.3" y="56" width="286.7" height="432" fill="#FAFAFA"></rect>
+          <line x1="526.7" y1="56" x2="526.7" y2="488" stroke="#6B6B6B" stroke-width="1" stroke-dasharray="3 3"></line>
+          <line x1="813.3" y1="56" x2="813.3" y2="488" stroke="#6B6B6B" stroke-width="1" stroke-dasharray="3 3"></line>
+          <g stroke="#D4D4D4" stroke-width="1">
+            <line x1="383.3" y1="56" x2="383.3" y2="488"></line><line x1="670.0" y1="56" x2="670.0" y2="488"></line><line x1="956.7" y1="56" x2="956.7" y2="488"></line>
+            <line x1="311.7" y1="56" x2="311.7" y2="488"></line><line x1="455.0" y1="56" x2="455.0" y2="488"></line><line x1="598.3" y1="56" x2="598.3" y2="488"></line>
+            <line x1="741.7" y1="56" x2="741.7" y2="488"></line><line x1="885.0" y1="56" x2="885.0" y2="488"></line><line x1="1028.3" y1="56" x2="1028.3" y2="488"></line>
+          </g>
+          <text x="383.3" y="26" font-size="13.5" font-weight="700" fill="#1A1A1A" text-anchor="middle">{{阶段一 · 0-12 个月 · 夯实基本盘}}</text>
+          <text x="670.0" y="26" font-size="13.5" font-weight="700" fill="#2D2D2D" text-anchor="middle">{{阶段二 · 12-24 个月 · 增长与规模化}}</text>
+          <text x="956.7" y="26" font-size="13.5" font-weight="700" fill="#2D2D2D" text-anchor="middle">{{阶段三 · 24 个月以上 · 再定位与重塑}}</text>
+          <text x="24" y="44" font-size="11" font-weight="700" fill="#808080">里程碑</text>
+          <g font-size="10" fill="#808080" text-anchor="middle">
+            <text x="275.8" y="44">Q1</text><text x="347.5" y="44">Q2</text><text x="419.2" y="44">Q3</text><text x="490.8" y="44">Q4</text>
+            <text x="562.5" y="44">Q5</text><text x="634.2" y="44">Q6</text><text x="705.8" y="44">Q7</text><text x="777.5" y="44">Q8</text>
+            <text x="849.2" y="44">Q9</text><text x="920.8" y="44">Q10</text><text x="992.5" y="44">Q11</text><text x="1064.2" y="44">Q12</text>
+          </g>
+          <g fill="#FAFAFA">
+            <rect x="24" y="56" width="212" height="48"></rect><rect x="24" y="152" width="212" height="48"></rect>
+            <rect x="24" y="248" width="212" height="48"></rect><rect x="24" y="344" width="212" height="48"></rect><rect x="24" y="440" width="212" height="48"></rect>
+          </g>
+          <g stroke="#D4D4D4" stroke-width="1">
+            <line x1="24" y1="104" x2="1100" y2="104"></line><line x1="24" y1="152" x2="1100" y2="152"></line><line x1="24" y1="200" x2="1100" y2="200"></line>
+            <line x1="24" y1="248" x2="1100" y2="248"></line><line x1="24" y1="296" x2="1100" y2="296"></line><line x1="24" y1="344" x2="1100" y2="344"></line>
+            <line x1="24" y1="392" x2="1100" y2="392"></line><line x1="24" y1="440" x2="1100" y2="440"></line><line x1="24" y1="488" x2="1100" y2="488"></line>
+          </g>
+          <g font-size="13" font-weight="700" fill="#1A1A1A">
+            <text x="24" y="74">{{M0 里程碑名}}</text><text x="24" y="122">{{D1 决策门名}}</text><text x="24" y="170">{{M1 里程碑名}}</text><text x="24" y="218">{{G1 阶段门名}}</text>
+            <text x="24" y="266">{{D2 决策门名}}</text><text x="24" y="314">{{M2 里程碑名}}</text><text x="24" y="362">{{G2 阶段门名}}</text><text x="24" y="410">{{M3 里程碑名}}</text><text x="24" y="458">{{G3 阶段门名}}</text>
+          </g>
+          <g font-size="11" fill="#6B6B6B">
+            <text x="24" y="92">{{里程碑说明}}</text><text x="24" y="140">{{里程碑说明}}</text><text x="24" y="188">{{里程碑说明}}</text><text x="24" y="236">{{里程碑说明}}</text>
+            <text x="24" y="284">{{里程碑说明}}</text><text x="24" y="332">{{里程碑说明}}</text><text x="24" y="380">{{里程碑说明}}</text><text x="24" y="428">{{里程碑说明}}</text><text x="24" y="476">{{里程碑说明}}</text>
+          </g>
+          <g>
+            <polygon points="430,72 442,80 430,88 418,80" fill="#2D2D2D"></polygon>
+            <text x="452" y="84" font-size="10" font-weight="700" fill="#2D2D2D">D1</text>
+            <rect x="540" y="166" width="14" height="14" fill="none" stroke="#1A1A1A" stroke-width="1.5"></rect>
+            <text x="562" y="178" font-size="10" font-weight="700" fill="#1A1A1A">M1</text>
+            <polygon points="655,214 667,222 655,230 643,222" fill="none" stroke="#1A1A1A" stroke-width="1.5"></polygon>
+            <text x="677" y="226" font-size="10" font-weight="700" fill="#1A1A1A">G1</text>
+            <circle cx="880" cy="404" r="7" fill="none" stroke="#6B6B6B" stroke-width="1.5"></circle>
+            <text x="896" y="408" font-size="10" font-weight="700" fill="#6B6B6B">M3</text>
+            <polygon points="1000,452 1012,460 1000,468 988,460" fill="#808080"></polygon>
+            <text x="1022" y="464" font-size="10" font-weight="700" fill="#808080">G3</text>
+          </g>
+          <text x="612" y="530" font-size="10.5" fill="#808080" text-anchor="middle">Sample 图：节点类型示意（圆 = 建设里程碑 M / 方块 = 阶段门 G / 菱形 = 决策门 D），节点位置与依赖由 {{capability-roadmap 确认包 md · 里程碑章节}} 数据确定；只标记里程碑，不表达项目级排期（P5）</text>
+        </svg>
+      </section>
+      <section class="section" id="phase">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">04 · Three Phases</p>
+            <h2>{{三阶段目标与投资标题}}</h2>
+            <p>{{三阶段目标与投资说明}}</p>
+          </div>
+          <p class="section-note">{{时间区间为经验参考，非固定三年日历}}</p>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <caption>{{三阶段 · 阶段目标 / 重点举措 / 资源与能力建设投资 / 成果指标 · Illustrative}}</caption>
+            <thead><tr><th>阶段</th><th>阶段目标</th><th>重点举措</th><th>关联重点能力</th><th>资源与能力建设投资</th><th>成果指标</th></tr></thead>
+            <tbody>
+              <tr><td>{{夯实基本盘}}</td><td>{{阶段目标}}</td><td>{{重点举措}}</td><td>{{关联能力}}</td><td>{{投资}}</td><td>{{业务/能力/采用/风险}}</td></tr>
+              <tr><td colspan="6">{{…阶段二/三行…}}</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+      <section class="section" id="metrics">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">05 · Metrics & Review</p>
+            <h2>{{度量复审标题}}</h2>
+            <p>{{度量复审说明}}</p>
+          </div>
+          <p class="section-note">{{输出判断}}</p>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <caption>{{分阶段成果度量与复审 · 指标口径 / 数据源 / owner / 频率 · Illustrative}}</caption>
+            <thead><tr><th>阶段</th><th>指标类型</th><th>指标名称</th><th>基线与计算口径</th><th>数据源</th><th>指标 owner</th><th>统计频率</th><th>复审节奏</th></tr></thead>
+            <tbody>
+              <tr><td>{{阶段}}</td><td>{{业务结果/能力/采用·行为/风险}}</td><td>{{指标名称}}</td><td>{{口径}}</td><td>{{数据源}}</td><td>{{owner}}</td><td>{{月/季}}</td><td>{{月度跟踪/季度复审}}</td></tr>
+              <tr><td colspan="8">{{…其余指标行…}}</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+      <section class="section" id="consistency">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">06 · Four-Layer Consistency</p>
+            <h2>{{四层一致性检查标题}}</h2>
+            <p>{{四层一致性检查说明}}</p>
+          </div>
+          <p class="section-note">{{输出判断}}</p>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <caption>{{四层一致性检查 · Strategy / Business Model / Operating Model / Enabling Technology · Illustrative}}</caption>
+            <thead><tr><th>层次</th><th>检查要点</th><th>结论</th><th>未决项</th></tr></thead>
+            <tbody>
+              <tr><td>{{Strategy}}</td><td>{{检查要点}}</td><td>{{通过/有条件通过/回指}}</td><td>{{未决项}}</td></tr>
+              <tr><td colspan="4">{{…其余层次行…}}</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+      <section class="section" id="quality">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">Quality Gate</p>
+            <h2>{{质量门标题：阶段 06 建议"{{质量门状态}}"}}</h2>
+            <p>{{质量门说明}}</p>
+          </div>
+          <p class="section-note">{{下一步重点}}</p>
+        </div>
+        <div class="quality-grid">
+          <article class="quality-card"><span class="status">{{状态}}</span><h3>{{检查项}}</h3><p>{{检查说明}}</p></article>
+          <article class="quality-card"><span class="status">{{状态}}</span><h3>{{检查项}}</h3><p>{{检查说明}}</p></article>
+          <article class="quality-card"><span class="status">{{状态}}</span><h3>{{检查项}}</h3><p>{{检查说明}}</p></article>
+          <article class="quality-card"><span class="status">{{状态}}</span><h3>{{检查项}}</h3><p>{{检查说明}}</p></article>
+          <article class="quality-card"><span class="status">{{状态}}</span><h3>{{检查项}}</h3><p>{{检查说明}}</p></article>
+          
+        </div>
+      </section>
+
+      <details class="panel" open>
+        <summary>{{未决条件清单（{{未决项数量}} 项，登记于本阶段）· 按方法论 T12 跟踪}}</summary>
+        <div class="panel-body">
+          <div class="table-wrap">
+            <table>
+              <caption>{{未决项列表}}</caption>
+              <thead>
+                <tr><th>编号</th><th>来源/原编号</th><th>未决内容</th><th>影响面</th><th>证据强度</th><th>责任人</th><th>拟裁决方式</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>{{U-xx}}</td><td>{{来源/原编号}}</td><td>{{未决内容}}</td><td>{{影响面}}</td><td>{{证据强度}}</td><td>{{责任人}}</td><td>{{拟裁决方式}}</td></tr>
+                <tr><td colspan="7">{{…其余未决项…}}</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </details>
+
+      <div class="table-wrap action-table">
+        <table>
+          <caption>下一步行动 · 行动 + owner + 时限</caption>
+          <thead><tr><th>下一步行动</th><th>责任 owner</th><th>时限</th></tr></thead>
+          <tbody>
+            <tr><td>{{下一步行动}}</td><td>{{责任 owner}}</td><td>{{时限}}</td></tr>
+            <tr><td colspan="3">{{…其余行动…}}</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </main>
+
+    <footer class="report-footer">
+      <span>Source: {{项目名称}} · Illustrative exhibit（示例数据需校准）</span>
+      <span>{{日期}} · {{版本}} · Capability Roadmap Demo · 06</span>
+    </footer>
+  </div>
+</body>
+</html>

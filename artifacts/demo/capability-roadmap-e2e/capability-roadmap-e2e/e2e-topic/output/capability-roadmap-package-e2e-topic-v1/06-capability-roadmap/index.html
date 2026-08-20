@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>06 形成企业级能力路线图 · 千店千策分销网络转型</title>
+<!-- 由 AI（LLM）按 deliverable-render SKILL.md 生成：业务内容只来自 capability-roadmap-e2e-topic-v1.md 结构化数据块；版面参照画布 06-capability-roadmap -->
+<style>
+  :root{
+    --page-bg:#FFFFFF; --block-bg:#F7F7F7; --ink:#1A1A1A; --ink-deep:#2D2D2D;
+    --ink-soft:#6B6B6B; --ink-muted:#808080; --border:#D4D4D4; --accent:#1A1A1A;
+    --table-head:#F1F1F1; --callout:#FAFAFA;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:var(--page-bg);color:var(--ink);line-height:1.6;}
+  .page{width:min(1280px,calc(100vw - 48px));margin:0 auto;padding:28px 0 64px;}
+  .report-header{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:24px;align-items:start;padding-bottom:18px;border-bottom:1px solid var(--border);}
+  .report-kicker,.eyebrow{margin:0;color:var(--ink-soft);font-size:11px;font-weight:700;letter-spacing:.2em;line-height:1.4;text-transform:uppercase;}
+  .report-title{margin:6px 0 0;color:var(--ink);font-size:15px;font-weight:700;}
+  .report-subtitle{margin:2px 0 0;color:var(--ink-soft);font-size:12px;}
+  .report-meta{display:grid;gap:8px;color:var(--ink-soft);font-size:12px;text-align:right;}
+  .hero{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(300px,.6fr);gap:28px;padding:34px 0 24px;border-bottom:1px solid var(--border);}
+  h1{margin:10px 0 0;color:var(--ink);font-size:26px;font-weight:700;line-height:1.4;}
+  h2{color:var(--ink);font-size:20px;font-weight:700;line-height:1.4;}
+  h3{color:var(--ink);font-size:15px;font-weight:600;line-height:1.4;}
+  .lead{margin:14px 0 0;max-width:900px;color:var(--ink-deep);font-size:14px;line-height:1.75;}
+  .so-what{padding:16px;border:1px solid var(--border);border-left:3px solid var(--ink);background:var(--block-bg);font-size:13px;color:var(--ink-deep);}
+  .so-what h2{font-size:15px;}
+  .so-what p{margin:8px 0 0;}
+  .nav-strip{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px;}
+  .nav-strip a{padding:5px 8px;border:1px solid var(--border);color:var(--ink-soft);font-size:12px;text-decoration:none;}
+  .summary-strip{display:grid;grid-template-columns:repeat(3,minmax(0,1fr)) auto;gap:10px;margin-top:22px;}
+  .summary-card{padding:13px;border:1px solid var(--border);background:var(--block-bg);font-size:12px;color:var(--ink-soft);}
+  .summary-card strong{display:block;color:var(--ink);font-size:13px;line-height:1.5;}
+  .summary-card p{margin:6px 0 0;}
+  .summary-tag{padding:13px;border:1px solid var(--ink);font-size:12px;color:var(--ink-soft);}
+  .summary-tag strong{display:block;color:var(--ink);font-size:26px;line-height:1.2;}
+  .section{padding-top:34px;}
+  .section-head{display:grid;grid-template-columns:minmax(0,1fr) minmax(260px,.34fr);gap:24px;align-items:end;margin-bottom:14px;}
+  .section-head p{margin:6px 0 0;color:var(--ink-soft);font-size:13px;}
+  .section-note{margin:0;padding:11px;border:1px solid var(--border);background:var(--block-bg);color:var(--ink-deep);font-size:12px;}
+  .table-wrap{overflow-x:auto;border:1px solid var(--border);background:var(--page-bg);}
+  table{width:100%;min-width:900px;border-collapse:collapse;}
+  th,td{padding:10px 12px;border-bottom:1px solid var(--border);text-align:left;vertical-align:top;font-size:13px;line-height:1.5;}
+  th{color:var(--ink);background:var(--table-head);border-bottom:2px solid var(--ink);font-weight:700;}
+  td{color:var(--ink-deep);}
+  caption{padding:9px 12px 5px;text-align:left;color:var(--ink-soft);font-size:12px;font-weight:700;}
+  .quality-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;}
+  .quality-card{min-height:120px;padding:13px;border:1px solid var(--border);background:var(--block-bg);}
+  .quality-card h3{font-size:14px;}
+  .quality-card p{margin:8px 0 0;color:var(--ink-soft);font-size:12px;}
+  .status{display:inline-block;margin-bottom:8px;padding-bottom:2px;color:var(--ink);border-bottom:1px solid var(--ink);font-size:12px;font-weight:700;}
+  details.panel{margin-top:12px;border:1px solid var(--border);background:var(--block-bg);}
+  details.panel summary{padding:11px 13px;color:var(--ink);font-size:13px;font-weight:700;cursor:pointer;}
+  details.panel .panel-body{padding:0 13px 13px;color:var(--ink-deep);font-size:13px;}
+  .action-table{margin-top:12px;}
+  .pill{display:inline-block;padding:3px 6px;border:1px solid var(--ink);color:var(--ink);background:var(--page-bg);font-size:12px;white-space:nowrap;}
+  .report-footer{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;margin-top:40px;padding-top:13px;border-top:1px solid var(--border);color:var(--ink-muted);font-size:11px;}
+  .fig{margin-top:14px;border:1px solid var(--border);background:var(--page-bg);padding:10px;}
+  .fig-legend{margin:8px 0 0;color:var(--ink-soft);font-size:12px;}
+  @media (max-width:980px){
+    .hero,.report-header,.section-head{grid-template-columns:1fr;}
+    .summary-strip,.quality-grid{grid-template-columns:1fr;}
+    .report-meta{text-align:left;}
+  }
+  @media print{.page{width:auto;padding:0;}.nav-strip{display:none;}}
+</style>
+</head>
+<body>
+  <div class="page">
+    <header class="report-header">
+      <div>
+        <p class="report-kicker">Capability Roadmap · 06 · v1</p>
+        <p class="report-title">能力路线图端到端演练 · 千店千策分销网络转型</p>
+        <p class="report-subtitle">企业级能力路线图交付物 · Illustrative exhibit</p>
+      </div>
+      <div class="report-meta" aria-label="交付物元信息">
+        <span>阶段：06</span>
+        <span>对象：企业级能力路线图</span>
+        <span>状态：pass</span>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero">
+        <div>
+          <p class="eyebrow">Executive Message</p>
+          <h1>三阶段企业级路线图：1 个排序簇、3 个里程碑节点（M/G/D）</h1>
+          <p class="lead">跨能力汇总排序形成企业级路线图：夯实基本盘（I-01 区域试点 + 决策门 D1 裁决 C5）→ 增长与规模化（I-03 平台建设）→ 再定位与重塑（I-05 组织沉淀）；度量、四层一致性与 O7 下游接口齐备。</p>
+          <nav class="nav-strip" aria-label="页面导航">
+            <a href="#clusters">排序簇</a><a href="#house">战略屋</a><a href="#gantt">里程碑甘特图</a><a href="#phases">三阶段</a><a href="#metrics">度量复审</a><a href="#consistency">四层一致性</a><a href="#o7">下游接口</a><a href="#quality">质量门</a>
+          </nav>
+        </div>
+        <aside class="so-what">
+          <h2>So what</h2>
+          <p>路线图覆盖实现愿景和雄心所需关键举措，保留依赖、阶段目标、资源、取舍依据、成果度量、复审触发器与治理要求；以里程碑而非项目级任务排期表达（P5）。</p>
+        </aside>
+      </section>
+
+      <section class="summary-strip" aria-label="核心支撑论点">
+        <article class="summary-card">
+          <span class="node-label">支撑论点 1</span>
+          <strong>排序簇聚合取舍</strong>
+          <p>1 个排序簇 SC-1「底座关键路径」：价值贡献=规模化前置，结论=先行投入。</p>
+        </article>
+        <article class="summary-card">
+          <span class="node-label">支撑论点 2</span>
+          <strong>里程碑治理节点</strong>
+          <p>M 里程碑 1 / G 阶段门 1 / D 决策门 1（C5 条件能力裁决）。</p>
+        </article>
+        <article class="summary-card">
+          <span class="node-label">支撑论点 3</span>
+          <strong>四层一致性通过</strong>
+          <p>Strategy / Business Model / Operating Model / Enabling Technology 全部通过。</p>
+        </article>
+        <div class="summary-tag">
+          <strong>3</strong>
+          <span>阶段 · 3 里程碑节点</span>
+        </div>
+      </section>
+
+      <section class="section" id="clusters">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">06 · Sort Clusters</p>
+            <h2>企业级排序簇</h2>
+            <p>将高耦合举措归入同一簇，每簇记录价值贡献、依赖成熟度、资源与风险约束与取舍结论。</p>
+          </div>
+          <p class="section-note">输出判断：共 1 个排序簇</p>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <caption>排序簇 · 共 1 个</caption>
+            <thead>
+              <tr><th>排序簇</th><th>代表举措</th><th>价值贡献</th><th>依赖成熟度</th><th>资源/风险约束</th><th>路线图取舍结论</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><strong>SC-1 底座关键路径</strong></td><td>I-01、I-02</td><td>规模化前置</td><td>就绪</td><td>资源紧张</td><td>先行投入</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="section" id="house">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">06 · Strategy House</p>
+            <h2>战略屋式能力蓝图</h2>
+            <p>愿景使命 → 价值结果 → 业务能力 → 基础能力四层能力蓝图，含三阶段建设建议。</p>
+          </div>
+          <p class="section-note">输出判断：C1 全程演进，C6 底座先行（示意）</p>
+        </div>
+        <div class="fig">
+          <svg viewBox="0 0 1123 720" role="img" aria-label="战略屋式能力蓝图">
+            <title>战略屋式能力蓝图</title>
+            <desc>愿景与使命层 → 价值结果层 → 业务能力层（C1，条件 C5 虚线）→ 基础能力层（C6 底座先行）。</desc>
+            <!-- 愿景与使命层 -->
+            <rect x="160" y="40" width="803" height="92" fill="#F7F7F7" stroke="#1A1A1A"/>
+            <text x="561" y="76" text-anchor="middle" font-size="15" font-weight="700" fill="#1A1A1A">愿景与使命层</text>
+            <text x="561" y="104" text-anchor="middle" font-size="12" fill="#2D2D2D">门店获得适合自己的商品、价格、拜访和履约策略</text>
+            <!-- 价值结果层 -->
+            <rect x="160" y="172" width="803" height="92" fill="#F7F7F7" stroke="#1A1A1A"/>
+            <text x="561" y="208" text-anchor="middle" font-size="15" font-weight="700" fill="#1A1A1A">价值结果层</text>
+            <text x="561" y="236" text-anchor="middle" font-size="12" fill="#2D2D2D">铺货质量 · 终端动销 · 拜访效率 · 库存健康度</text>
+            <!-- 业务能力层 -->
+            <rect x="160" y="304" width="803" height="150" fill="#FFFFFF" stroke="#1A1A1A"/>
+            <text x="561" y="330" text-anchor="middle" font-size="15" font-weight="700" fill="#1A1A1A">业务能力层</text>
+            <rect x="220" y="348" width="240" height="80" fill="#F7F7F7" stroke="#1A1A1A"/>
+            <text x="340" y="382" text-anchor="middle" font-size="13" font-weight="700" fill="#1A1A1A">C1 渠道与门店策略管理</text>
+            <text x="340" y="404" text-anchor="middle" font-size="11" fill="#6B6B6B">阶段一试点 · 全程演进</text>
+            <rect x="663" y="348" width="240" height="80" fill="#FFFFFF" stroke="#1A1A1A" stroke-dasharray="6 4"/>
+            <text x="783" y="382" text-anchor="middle" font-size="13" font-weight="700" fill="#1A1A1A">C5 供需与库存（条件）</text>
+            <text x="783" y="404" text-anchor="middle" font-size="11" fill="#6B6B6B">决策门 D1 裁决 · 虚线表达</text>
+            <!-- 基础能力层 -->
+            <rect x="160" y="494" width="803" height="150" fill="#FFFFFF" stroke="#1A1A1A"/>
+            <text x="561" y="520" text-anchor="middle" font-size="15" font-weight="700" fill="#1A1A1A">基础能力层</text>
+            <rect x="220" y="538" width="240" height="80" fill="#F7F7F7" stroke="#1A1A1A"/>
+            <text x="340" y="572" text-anchor="middle" font-size="13" font-weight="700" fill="#1A1A1A">C6 数据、AI 与治理基础</text>
+            <text x="340" y="594" text-anchor="middle" font-size="11" fill="#6B6B6B">底座先行 · 阶段一投入</text>
+            <rect x="663" y="538" width="240" height="80" fill="#F7F7F7" stroke="#1A1A1A"/>
+            <text x="783" y="572" text-anchor="middle" font-size="13" font-weight="700" fill="#1A1A1A">共享数据与平台底座</text>
+            <text x="783" y="594" text-anchor="middle" font-size="11" fill="#6B6B6B">跨价值流复用 · 规模化前置</text>
+            <!-- 层间箭头 -->
+            <line x1="561" y1="132" x2="561" y2="172" stroke="#1A1A1A" stroke-width="1.5"/>
+            <line x1="561" y1="264" x2="561" y2="304" stroke="#1A1A1A" stroke-width="1.5"/>
+            <line x1="561" y1="454" x2="561" y2="494" stroke="#1A1A1A" stroke-width="1.5"/>
+            <!-- 底部注释 -->
+            <text x="561" y="676" font-size="11" fill="#808080" text-anchor="middle">阶段推进说明：夯实基本盘 → 增长与规模化 → 再定位与重塑（Illustrative · 需实际调研校准）</text>
+          </svg>
+          <p class="fig-legend">分层含义：上层定义增长策略与价值结果，中层为需建设的业务能力（条件能力以虚线标注），底层为跨价值流底座。</p>
+        </div>
+      </section>
+
+      <section class="section" id="gantt">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">06 · Milestone Gantt</p>
+            <h2>里程碑甘特图（M / G / D）</h2>
+            <p>相对时间轴非项目排期；M 里程碑圆、G 阶段门方块、D 决策门菱形。</p>
+          </div>
+          <p class="section-note">输出判断：决策门 D1 = C5 条件能力裁决（未决项治理路线图化）</p>
+        </div>
+        <div class="fig">
+          <svg viewBox="0 0 1123 560" role="img" aria-label="里程碑甘特图">
+            <title>里程碑甘特图</title>
+            <desc>三阶段里程碑：M1 策略引擎可验证节点、G1 阶段一目标达成判定、D1 C5 条件能力裁决。</desc>
+            <!-- 月份刻度（相对） -->
+            <text x="60" y="40" font-size="11" fill="#808080">2026-09</text>
+            <text x="300" y="40" font-size="11" fill="#808080">2026-11</text>
+            <text x="560" y="40" font-size="11" fill="#808080">2027-02</text>
+            <text x="840" y="40" font-size="11" fill="#808080">2027-06</text>
+            <!-- 阶段一 · 夯实基本盘 -->
+            <text x="60" y="90" font-size="13" font-weight="700" fill="#1A1A1A">阶段一 · 夯实基本盘（0-12M）</text>
+            <rect x="80" y="100" width="260" height="34" fill="#F7F7F7" stroke="#1A1A1A"/>
+            <text x="90" y="122" font-size="12" fill="#2D2D2D">数据与治理底座（C6）</text>
+            <rect x="360" y="100" width="260" height="34" fill="#F7F7F7" stroke="#1A1A1A"/>
+            <text x="370" y="122" font-size="12" fill="#2D2D2D">策略闭环试点（C1 · I-01）</text>
+            <!-- D1 决策门（菱形） -->
+            <polygon points="340,90 358,117 340,144 322,117" fill="none" stroke="#1A1A1A" stroke-width="1.5"/>
+            <text x="368" y="121" font-size="12" fill="#6B6B6B">决策门 D1 · C5 条件能力裁决</text>
+            <!-- M1 里程碑（圆） -->
+            <circle cx="470" cy="117" r="7" fill="#1A1A1A"/>
+            <text x="486" y="121" font-size="12" fill="#6B6B6B">里程碑 M1 · 策略引擎可验证节点</text>
+            <!-- G1 阶段门（方块） -->
+            <rect x="700" y="104" width="13" height="13" fill="#FFFFFF" stroke="#1A1A1A" stroke-width="2"/>
+            <text x="722" y="115" font-size="12" fill="#6B6B6B">阶段门 G1 · 阶段一目标达成判定（after M1）</text>
+            <!-- 阶段二 · 增长与规模化 -->
+            <text x="60" y="200" font-size="13" font-weight="700" fill="#1A1A1A">阶段二 · 增长与规模化（12-24M）</text>
+            <rect x="140" y="210" width="340" height="34" fill="#F7F7F7" stroke="#1A1A1A"/>
+            <text x="150" y="232" font-size="12" fill="#2D2D2D">模型运营平台与经销商协同（I-03）</text>
+            <!-- 阶段三 · 再定位与重塑 -->
+            <text x="60" y="310" font-size="13" font-weight="700" fill="#1A1A1A">阶段三 · 再定位与重塑（24M+）</text>
+            <rect x="200" y="320" width="360" height="34" fill="#F7F7F7" stroke="#1A1A1A"/>
+            <text x="210" y="342" font-size="12" fill="#2D2D2D">组织沉淀与重塑（C6/C1 能力建设投资）</text>
+            <!-- 依赖虚线 -->
+            <line x1="477" y1="124" x2="700" y2="110" stroke="#6B6B6B" stroke-width="1" stroke-dasharray="4 3"/>
+          </svg>
+          <p class="fig-legend">图例：● M 建设里程碑（进度跟踪与价值验证检查点）；■ G 阶段门（阶段目标达成判定）；◇ D 决策门（关键未决项裁决，触发路线图滚动更新）。</p>
+        </div>
+      </section>
+
+      <section class="section" id="phases">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">06 · Three Phases</p>
+            <h2>三阶段路线图</h2>
+            <p>阶段目标、重点举措、关联能力、依赖、资源与价值验证（T10）。</p>
+          </div>
+          <p class="section-note">输出判断：时间区间为经验参考，非固定三年日历</p>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <caption>企业级能力路线图表（T10）· 三阶段</caption>
+            <thead>
+              <tr><th>阶段</th><th>阶段目标</th><th>重点举措</th><th>关联重点能力</th><th>依赖关系</th><th>资源与投资</th><th>价值验证</th><th>成果指标</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><strong>夯实基本盘</strong></td><td>弥补关键能力缺口</td><td>I-01</td><td>C1</td><td>主数据</td><td>中投入</td><td>区域试点</td><td>业务/能力/采用/风险</td></tr>
+              <tr><td><strong>增长与规模化</strong></td><td>强化运营系统</td><td>I-03</td><td>C2</td><td>平台</td><td>大投入</td><td>规模化验证</td><td>业务/能力/采用/风险</td></tr>
+              <tr><td><strong>再定位与重塑</strong></td><td>配置战略投入</td><td>I-05</td><td>C3</td><td>组织</td><td>专项投入</td><td>价值释放评估</td><td>业务/能力/采用/风险</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="section" id="metrics">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">06 · Metrics Review</p>
+            <h2>度量与复审</h2>
+            <p>每项指标附基线口径、数据源与 owner，确保"数字可审计、可复核、可归责"（T11A）。</p>
+          </div>
+          <p class="section-note">输出判断：指标口径齐备</p>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <caption>路线图度量与复审表（T11A）· 摘录</caption>
+            <thead>
+              <tr><th>阶段</th><th>指标类型</th><th>指标名称</th><th>基线与计算口径</th><th>数据源</th><th>指标 owner</th><th>统计频率</th><th>复审节奏</th><th>触发器</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>夯实基本盘</td><td>业务结果</td><td>终端动销率</td><td>口径说明</td><td>销售系统</td><td>销售 VP</td><td>月</td><td>月度跟踪/季度复审</td><td>价值假设失效</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="section" id="consistency">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">06 · Four-Layer Consistency</p>
+            <h2>四层一致性检查</h2>
+            <p>Strategy / Business Model / Operating Model / Enabling Technology and Infrastructure（T11B）。</p>
+          </div>
+          <p class="section-note">输出判断：四层全部通过</p>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <caption>四层一致性检查表（T11B）· 共 4 层</caption>
+            <thead>
+              <tr><th>层次</th><th>检查要点</th><th>结论</th><th>未决项</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Strategy</td><td>路线图支撑愿景、雄心与战略方向</td><td><span class="pill">通过</span></td><td>—</td></tr>
+              <tr><td>Business Model</td><td>支撑价值主张、客户结果与盈利模式</td><td><span class="pill">通过</span></td><td>—</td></tr>
+              <tr><td>Operating Model</td><td>与目标运营模式、组织与流程要求一致</td><td><span class="pill">通过</span></td><td>—</td></tr>
+              <tr><td>Enabling Technology & Infrastructure</td><td>与平台、数据、集成与技术债演进约束一致</td><td><span class="pill">通过</span></td><td>—</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="section" id="o7">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">06 · Downstream Interfaces (O7)</p>
+            <h2>下游接口摘要</h2>
+            <p>端到端方案 / 目标运营模式 / 详细实施计划 / Benefit Case / 企业架构 / 组合治理——允许写不适用/待补但不可缺失。</p>
+          </div>
+          <p class="section-note">输出判断：六项齐备（不适用/待补已裁决）</p>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <caption>下游接口摘要（O7）· 共 6 项</caption>
+            <thead>
+              <tr><th>下游接口</th><th>状态</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>端到端方案</td><td>待补</td></tr>
+              <tr><td>目标运营模式</td><td>不适用</td></tr>
+              <tr><td>详细实施计划</td><td>待补</td></tr>
+              <tr><td>Benefit Case</td><td>待补</td></tr>
+              <tr><td>企业架构</td><td>不适用</td></tr>
+              <tr><td>组合治理</td><td>待补</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="section" id="quality">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">06 · Quality Gate</p>
+            <h2>阶段 06 建议"pass"</h2>
+            <p>核心判定项：路线图完整性 / 依赖与资源可承受。</p>
+          </div>
+          <p class="section-note">下一步重点：出口 render_preflight → 用户授权 → finalized</p>
+        </div>
+        <div class="quality-grid">
+          <article class="quality-card"><span class="status">通过</span><h3>排序簇齐备</h3><p>取舍全貌聚合表达，代表举措/价值/依赖/约束记录</p></article>
+          <article class="quality-card"><span class="status">通过</span><h3>里程碑 M/G/D</h3><p>建设里程碑、阶段门、决策门结构完整，依赖保留</p></article>
+          <article class="quality-card"><span class="status">通过</span><h3>三阶段目标</h3><p>阶段目标、举措重心、资源与能力建设投资齐备</p></article>
+          <article class="quality-card"><span class="status">通过</span><h3>四层一致性</h3><p>Strategy/Business Model/Operating Model/Enabling Tech 全部通过</p></article>
+          <article class="quality-card"><span class="status">通过</span><h3>度量复审</h3><p>每阶段业务结果/能力/采用/风险指标，口径·数据源·owner 齐备</p></article>
+          <article class="quality-card"><span class="status">通过</span><h3>下游接口 O7</h3><p>六项齐备（不适用/待补已裁决），为阶段三接口</p></article>
+        </div>
+      </section>
+
+      <details class="panel" open>
+        <summary>未决条件清单（1 项，登记于阶段 03 承接）· 按方法论 T12 跟踪</summary>
+        <div class="panel-body">
+          <div class="table-wrap">
+            <table>
+              <caption>未决项列表</caption>
+              <thead>
+                <tr><th>编号</th><th>来源/原编号</th><th>未决内容</th><th>影响面</th><th>证据强度</th><th>责任人</th><th>拟裁决方式</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>U-03</td><td>承接 03·U-03</td><td>C5 是否纳入重点清单（战略关键性证据待补）</td><td>重点能力清单完整性</td><td>C</td><td>供应链 VP</td><td>决策门 D1 裁决（纳入/移出触发路线图滚动更新）</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </details>
+
+      <div class="table-wrap action-table">
+        <table>
+          <caption>下一步行动 · 行动 + owner + 时限</caption>
+          <thead><tr><th>下一步行动</th><th>责任 owner</th><th>时限</th></tr></thead>
+          <tbody>
+            <tr><td>出口 render_preflight：六阶段 confirmed + render-options confirmed → draft 资产包对账</td><td>主 Agent</td><td>出口授权前</td></tr>
+            <tr><td>决策门 D1 裁决 C5 条件能力（补强证据后）</td><td>供应链 VP</td><td>阶段一（2026-11）</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </main>
+
+    <footer class="report-footer">
+      <span>Source: 能力路线图端到端演练 · Illustrative exhibit（示例数据需校准）</span>
+      <span>2026-08-20 · v1 · Capability Roadmap Demo · 06</span>
+    </footer>
+  </div>
+</body>
+</html>

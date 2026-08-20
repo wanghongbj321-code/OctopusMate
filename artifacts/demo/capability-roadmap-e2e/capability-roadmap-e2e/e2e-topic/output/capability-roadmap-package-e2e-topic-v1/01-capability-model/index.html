@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>01 构建战略对齐的企业能力模型 · 千店千策分销网络转型</title>
+<!-- 由 AI（LLM）按 deliverable-render SKILL.md 生成：业务内容只来自 capability-model-e2e-topic-v1.md 结构化数据块；版面参照画布 01-capability-model -->
+<style>
+  :root{
+    --page-bg:#FFFFFF; --block-bg:#F7F7F7; --ink:#1A1A1A; --ink-deep:#2D2D2D;
+    --ink-soft:#6B6B6B; --ink-muted:#808080; --border:#D4D4D4; --accent:#1A1A1A;
+    --table-head:#F1F1F1; --callout:#FAFAFA;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:var(--page-bg);color:var(--ink);line-height:1.6;}
+  .page{width:min(1280px,calc(100vw - 48px));margin:0 auto;padding:28px 0 64px;}
+  .report-header{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:24px;align-items:start;padding-bottom:18px;border-bottom:1px solid var(--border);}
+  .report-kicker,.eyebrow{margin:0;color:var(--ink-soft);font-size:11px;font-weight:700;letter-spacing:.2em;line-height:1.4;text-transform:uppercase;}
+  .report-title{margin:6px 0 0;color:var(--ink);font-size:15px;font-weight:700;}
+  .report-subtitle{margin:2px 0 0;color:var(--ink-soft);font-size:12px;}
+  .report-meta{display:grid;gap:8px;color:var(--ink-soft);font-size:12px;text-align:right;}
+  .hero{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(300px,.6fr);gap:28px;padding:34px 0 24px;border-bottom:1px solid var(--border);}
+  h1{margin:10px 0 0;color:var(--ink);font-size:26px;font-weight:700;line-height:1.4;}
+  h2{color:var(--ink);font-size:20px;font-weight:700;line-height:1.4;}
+  h3{color:var(--ink);font-size:15px;font-weight:600;line-height:1.4;}
+  .lead{margin:14px 0 0;max-width:900px;color:var(--ink-deep);font-size:14px;line-height:1.75;}
+  .so-what{padding:16px;border:1px solid var(--border);border-left:3px solid var(--ink);background:var(--block-bg);font-size:13px;color:var(--ink-deep);}
+  .so-what h2{font-size:15px;}
+  .so-what p{margin:8px 0 0;}
+  .nav-strip{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px;}
+  .nav-strip a{padding:5px 8px;border:1px solid var(--border);color:var(--ink-soft);font-size:12px;text-decoration:none;}
+  .summary-strip{display:grid;grid-template-columns:repeat(3,minmax(0,1fr)) auto;gap:10px;margin-top:22px;}
+  .summary-card{padding:13px;border:1px solid var(--border);background:var(--block-bg);font-size:12px;color:var(--ink-soft);}
+  .summary-card strong{display:block;color:var(--ink);font-size:13px;line-height:1.5;}
+  .summary-card p{margin:6px 0 0;}
+  .summary-tag{padding:13px;border:1px solid var(--ink);font-size:12px;color:var(--ink-soft);}
+  .summary-tag strong{display:block;color:var(--ink);font-size:26px;line-height:1.2;}
+  .section{padding-top:34px;}
+  .section-head{display:grid;grid-template-columns:minmax(0,1fr) minmax(260px,.34fr);gap:24px;align-items:end;margin-bottom:14px;}
+  .section-head p{margin:6px 0 0;color:var(--ink-soft);font-size:13px;}
+  .section-note{margin:0;padding:11px;border:1px solid var(--border);background:var(--block-bg);color:var(--ink-deep);font-size:12px;}
+  .logic-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;}
+  .logic-node{padding:13px;border:1px solid var(--border);background:var(--block-bg);}
+  .logic-node strong{display:block;margin-top:8px;color:var(--ink);font-size:14px;line-height:1.45;}
+  .logic-node p{margin:6px 0 0;color:var(--ink-soft);font-size:12px;}
+  .node-label{display:inline-block;color:var(--ink-muted);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;}
+  .arch-row{display:grid;grid-template-columns:170px minmax(0,1fr);gap:10px;margin-bottom:10px;}
+  .arch-label{padding:13px;border:1px solid var(--ink);font-size:13px;font-weight:700;color:var(--ink);}
+  .arch-cells{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;}
+  .domain{padding:13px;border:1px solid var(--border);background:var(--block-bg);}
+  .domain-top{display:flex;justify-content:space-between;gap:10px;}
+  .domain-code{padding:3px 6px;border:1px solid var(--ink);font-size:11px;font-weight:700;}
+  .domain p{margin:8px 0 0;color:var(--ink-soft);font-size:12px;}
+  .classification{display:block;margin-top:10px;color:var(--ink-muted);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;}
+  .table-wrap{overflow-x:auto;border:1px solid var(--border);background:var(--page-bg);}
+  table{width:100%;min-width:900px;border-collapse:collapse;}
+  th,td{padding:10px 12px;border-bottom:1px solid var(--border);text-align:left;vertical-align:top;font-size:13px;line-height:1.5;}
+  th{color:var(--ink);background:var(--table-head);border-bottom:2px solid var(--ink);font-weight:700;}
+  td{color:var(--ink-deep);}
+  caption{padding:9px 12px 5px;text-align:left;color:var(--ink-soft);font-size:12px;font-weight:700;}
+  .quality-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;}
+  .quality-card{min-height:120px;padding:13px;border:1px solid var(--border);background:var(--block-bg);}
+  .quality-card h3{font-size:14px;}
+  .quality-card p{margin:8px 0 0;color:var(--ink-soft);font-size:12px;}
+  .status{display:inline-block;margin-bottom:8px;padding-bottom:2px;color:var(--ink);border-bottom:1px solid var(--ink);font-size:12px;font-weight:700;}
+  details.panel{margin-top:12px;border:1px solid var(--border);background:var(--block-bg);}
+  details.panel summary{padding:11px 13px;color:var(--ink);font-size:13px;font-weight:700;cursor:pointer;}
+  details.panel .panel-body{padding:0 13px 13px;color:var(--ink-deep);font-size:13px;}
+  .action-table{margin-top:12px;}
+  .pill{display:inline-block;padding:3px 6px;border:1px solid var(--ink);color:var(--ink);background:var(--page-bg);font-size:12px;white-space:nowrap;}
+  .report-footer{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;margin-top:40px;padding-top:13px;border-top:1px solid var(--border);color:var(--ink-muted);font-size:11px;}
+  .fig{margin-top:14px;border:1px solid var(--border);background:var(--page-bg);padding:10px;}
+  .fig-legend{margin:8px 0 0;color:var(--ink-soft);font-size:12px;}
+  @media (max-width:980px){
+    .hero,.report-header,.section-head,.arch-row{grid-template-columns:1fr;}
+    .summary-strip,.logic-grid,.arch-cells,.quality-grid{grid-template-columns:1fr;}
+    .report-meta{text-align:left;}
+  }
+  @media print{.page{width:auto;padding:0;}.nav-strip{display:none;}}
+</style>
+</head>
+<body>
+  <div class="page">
+    <header class="report-header">
+      <div>
+        <p class="report-kicker">Capability Roadmap · 01 · v1</p>
+        <p class="report-title">能力路线图端到端演练 · 千店千策分销网络转型</p>
+        <p class="report-subtitle">企业能力模型交付物 · Illustrative exhibit</p>
+      </div>
+      <div class="report-meta" aria-label="交付物元信息">
+        <span>阶段：01</span>
+        <span>对象：能力模型</span>
+        <span>状态：pass</span>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero">
+        <div>
+          <p class="eyebrow">Executive Message</p>
+          <h1>能力模型可支撑战略交付：1 个能力域（Core）承载门店策略闭环</h1>
+          <p class="lead">从愿景与雄心反推企业能力：门店获得适合自己的商品策略，需以铺货质量与终端动销为业务结果，以更准分群与更快试验为中间收益，以主数据与交易信号为使能条件，收敛为 1 个能力域、2 项 L2 能力。</p>
+          <nav class="nav-strip" aria-label="页面导航">
+            <a href="#logic">战略连接</a><a href="#architecture">能力架构</a><a href="#register">能力清单</a><a href="#value-stream">价值流校验</a><a href="#quality">质量门</a>
+          </nav>
+        </div>
+        <aside class="so-what">
+          <h2>So what</h2>
+          <p>能力模型是后续成熟度、重点能力与路线图的共同基准——本模型覆盖组织运营、战略交付与竞争优势所需能力，且每项能力可回溯愿景、雄心或价值假设。</p>
+        </aside>
+      </section>
+
+      <section class="summary-strip" aria-label="核心支撑论点">
+        <article class="summary-card">
+          <span class="node-label">支撑论点 1</span>
+          <strong>价值-能力反推成立</strong>
+          <p>愿景 → 业务结果 → 中间收益 → 使能条件 → 能力模型逻辑链完整（T1）。</p>
+        </article>
+        <article class="summary-card">
+          <span class="node-label">支撑论点 2</span>
+          <strong>建模规范全过</strong>
+          <p>命名/层级/MECE/粒度/稳定性/版本治理六项检查全部通过（T2A）。</p>
+        </article>
+        <article class="summary-card">
+          <span class="node-label">支撑论点 3</span>
+          <strong>价值流覆盖完整</strong>
+          <p>铺货价值流由 C1 直接支撑，校验结论覆盖完整（T2B）。</p>
+        </article>
+        <div class="summary-tag">
+          <strong>1+2</strong>
+          <span>能力域 + L2 能力</span>
+        </div>
+      </section>
+
+      <section class="section" id="logic">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">01 · Strategy To Capability</p>
+            <h2>价值-能力反推逻辑链</h2>
+            <p>从经营结果反推能力，而非从部门、系统或项目出发（T1）。</p>
+          </div>
+          <p class="section-note">输出判断：连接完整，C1 为价值实现枢纽</p>
+        </div>
+        <div class="logic-grid">
+          <article class="logic-node">
+            <span class="node-label">愿景</span>
+            <strong>门店获得适合自己的商品策略</strong>
+            <p>实现已确认方向</p>
+          </article>
+          <article class="logic-node">
+            <span class="node-label">业务结果</span>
+            <strong>铺货质量与终端动销</strong>
+            <p>最终业务结果</p>
+          </article>
+          <article class="logic-node">
+            <span class="node-label">中间收益</span>
+            <strong>更准分群与更快试验</strong>
+            <p>中间收益</p>
+          </article>
+          <article class="logic-node">
+            <span class="node-label">使能条件</span>
+            <strong>主数据与交易信号</strong>
+            <p>使能条件/变化活动</p>
+          </article>
+          <article class="logic-node" style="border:1px solid var(--ink);">
+            <span class="node-label">能力模型</span>
+            <strong>C1 渠道与门店策略管理</strong>
+            <p>让门店获得适合自己的策略（Mission）</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="section" id="architecture">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">01 · Capability Architecture</p>
+            <h2>能力架构分层</h2>
+            <p>按「策略层 / 执行层 / 基础层」呈现能力域，标注战略性质分类（T2）。</p>
+          </div>
+          <p class="section-note">输出判断：C1 归执行层（Core），承载铺货质量与终端动销</p>
+        </div>
+        <div class="arch-row">
+          <div class="arch-label">策略层</div>
+          <div class="arch-cells"><div class="domain"><span class="classification">Strategic · 暂无确认项</span></div></div>
+        </div>
+        <div class="arch-row">
+          <div class="arch-label">执行层</div>
+          <div class="arch-cells">
+            <div class="domain">
+              <div class="domain-top"><span class="domain-code">C1</span><span class="classification">Core</span></div>
+              <p><strong>渠道与门店策略管理</strong></p>
+              <p>共同分母：端到端流程；L2：C1-1 门店分群与画像 / C1-2 门店级策略制定；模型 owner：销售 VP</p>
+            </div>
+          </div>
+        </div>
+        <div class="arch-row">
+          <div class="arch-label">基础层</div>
+          <div class="arch-cells"><div class="domain"><span class="classification">Foundational · 暂无确认项</span></div></div>
+        </div>
+      </section>
+
+      <section class="section" id="register">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">01 · Capability Register</p>
+            <h2>能力模型清单</h2>
+            <p>单项能力含 Mission、Purpose、价值来源、AI/数据依赖与所有权（T2）。</p>
+          </div>
+          <p class="section-note">输出判断：清单非静态目录，含 AI 依赖与价值来源</p>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <caption>能力模型清单 · 共 1 个能力域、2 项 L2 能力</caption>
+            <thead>
+              <tr><th>能力域</th><th>单项能力</th><th>层级</th><th>Mission</th><th>Purpose</th><th>价值来源</th><th>AI/数据依赖</th><th>分类</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>C1 渠道与门店策略管理</td><td>C1-1 门店分群与画像</td><td>L2</td>
+                <td>精准分群</td><td>支撑差异化策略</td><td>业务结果</td><td>高</td><td><span class="pill">Core</span></td>
+              </tr>
+              <tr>
+                <td>C1 渠道与门店策略管理</td><td>C1-2 门店级策略制定</td><td>L2</td>
+                <td>制定门店策略</td><td>支撑铺货质量</td><td>价值流</td><td>中</td><td><span class="pill">Core</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="section" id="value-stream">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">01 · Value Stream Validation</p>
+            <h2>价值流校验</h2>
+            <p>用关键价值流与客户结果检查能力遗漏、重叠与战略偏差（T2B）。</p>
+          </div>
+          <p class="section-note">输出判断：铺货价值流覆盖完整，C1 为重点能力候选</p>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <caption>价值流-能力校验 · 目标指标为 Illustrative 数字，需实际调研校准</caption>
+            <thead>
+              <tr><th>价值流</th><th>关键阶段</th><th>支撑能力</th><th>校验结论</th><th>是否重点能力候选</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>铺货价值流</td><td>策略制定</td><td>C1</td><td><span class="pill">覆盖完整</span></td><td>是</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="fig">
+          <svg viewBox="0 0 660 262" role="img" aria-label="价值流 × 能力域覆盖矩阵">
+            <title>价值流 × 能力域覆盖矩阵</title>
+            <desc>1 条价值流 × 1 个能力域：铺货价值流直接依赖 C1，实心圆表示直接依赖。</desc>
+            <text x="10" y="30" font-size="12" font-weight="700" fill="#1A1A1A">价值流 \ 能力域</text>
+            <text x="147" y="30" font-size="12" font-weight="700" fill="#1A1A1A" text-anchor="middle">C1</text>
+            <g font-size="12" fill="#2D2D2D">
+              <text x="10" y="64">铺货价值流</text>
+            </g>
+            <g>
+              <circle cx="147" cy="60" r="9" fill="#1A1A1A"></circle>
+            </g>
+          </svg>
+          <p class="fig-legend">图例：实心圆 = 价值流直接依赖该能力域；空心圆 = 非核心支撑（间接相关）。</p>
+        </div>
+      </section>
+
+      <section class="section" id="quality">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">01 · Quality Gate</p>
+            <h2>阶段 01 建议"pass"</h2>
+            <p>核心判定项：能力模型完整性 / 战略对齐。</p>
+          </div>
+          <p class="section-note">下一步重点：在进入阶段 02 前无阻断项</p>
+        </div>
+        <div class="quality-grid">
+          <article class="quality-card"><span class="status">通过</span><h3>能力模型完整性</h3><p>覆盖组织运营、战略交付与竞争优势所需能力</p></article>
+          <article class="quality-card"><span class="status">通过</span><h3>战略对齐</h3><p>每项能力可回溯愿景、雄心或价值假设</p></article>
+          <article class="quality-card"><span class="status">通过</span><h3>建模规范</h3><p>命名/层级/MECE/粒度/稳定性/版本治理六项检查通过</p></article>
+          <article class="quality-card"><span class="status">通过</span><h3>价值流校验</h3><p>铺货价值流覆盖完整，无遗漏/重叠/战略偏差</p></article>
+          <article class="quality-card"><span class="status">通过</span><h3>分类与所有权</h3><p>Strategic/Core/Foundational 分类及理由保留，模型 owner 明确</p></article>
+          <article class="quality-card"><span class="status">通过</span><h3>版本治理</h3><p>能力模型版本、变更原因、批准人记录齐备</p></article>
+        </div>
+      </section>
+
+      <details class="panel" open>
+        <summary>未决条件清单（0 项，登记于阶段 01）· 按方法论 T12 跟踪</summary>
+        <div class="panel-body">
+          <div class="table-wrap">
+            <table>
+              <caption>未决项列表</caption>
+              <thead>
+                <tr><th>编号</th><th>来源/原编号</th><th>未决内容</th><th>影响面</th><th>证据强度</th><th>责任人</th><th>拟裁决方式</th></tr>
+              </thead>
+              <tbody>
+                <tr><td colspan="7">本阶段无未决项</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </details>
+
+      <div class="table-wrap action-table">
+        <table>
+          <caption>下一步行动 · 行动 + owner + 时限</caption>
+          <thead><tr><th>下一步行动</th><th>责任 owner</th><th>时限</th></tr></thead>
+          <tbody>
+            <tr><td>进入阶段 02：建立 6 个能力域的六维当前状态基线</td><td>销售 VP</td><td>阶段 02 前</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </main>
+
+    <footer class="report-footer">
+      <span>Source: 能力路线图端到端演练 · Illustrative exhibit（示例数据需校准）</span>
+      <span>2026-08-20 · v1 · Capability Roadmap Demo · 01</span>
+    </footer>
+  </div>
+</body>
+</html>

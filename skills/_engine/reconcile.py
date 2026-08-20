@@ -1,10 +1,15 @@
-"""md ↔ state.json 重建与对账（G2-05 第一版）。
+"""md ↔ state.json 重建与对账（G2-05 第一版 + M4-02 roadmap 扩展）。
 
 对齐设计 G0 §10 与方案 §10：
 - **confirmed md 是人工事实源，state.json 是可重建执行镜像**
 - `rebuild_state_from_artifacts()`：从 confirmed md 链重建 artifact manifest 与业务字段
   （scoring_config / dimensionScores / angleScores / blockingIssues / evidenceList）
 - 恢复优先级：confirmed md + hash 有效 → 可重建；draft/stale 不作为事实源
+
+M4-02 扩展（§6.5 stale 策略 + M4-02 完成标准）：
+- 六阶段 md（roadmap-step01~06）与 render-options 通用白名单扫描即重建（无专属代码）
+- roadmap.package.current 为目录级 artifact（无 md 文件）→ 从 output/ 探测重建
+  （目录存在 + 7 文件齐全；source_refs 从六阶段 manifest 镜像重建；finalized 镜像保留）
 
 限制（第一版，G3 确认包对账补齐）：
 - 证据详情（evidence/level/verification/supports）不落维度 md，rebuild 仅重建证据编号骨架
@@ -14,6 +19,7 @@ from __future__ import annotations
 
 import json
 import re
+from datetime import datetime, timezone
 from pathlib import Path
 
 from . import files
@@ -81,6 +87,8 @@ def rebuild_state_from_artifacts(session_dir: Path, state: dict | None = None) -
     _rebuild_scores(state, modules_dir, artifacts)
     _rebuild_blockers(state, modules_dir, artifacts)
     _rebuild_evidence(state, modules_dir, artifacts)
+    # M4-02：roadmap package 目录级 artifact（无 md 文件）从 output/ 探测重建
+    _rebuild_roadmap_package(state, session_dir)
     return state
 
 
@@ -90,6 +98,62 @@ def _confirmed_artifact_paths(modules_dir: Path, artifacts: dict, aid: str) -> l
     if not entry:
         return []
     return [modules_dir / Path(entry["path"]).name]
+
+
+# --- M4-02 roadmap package 目录级重建 ---
+
+_PACKAGE_REL_FILES = (
+    "index.html",
+    "01-capability-model/index.html",
+    "02-baseline-maturity/index.html",
+    "03-priority-capabilities/index.html",
+    "04-future-state/index.html",
+    "05-gap-initiatives/index.html",
+    "06-capability-roadmap/index.html",
+)
+
+
+def _rebuild_roadmap_package(state: dict, session_dir: Path) -> None:
+    """M4-02：从 output/ 探测重建 roadmap.package.current（§6.5：state 视为缓存，可重建）。
+
+    - 仅当 manifest 无 package 索引时重建镜像（已登记的直接保留，避免覆盖 authorized/finalized）
+    - 目录必须存在且 7 文件齐全才重建；source_refs 从六阶段 manifest 镜像重建；
+      package_hash 重新计算（目录对账凭据）
+    """
+    topic_slug = state.get("topic_slug", "")
+    out = session_dir / "output"
+    if not topic_slug or not out.exists():
+        return
+    if (state.get("artifacts") or {}).get("roadmap.package.current"):
+        return  # 已登记镜像保留（不覆盖 authorized/finalized 状态）
+    prefix = f"capability-roadmap-package-{topic_slug}-v"
+    dirs = [p for p in out.iterdir() if p.is_dir() and p.name.startswith(prefix)]
+    if not dirs:
+        return
+
+    def _ver(p: Path) -> int:
+        tail = p.name[len(prefix):]
+        return int(tail) if tail.isdigit() else 0
+
+    latest = max(dirs, key=_ver)
+    version = _ver(latest) or 1
+    if not all((latest / rel).exists() for rel in _PACKAGE_REL_FILES):
+        return
+    from . import roadmap as roadmap_mod  # 延迟导入（roadmap 依赖 files，避免顶层循环）
+
+    source_refs = roadmap_mod._all_step_refs(state)
+    pkg_hash = roadmap_mod.package_content_hash(latest)
+    state.setdefault("artifacts", {})
+    state["artifacts"]["roadmap.package.current"] = {
+        "path": f"output/{latest.name}",
+        "version": version,
+        "status": "draft",
+        "content_hash": pkg_hash or "",
+        "depends_on": source_refs,
+        "source_refs": source_refs,
+        "package_hash": pkg_hash or "",
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
 
 
 def _rebuild_scoring(state: dict, modules_dir: Path) -> None:
