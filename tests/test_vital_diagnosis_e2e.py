@@ -148,21 +148,58 @@ class TestVitalDiagnosisE2E(unittest.TestCase):
                          "顾问将 I2 锚点第 1 档改为「依赖人工判断（顾问定制）」")
         advance(state, method)
 
-        # 3. 步骤 01-05 五维打分（22 角度，按维推进）
-        dim_steps = {"01": ["V1", "V2", "V3", "V4"], "02": ["I1", "I2", "I3", "I4"],
-                     "03": ["T1", "T2", "T3"], "04": ["A1", "A2", "A3", "A4", "A5", "A6", "A7"],
-                     "05": ["L1", "L2", "L3", "L4"]}
-        for sid, angles in dim_steps.items():
+        # 3. 步骤 01-05 五维打分（22 角度，按维推进；G2：每维 run_step 后写 confirmed 维度 md）
+        dim_steps = {"01": "v", "02": "i", "03": "t", "04": "a", "05": "l"}
+        dim_angles = {"01": ["V1", "V2", "V3", "V4"], "02": ["I1", "I2", "I3", "I4"],
+                      "03": ["T1", "T2", "T3"], "04": ["A1", "A2", "A3", "A4", "A5", "A6", "A7"],
+                      "05": ["L1", "L2", "L3", "L4"]}
+        for sid, dim in dim_steps.items():
+            angles = dim_angles[sid]
             out = topic_dir / "modules" / f"diagnosis-{sid}.md"
             out.write_text(f"# {method.step_by_id(sid).name}\n\n（演练模拟：{len(angles)} 角度打分）\n", encoding="utf-8")
             r = run_step(state, method, sid, out, ai_verdict={"core_ok": True}, session_dir=topic_dir)
             self.assertEqual(r["status"], "pass", f"步骤 {sid} 应通过：{r}")
+            # 写 confirmed 维度 md（含 item id；source_refs 指向 scoring 当前版本）
+            dim_data = {
+                "summary": f"{method.step_by_id(sid).name}：演练维度总结（用户已确认）",
+                "angles": [
+                    {"angle": a, "score": DEMO_SCORES[a]["score"], "judgment": DEMO_SCORES[a]["judgment"],
+                     "evidenceIds": DEMO_SCORES[a]["evidenceIds"], "anchor_ref": "diagnosis-scoring-*-v1"}
+                    for a in angles
+                ],
+                "items": [
+                    {"angle": angles[0], "type": "fact", "content": f"{angles[0]} 现状事实（演练）", "evidence_refs": []},
+                    {"angle": angles[0], "type": "issue", "content": f"{angles[0]} 问题点（演练）", "evidence_refs": []},
+                ],
+            }
+            files.write_dimension_artifact(topic_dir, dim, dim_data, SCORING_CONFIRMATION, state=state)
             advance(state, method)
 
         # 4. evidence 登记（全流程累积）
         ev_list = build_evidence()
 
-        # 5. 步骤 06 阻断识别（规则型 ≤2.0 + 语义型链路断裂）
+        # 5. 统计（维度分/总体分）——overview md 需要维度分
+        result = scoring.compute_all(DEMO_SCORES, state_mod.get_scoring_config(state))
+        self.assertEqual(result["errors"], [])
+        # V: (3.5+3.5+3.5+3.0)/4 = 3.375 → 3.4；I: (3.0+1.5+3.0+1.0)/4 = 2.125 → 2.1
+        self.assertEqual(result["dimension_scores"]["V"], 3.4)
+        self.assertEqual(result["dimension_scores"]["I"], 2.1)
+        # 总体（五维均分）≈ (3.4+2.1+T+A+L)/5；本演练仅 2 维有分 → 总体 = (3.4+2.1)/2 = 2.8
+        # （未打分维度不计入，对齐方法论 §二-2）
+        self.assertIsNotNone(result["overall_score"])
+
+        # 6. 写 confirmed overview md（5 维完成后；G2：step:06 前置 gate 依赖它）
+        files.write_overview_artifact(topic_dir, {
+            "conclusion": "总体结论（演练）：数据链路断裂阻断 AI 消费；V/L 维度扎实，I 维全场最弱",
+            "dimensions": [
+                {"dim": d, "name": files.DIM_NAMES[d.lower()], "score": result["dimension_scores"].get(d),
+                 "judgment": "演练判断"} for d in ("V", "I") if d in result["dimension_scores"]
+            ],
+            "narrative": "跨维度关联（演练）：I 维链路断裂限制 T/A/L 的 AI 就绪度",
+            "items": [{"angle": "I2", "type": "issue", "content": "数据链路断裂（演练）", "evidence_refs": ["E-04"]}],
+        }, SCORING_CONFIRMATION, state=state)
+
+        # 7. 步骤 06 阻断识别（规则型 ≤2.0 + 语义型链路断裂）→ 写 confirmed blockers md
         blocks = blocker.identify_blockers(
             DEMO_SCORES, ev_list, state_mod.get_scoring_config(state),
             semantic_blocks=[{"angle": "T3", "issue": "核心业务系统无直连接口，链路断裂",
@@ -174,19 +211,18 @@ class TestVitalDiagnosisE2E(unittest.TestCase):
         out06.write_text(f"# 阻断性问题与改进路径\n\n{len(blocks)} 项阻断问题\n", encoding="utf-8")
         r6 = run_step(state, method, "06", out06, ai_verdict={"core_ok": True}, session_dir=topic_dir)
         self.assertEqual(r6["status"], "pass")
+        files.write_blockers_artifact(topic_dir, {
+            "blockers": [
+                {"id": b["id"], "angle": b["angle"], "type": "规则型（≤2.0）", "impact": b["impact"],
+                 "evidenceIds": b["evidenceIds"], "source_item": f"D-{b['angle']}-issue-001",
+                 "suggestion": b["suggestion"], "owner": "待指定", "timeline": "待指定"}
+                for b in blocks
+            ],
+            "path": blocker.build_improvement_path(blocks),
+        }, SCORING_CONFIRMATION, state=state)
         advance(state, method)
 
-        # 6. 统计（维度分/总体分）
-        result = scoring.compute_all(DEMO_SCORES, state_mod.get_scoring_config(state))
-        self.assertEqual(result["errors"], [])
-        # V: (3.5+3.5+3.5+3.0)/4 = 3.375 → 3.4；I: (3.0+1.5+3.0+1.0)/4 = 2.125 → 2.1
-        self.assertEqual(result["dimension_scores"]["V"], 3.4)
-        self.assertEqual(result["dimension_scores"]["I"], 2.1)
-        # 总体（五维均分）≈ (3.4+2.1+T+A+L)/5；本演练仅 2 维有分 → 总体 = (3.4+2.1)/2 = 2.8
-        # （未打分维度不计入，对齐方法论 §二-2）
-        self.assertIsNotNone(result["overall_score"])
-
-        # 7. 组装输出 → 出口校验（diagnosis 分支）
+        # 8. 组装输出 → 出口校验（diagnosis 分支）
         output = {
             "diagnosisScope": {"objects": ["数据中台"], "boundary": "数据管理域"},
             "scoringConfig": state_mod.get_scoring_config(state),
@@ -210,7 +246,7 @@ class TestVitalDiagnosisE2E(unittest.TestCase):
         self.assertEqual(exit_result["errors"], [], f"出口校验应通过：{exit_result['errors']}")
         self.assertFalse(exit_result["blocked"])
 
-        # 8. 确认包组装（唯一事实源）→ 授权 finalized
+        # 9. 确认包组装（唯一事实源）→ 授权 finalized
         content = assemble_diagnosis_package(output, state, method)
         pkg_path = write_diagnosis_package(topic_dir, content, slug="data-platform-diagnosis")
         self.assertTrue(pkg_path.exists())
