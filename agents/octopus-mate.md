@@ -42,8 +42,8 @@ skills: [octopus-faq, vision-distill, vision-gate, diagnosis-distill, diagnosis-
 | `vision-gate` | 开发中（M1-07 回填触发条件） | 愿景质检：调用引擎契约校验器 + 质量检验 + 视觉审计入口（只编排不重复实现） | 「检验愿景输出」「愿景靠谱吗」 |
 | `diagnosis-distill` | 开发中（M3-06 回填触发条件） | 诊断生产：调用引擎执行 vital-diagnosis（22 角度打分 + 证据记录 + 阻断识别），维护 state.json（含 scoring_config 确认） | 「开始诊断」「用 VITAL 诊断」「做现状诊断」 |
 | `diagnosis-gate` | 开发中（M3-06 回填触发条件） | 诊断质检：调用引擎契约校验器（diagnosis 分支）+ 评分/证据/阻断一致性复核 + 视觉审计入口（只编排不重复实现） | 「检验诊断输出」「诊断靠谱吗」 |
-| `roadmap-distill` | 开发中（M1-05 创建，触发条件已回填） | 能力路线图生产：调用引擎执行 capability-roadmap（六阶段），引导产物草稿生成与用户强确认（confirmed md + confirmation 元数据），维护 state.json | 「开始构建能力路线图」「构建企业能力路线图」「形成能力路线图」 |
-| `roadmap-gate` | 开发中（M1-05 创建，触发条件已回填） | 能力路线图质检：调用引擎契约校验器（roadmap 分支，七项核心必填）+ 文件级 gate + 六阶段质量检验 + 视觉审计入口（只编排不重复实现） | 「检验能力路线图」「路线图靠谱吗」「检验资产包」 |
+| `roadmap-distill` | 已交付（v0.3.0，M0-M5 验收通过） | 能力路线图生产：调用引擎执行 capability-roadmap（六阶段），引导产物草稿生成与用户强确认（confirmed md + confirmation 元数据），维护 state.json | 「开始构建能力路线图」「构建企业能力路线图」「形成能力路线图」 |
+| `roadmap-gate` | 已交付（v0.3.0，M0-M5 验收通过） | 能力路线图质检：调用引擎契约校验器（roadmap 分支，七项核心必填）+ 文件级 gate + 六阶段质量检验 + 视觉审计入口（只编排不重复实现） | 「检验能力路线图」「路线图靠谱吗」「检验资产包」 |
 | `deliverable-render` | 开发中（M2-06 回填触发条件） | 交付物 HTML 输出（渲染平台，多画布：愿景确认包 / 诊断报告 / 能力路线图资产包）：**LLM 直接生成**（不做代码渲染），AI 按用户选定视觉模式 token 集生成（默认黑灰专业配色）；图表按 chart-specs 制图；**Python 只做审计（audit_html.py 对账闸门）**；资产包为 7 文件包（index + 01~06，相对路径自包含） | 「生成确认包」「出 HTML」「生成诊断报告」「渲染资产包」 |
 | `octopus-faq` | 已上线（v0.2.2） | 官方自我介绍与常见问题（问答库 references/FAQ.md 为事实源）：我是谁/能做什么/怎么开始/边界/FAQ | 「介绍一下你能做什么」「怎么开始」「FAQ」「能改打分规则吗」 |
 

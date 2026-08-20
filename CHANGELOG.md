@@ -1,9 +1,31 @@
 # Changelog · Octopus Mate
 
 > 版本变更记录与专家包修改规范。项目采用语义化版本（SemVer）：`MAJOR.MINOR.PATCH`。
-> 专家包当前版本：**0.2.2**（VITAL 诊断管线文件级 gate 优化，2026-08-20 发布）。
+> 专家包当前版本：**0.3.0**（构建企业能力路线图：六阶段 + 交付资产包 + 强确认链，2026-08-21 待发布）。
 
 ## 版本历史
+
+### 0.3.0 — 2026-08-21 · 构建企业能力路线图（六阶段 + 交付资产包 + 强确认链）
+
+> 依据：`internal/docs/dev-plan/构建企业能力路线图-功能开发计划.md`（v0.2，M0-M5 全部完成）与 `-验收评审报告.md`（A1-A9 共 9 项达成，A10 发布）。第三落地功能——将愿景与雄心转化为战略对齐的企业能力模型、成熟度基线、重点能力、差距举措与企业级路线图，链接阶段一（愿景）与阶段三（端到端方案）的枢纽。M0 前置机制确认 → M1 方法包 → M2 六阶段产物 md 管线 → M3 资产包渲染（LLM 生成）→ M4 文件级 gate 链 → M5 测试与验收。
+
+**Added**
+- `skills/methods/capability-roadmap/`（新方法包）：六步骤 manifest（`roadmap-method` 类型，双轨 gate）+ T1-T13 工具模板（18 个阶段专属 + `_shared/` 共享 T10/T12/T13）+ AI 引导剧本（强确认链话术）
+- `skills/_engine/roadmap.py`（新）：六阶段 md 结构契约（T1-T13 字段 + 结构化数据块）+ 契约校验器（`validate_roadmap_contract` / `read_roadmap_artifact`，含阶段特殊规则：02 六维完整性 / 03 排除理由 / 04 差距级别 + AI 风险控制 / 06 里程碑 M·G·D + O7）+ 六阶段写函数（draft→confirmed 版本不覆盖）+ `write_roadmap_render_options`（通用 render-options 类型 + `roadmap.renderOptions.current`）+ package artifact（`roadmap.package.current`：source_refs 六阶段 + package_hash）+ 出口三段式 `render_preflight` / `exit_check`
+- `skills/roadmap-distill/`、`skills/roadmap-gate/`（新 skill 包）：生产 / 质检两件套（roadmap 域）
+- `files.py` roadmap adapter：`ROADMAP_STAGE_REQUIRED`（step:01~06 链 + render:stepN + roadmap:render_preflight/authorized/finalized）、`check_required` 合并六阶段契约校验 + package 目录级特例、`mark_stale_dependents` 升级传递传播
+- `exit.confirm` roadmap 分支：用户出口授权证据必传（authorization.confirmed_by=user，AI 不得自代）+ `state.exit_authorization` 写入（R8 审计链）；`state.transition` roadmap 分支（未 authorized 不可 finalized + HTML 对账复核）
+- `reconcile.rebuild_state_from_artifacts`：从 `output/` 探测重建 package 目录级 artifact
+- `deliverable-render` SKILL.md 新增 `canvasType=capability-package`（LLM 生成指令）+ `references/capability-package-chart-specs.md`（9 类可视化规格：逻辑链 / 分层图 / 覆盖矩阵 / 热力矩阵 / 重点矩阵 / 差距热力 / 举措链 / 战略屋 / 甘特图 M·G·D）；`audit_html.py` 包对账扩展（`check_capability_package`：7 文件 + 相对路径 + 信息比对 + Illustrative + token 无裸值 + 13 条不变量）
+- `schemas/state.json.schema.json`：artifacts.status 枚举补 confirmed/stale + source_refs/package_hash/confirmed_* 字段 + 顶层 `exit_authorization`
+- manifest schema `roadmap-method` 分支；`schemas/manifest.schema.json` v3
+
+**Changed**
+- 六阶段强确认链端到端强制（§6.7 共 8 次强确认点：六阶段 6 + render-options 1 + 出口授权 1）：每阶段产物 AI 只提供草稿，无用户确认（confirmed_by=user）不可进入下一步——文件级规则型 gate 强制
+- 交付物为交付资产包（index + 六页 7 文件，单页自包含、相对链接、离线可打印），业务内容全部来自六阶段 confirmed md 结构化数据块（机器对账一致，无 demo 样例数值泄漏）
+- 资产包渲染沿用 LLM 直接生成方向（AGENTS.md 规则 5，Python 只做 audit 审计）
+
+**测试**：全量 **349 用例全绿** + 契约一致性空跑 0 失败（5 manifest）；roadmap 域 7 个测试文件（M0 smoke 15 + M1 验收 7 + M2 契约 22 + M3 渲染 10 + M4 gate 链 23 + M5 一致性/e2e/边界 19）+ 既有 253 用例零回归；演练资产进仓库 demo（`artifacts/demo/capability-roadmap-e2e/`：六阶段 md + 7 文件资产包 + 演练记录 + 3 张浏览器截图）。
 
 ### 0.2.2 — 2026-08-20 · 文件级 gate 优化（产物驱动型诊断管线）
 
