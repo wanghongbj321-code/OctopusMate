@@ -1,0 +1,627 @@
+"""文件级规则型 gate 引擎（G1：打分规则 md 与步骤 01 前置 Gate）。
+
+对齐设计：`internal/docs/dev-plan/VITAL 诊断功能开发计划-文件级gate优化方案-G0授权证据与产物索引设计.md`
+- G0-01 artifact frontmatter 与 confirmation 契约（六类白名单 / 必填字段 / confirmed_by=user）
+- G0-02 canonical body hash 规则（frontmatter 不参与正文 hash；CRLF/行尾空白/末尾空行归一化）
+- G0-03 state.json.artifacts manifest（current / version / path / hash / depends_on / status / created_at）
+- G0-04 required artifacts 映射与全路径强制（step:01-06 / exit / confirm / finalized / render）
+
+铁律：所有 gate 均为引擎规则型检查（代码判定）；自然语言确认摘要只服务人类阅读，不作为唯一 gate 依据。
+"""
+from __future__ import annotations
+
+import hashlib
+import json
+import re
+from dataclasses import dataclass, field
+from datetime import datetime, timezone
+from pathlib import Path
+
+try:
+    import yaml  # type: ignore
+except ImportError:  # pragma: no cover
+    yaml = None
+
+# --- G0-01 六类 artifact 白名单 ---
+
+ARTIFACT_TYPES = {
+    "diagnosis-scoring",
+    "diagnosis-dimension",
+    "diagnosis-overview",
+    "diagnosis-blockers",
+    "diagnosis-confirm",
+    "render-options",
+}
+
+# artifact_type → 文件命名模板（{topic_slug}-v{N} 统一后缀）
+_ARTIFACT_FILENAME = {
+    "diagnosis-scoring": "diagnosis-scoring-{topic_slug}-v{N}.md",
+    "diagnosis-dimension": "diagnosis-{dim}-{topic_slug}-v{N}.md",
+    "diagnosis-overview": "diagnosis-overview-{topic_slug}-v{N}.md",
+    "diagnosis-blockers": "diagnosis-blockers-{topic_slug}-v{N}.md",
+    "diagnosis-confirm": "diagnosis-confirm-{topic_slug}-v{N}.md",      # 正式版
+    "render-options": "render-options-{topic_slug}-v{N}.md",
+}
+_CONFIRM_DRAFT_FILENAME = "diagnosis-confirm-{topic_slug}-draft-v{N}.md"
+
+# confirmation 主体枚举（gate 只接受 user）
+CONFIRMED_BY_VALUES = {"user", "ai", "agent", "system"}
+
+
+# --- G0-02 canonical body / content hash ---
+
+def canonicalize(raw_text: str) -> str:
+    """规范化正文（剥离 frontmatter 后的正文按 G0-02 步骤清洗）。
+
+    规则：剥离 UTF-8 BOM → 移除 frontmatter 段 → CRLF 归一化 → 行尾空白清洗 →
+    末尾空行清理（保留恰好一个 \\n）。不做大小写/全半角归一化（避免改动正文含义）。
+    """
+    text = raw_text
+    if text.startswith("\ufeff"):
+        text = text[1:]
+    _, body = split_frontmatter(text)
+    lines = body.split("\n")
+    cleaned = []
+    for line in lines:
+        line = line.replace("\r", "").rstrip(" \t")
+        cleaned.append(line)
+    # 去除末尾所有空行，保留恰好一个 "\n"
+    while cleaned and cleaned[-1] == "":
+        cleaned.pop()
+    return "\n".join(cleaned) + "\n" if cleaned else ""
+
+
+def content_hash(raw_text: str) -> str:
+    """G0-02：content_hash = sha256(canonical body)，格式 sha256:hex。"""
+    digest = hashlib.sha256(canonicalize(raw_text).encode("utf-8")).hexdigest()
+    return f"sha256:{digest}"
+
+
+# --- G0-01 frontmatter 解析 ---
+
+def split_frontmatter(text: str) -> tuple[dict | None, str]:
+    """解析 YAML frontmatter。
+
+    规则：起始定界符 "---" 必须位于首行（允许前置 BOM）；结束定界符为正文前独立一行
+    （行内容恰好为 "---"）。返回 (meta, body)；无合法 frontmatter 或解析失败 → (None, 原文)。
+    """
+    text = text.lstrip("\ufeff")
+    if not text.startswith("---"):
+        return None, text
+    lines = text.split("\n")
+    # 跳过首行 "---"，找正文前第一个独立 "---" 行
+    end_idx = None
+    for i, line in enumerate(lines[1:], start=1):
+        if line == "---":
+            end_idx = i
+            break
+    if end_idx is None:
+        return None, text
+    fm_block = "\n".join(lines[1:end_idx])
+    body = "\n".join(lines[end_idx + 1:])
+    if yaml is None:
+        raise RuntimeError("解析 YAML frontmatter 需要 PyYAML，请先安装：pip install pyyaml")
+    try:
+        meta = yaml.safe_load(fm_block) or {}
+    except yaml.YAMLError:
+        return None, text
+    if not isinstance(meta, dict):
+        return None, text
+    return meta, body
+
+
+# --- G0-01 artifact 结构校验 ---
+
+def validate_artifact_meta(meta: dict | None) -> list[str]:
+    """G0-01 校验规则：字段/白名单/必填。返回错误列表（空 = 通过）。"""
+    errors: list[str] = []
+    if not isinstance(meta, dict):
+        return ["frontmatter 缺失或非对象"]
+    atype = meta.get("artifact_type")
+    if atype not in ARTIFACT_TYPES:
+        errors.append(f"artifact_type 必须属于白名单 {sorted(ARTIFACT_TYPES)}，实际 {atype!r}")
+    for key in ("artifact_id", "version", "status", "source_refs", "content_hash", "confirmation"):
+        if key not in meta:
+            errors.append(f"frontmatter 缺少必填字段：{key}")
+    if not isinstance(meta.get("version"), int) or meta["version"] < 1:
+        errors.append(f"version 必须为 ≥1 的整数，实际 {meta.get('version')!r}")
+    if meta.get("status") not in ("draft", "confirmed"):
+        errors.append(f"status 文件内合法值为 draft/confirmed，实际 {meta.get('status')!r}")
+    if not isinstance(meta.get("source_refs"), list):
+        errors.append("source_refs 必须为数组")
+    ch = meta.get("content_hash")
+    if not isinstance(ch, str) or not ch.startswith("sha256:"):
+        errors.append("content_hash 格式必须为 sha256:{hex}")
+    conf = meta.get("confirmation")
+    if not isinstance(conf, dict):
+        errors.append("confirmation 必须为对象")
+    else:
+        errors.extend(_validate_confirmation(conf))
+    return errors
+
+
+def _validate_confirmation(conf: dict) -> list[str]:
+    """G0-01 confirmation 子契约校验（gate 凭据）。"""
+    errors: list[str] = []
+    if conf.get("status") != "confirmed":
+        errors.append("confirmation.status 必须为 confirmed")
+    if conf.get("confirmed_by") not in CONFIRMED_BY_VALUES:
+        errors.append(f"confirmation.confirmed_by 必须为 {sorted(CONFIRMED_BY_VALUES)} 之一")
+    if not conf.get("confirmed_at"):
+        errors.append("confirmation.confirmed_at 必填（ISO 8601）")
+    if not conf.get("interaction_ref"):
+        errors.append("confirmation.interaction_ref 必填（非空）")
+    if not conf.get("confirmed_content_hash"):
+        errors.append("confirmation.confirmed_content_hash 必填（sha256:{hex}）")
+    return errors
+
+
+# --- artifact 读取（组合校验） ---
+
+@dataclass
+class Artifact:
+    """解析后的 artifact 视图。"""
+
+    path: Path
+    meta: dict | None = None
+    body: str = ""
+    valid: bool = False
+    errors: list = field(default_factory=list)
+    hash_matched: bool = False
+
+    @property
+    def artifact_id(self) -> str:
+        return (self.meta or {}).get("artifact_id", "")
+
+
+def read_artifact(path: Path) -> Artifact:
+    """读取并校验 artifact 文件：frontmatter 结构 + hash 复算。"""
+    path = Path(path)
+    art = Artifact(path=path)
+    if not path.exists():
+        art.errors.append("文件不存在")
+        return art
+    try:
+        text = path.read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError) as e:
+        art.errors.append(f"读取失败：{e}")
+        return art
+    meta, body = split_frontmatter(text)
+    art.meta, art.body = meta, body
+    errors = validate_artifact_meta(meta)
+    if errors:
+        art.errors.extend(errors)
+        return art
+    assert meta is not None
+    art.hash_matched = meta.get("content_hash") == content_hash(text)
+    if not art.hash_matched:
+        art.errors.append("content_hash 与 canonical body 复算不一致（文件可能被修改）")
+    art.valid = art.hash_matched and not art.errors
+    return art
+
+
+# --- 版本工具 ---
+
+_VERSION_RE = re.compile(r"-v(\d+)\.md$")
+
+
+def next_version(directory: Path, prefix: str) -> int:
+    """返回目录下 {prefix}-v{N}.md 的下一个版本号（不覆盖旧版本）。
+
+    prefix 为文件名主体（不含 -v{N} 后缀），如 "diagnosis-scoring-{topic_slug}"。
+    """
+    if not directory.exists():
+        return 1
+    max_v = 0
+    for p in directory.iterdir():
+        if not p.is_file() or not p.name.startswith(prefix):
+            continue
+        m = _VERSION_RE.search(p.name)
+        if m:
+            max_v = max(max_v, int(m.group(1)))
+    return max_v + 1
+
+
+# --- G0-03 manifest 辅助 ---
+
+def load_state_json(session_dir: Path) -> dict | None:
+    state_path = session_dir / "state.json"
+    if not state_path.exists():
+        return None
+    try:
+        with open(state_path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except (OSError, json.JSONDecodeError):
+        return None
+
+
+def save_state_json(session_dir: Path, state: dict) -> None:
+    state["updated_at"] = datetime.now(timezone.utc).isoformat()
+    state_path = session_dir / "state.json"
+    state_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(state_path, "w", encoding="utf-8") as f:
+        json.dump(state, f, ensure_ascii=False, indent=2)
+        f.write("\n")
+
+
+def register_artifact(state: dict, artifact_id: str, entry: dict) -> None:
+    """登记/更新 artifact manifest（G0-03）。entry 含 path/version/status/content_hash/depends_on/created_at 等。"""
+    state.setdefault("artifacts", {})
+    state["artifacts"][artifact_id] = entry
+
+
+# --- G1-02 写入工具 ---
+
+def _write_artifact(
+    session_dir: Path,
+    topic_slug: str,
+    artifact_type: str,
+    artifact_id: str,
+    version: int,
+    source_refs: list[str],
+    body: str,
+    confirmation: dict,
+    state: dict | None = None,
+    filename: str | None = None,
+) -> Path:
+    """通用 artifact 写入：构造 frontmatter（含 content_hash）→ 写 md → 登记 manifest。
+
+    - 版本不覆盖：文件名为 -v{N}.md，N = 指定 version；目标文件已存在则拒绝
+    - confirmation 与正文分离：frontmatter 不参与正文 hash（G0-02）
+    - confirmed_content_hash 与 content_hash 强一致（G0 D3，确认基线 = 文件正文）
+    - state 提供时：就地更新 manifest 并保存 state.json；否则加载/重建保存
+    """
+    modules_dir = session_dir / "modules"
+    modules_dir.mkdir(parents=True, exist_ok=True)
+    if filename is None:
+        filename = _ARTIFACT_FILENAME[artifact_type].format(topic_slug=topic_slug, N=version)
+    path = modules_dir / filename
+    # 版本不覆盖：目标文件已存在则拒绝（防误覆盖）
+    if path.exists():
+        raise FileExistsError(f"artifact 文件已存在，版本不覆盖：{path}")
+
+    meta = {
+        "artifact_type": artifact_type,
+        "artifact_id": artifact_id,
+        "version": version,
+        "status": "confirmed",
+        "source_refs": source_refs,
+        "confirmation": dict(confirmation),
+    }
+    # 先以占位 hash 生成一次，复算 real hash 后重写（hash 只针对正文，frontmatter 不参与）
+    meta["content_hash"] = _hash_placeholder()
+    file_text = f"---\n{_dump_yaml(meta)}---\n\n{body}"
+    real_hash = content_hash(file_text)
+    conf = dict(confirmation)
+    conf["confirmed_content_hash"] = real_hash  # 强一致（G0 D3）
+    meta["content_hash"] = real_hash
+    meta["confirmation"] = conf
+    file_text = f"---\n{_dump_yaml(meta)}---\n\n{body}"
+    path.write_text(file_text, encoding="utf-8")
+
+    # 登记 manifest
+    if state is None:
+        state = load_state_json(session_dir) or {}
+    now = datetime.now(timezone.utc).isoformat()
+    register_artifact(state, artifact_id, {
+        "path": f"modules/{filename}",
+        "version": version,
+        "status": "confirmed",
+        "content_hash": real_hash,
+        "depends_on": source_refs,
+        "created_at": now,
+        "confirmed_at": conf.get("confirmed_at", now),
+        "confirmed_by": conf.get("confirmed_by", "user"),
+        "interaction_ref": conf.get("interaction_ref", ""),
+    })
+    save_state_json(session_dir, state)
+    return path
+
+
+def _hash_placeholder() -> str:
+    return "sha256:" + "0" * 64
+
+
+def _dump_yaml(data: dict) -> str:
+    if yaml is None:
+        raise RuntimeError("输出 YAML frontmatter 需要 PyYAML，请先安装：pip install pyyaml")
+    return yaml.safe_dump(data, allow_unicode=True, sort_keys=False, default_flow_style=False)
+
+
+def write_scoring_artifact(
+    session_dir: Path,
+    scoring_config: dict,
+    confirmation: dict,
+    state: dict | None = None,
+) -> Path:
+    """G1-02：写入 confirmed scoring artifact（诊断步骤 01 前置产物）。
+
+    - 生成 `modules/diagnosis-scoring-{topic_slug}-v{N}.md`（规则快照 + confirmation + hash）
+    - 更新 state.json：scoring_config（版本化 history）+ artifact manifest
+    - 版本不覆盖：v2 规则生成新文件，v1 原样保留（下游 stale 传播属 G2）
+    """
+    session_dir = Path(session_dir)
+    if state is None:
+        state = load_state_json(session_dir) or {}
+    topic_slug = state.get("topic_slug", "")
+    project_name = state.get("project_name", "")
+    topic_name = state.get("topic_name", "")
+    if not topic_slug:
+        raise ValueError("state.json 缺少 topic_slug，无法命名 scoring artifact")
+
+    version = next_version(session_dir / "modules", f"diagnosis-scoring-{topic_slug}")
+    body = _scoring_md_body(project_name, topic_name, scoring_config)
+    path = _write_artifact(
+        session_dir, topic_slug,
+        artifact_type="diagnosis-scoring",
+        artifact_id="diagnosis.scoring.current",
+        version=version,
+        source_refs=[],
+        body=body,
+        confirmation=confirmation,
+        state=state,
+    )
+
+    # 同步 state.scoring_config（版本化 history，对齐 state.py set_scoring_config 语义）
+    _sync_scoring_config(state, scoring_config)
+    save_state_json(session_dir, state)
+    return path
+
+
+def _scoring_md_body(project_name: str, topic_name: str, scoring_config: dict) -> str:
+    """打分规则 md 正文（方案 §4.3 结构契约）。"""
+    scale = (scoring_config or {}).get("scale", {})
+    anchors = (scoring_config or {}).get("anchors", {})
+    source = (scoring_config or {}).get("source", "system-default")
+    lines = [
+        f"# 打分规则：{project_name} · {topic_name}",
+        "",
+        "## 规则总览",
+        "| 项 | 值 |",
+        "|---|---|",
+        f"| 分值范围 | {scale.get('min', '?')}-{scale.get('max', '?')} |",
+        f"| 步进 | {scale.get('step', '?')} |",
+        f"| 阻断阈值 | {(scoring_config or {}).get('blockThreshold', '?')} |",
+        f"| 来源 | {source} |",
+        "",
+        "## 逐角度锚点",
+        "| 角度 | 锚点文本（1-5 分参照） |",
+        "|---|---|",
+    ]
+    for dim, angles in (anchors or {}).items():
+        if not isinstance(angles, dict):
+            continue
+        for angle, anchor in angles.items():
+            lines.append(f"| {angle} | {_fmt_anchor(anchor)} |")
+    custom = (scoring_config or {}).get("customNote")
+    if custom:
+        lines.append("")
+        lines.append("## 顾问备注")
+        lines.append(f"- {custom}")
+    lines.append("")
+    lines.append("## 人类可读确认摘要")
+    lines.append("- 确认方式：整体采用默认锚点 / 逐角度修改 / 自定义上传 / 混合规则")
+    lines.append("- 确认内容摘要：见 frontmatter confirmation.confirmation_text")
+    return "\n".join(lines)
+
+
+def _fmt_anchor(anchor) -> str:
+    """锚点文本展平：dict {分值: 描述} → '1分:描述 / 3分:描述'；str 原样。"""
+    if isinstance(anchor, dict):
+        return "；".join(f"{k}分:{v}" for k, v in anchor.items())
+    return str(anchor)
+
+
+def _sync_scoring_config(state: dict, config: dict) -> None:
+    """同步 state.scoring_config（版本化，旧值入 history）。"""
+    prev = state.get("scoring_config")
+    history = state.setdefault("scoring_config_history", [])
+    if prev is not None:
+        history.append({**prev, "replaced_at": datetime.now(timezone.utc).isoformat()})
+    state["scoring_config"] = config
+
+
+# --- G1-05 打分规则来源合并（AI 引导层支撑：partial upload 不静默补齐） ---
+
+def merge_scoring_rules(user_config: dict | None, default_config: dict) -> dict:
+    """合并用户上传规则与默认规则（G1-05：user-upload / system-default / mixed）。
+
+    规则（对齐方案 §4.2 与评审 P2-3）：
+    - 用户提供完整规则 → source=user-upload，merged 全为用户内容
+    - 用户未提供 → source=system-default，merged 全为默认内容
+    - 部分提供 → source=mixed：已覆盖角度用用户内容，未覆盖角度列出为 missing_angles
+      （**不静默补齐**：missing_angles 必须由调用方回读确认后才可落盘）
+    - conflicts：用户规则与默认规则在 scale/blockThreshold 等顶层配置不一致时列出，由调用方回读
+
+    返回 {"source": str, "merged": dict, "missing_angles": [...], "conflicts": [...]}。
+    """
+    user_config = user_config or {}
+    default_anchors = (default_config or {}).get("anchors") or {}
+    user_anchors = user_config.get("anchors") or {}
+
+    # 顶层配置：优先用户，冲突留痕
+    conflicts: list[str] = []
+    merged = {
+        "scale": user_config.get("scale") or (default_config or {}).get("scale"),
+        "blockThreshold": user_config.get("blockThreshold")
+        if user_config.get("blockThreshold") is not None
+        else (default_config or {}).get("blockThreshold"),
+    }
+    for key, label in (("scale", "量表"), ("blockThreshold", "阻断阈值")):
+        u, d = user_config.get(key), (default_config or {}).get(key)
+        if u is not None and d is not None and u != d:
+            conflicts.append(f"{label}：用户 {u} ≠ 默认 {d}")
+
+    # 角度级合并：逐维度逐角度
+    merged_anchors: dict[str, dict] = {}
+    missing_angles: list[str] = []
+    all_angles: set[str] = set()
+    for dim, angles in default_anchors.items():
+        merged_anchors.setdefault(dim, {})
+        user_dim = user_anchors.get(dim) if isinstance(user_anchors.get(dim), dict) else {}
+        for angle in angles:
+            all_angles.add(angle)
+            if angle in user_dim:
+                merged_anchors[dim][angle] = user_dim[angle]
+            else:
+                merged_anchors[dim][angle] = angles[angle]
+                missing_angles.append(angle)
+    # 用户独有的角度（默认锚点没有）→ 视为用户扩展，不列为缺失，但记录
+    for dim, angles in (user_anchors or {}).items():
+        if not isinstance(angles, dict):
+            continue
+        for angle in angles:
+            if angle not in all_angles:
+                merged_anchors.setdefault(dim, {})[angle] = angles[angle]
+    merged["anchors"] = merged_anchors
+
+    if user_config.get("customNote"):
+        merged["customNote"] = user_config["customNote"]
+
+    if not user_config:
+        source = "system-default"
+    elif missing_angles:
+        source = "mixed"
+    else:
+        source = "user-upload"
+    merged["source"] = source
+    return {
+        "source": source,
+        "merged": merged,
+        "missing_angles": missing_angles,
+        "conflicts": conflicts,
+    }
+
+
+# --- G0-04 required artifacts 映射与检查 ---
+
+# 权威映射表（对齐 G0 设计 §4.2）。
+# G1 范围：只接入 step:00/01（G1 出口标准：无有效 scoring md 时任何进入步骤 01 的路径被阻断）。
+# step:02-06 / exit / finalized / render 的 required artifacts 在 G2-03 / G3 / G4 随
+# write_dimension_artifact / write_overview_artifact / write_blockers_artifact /
+# write_render_options_artifact 一起接入（阶段未接入的 stage 返回空 = 不阻断，保持 vision 等兼容）。
+STAGE_REQUIRED: dict[str, list[str]] = {
+    "step:00": [],
+    "step:01": ["diagnosis.scoring.current"],
+    # "step:02": ["diagnosis.scoring.current", "diagnosis.dimension.v.current"],          # G2-03
+    # "step:03": [... + dimension.i ...],                                                  # G2-03
+    # "step:04": [... + dimension.t ...],                                                  # G2-03
+    # "step:05": [... + dimension.a ...],                                                  # G2-03
+    # "step:06": [... + dimension.l + overview ...],                                       # G2-03
+    # "exit:aggregate": [... + blockers ...],                                              # G3-01
+    # "exit:confirm": ["diagnosis.confirm.current"],                                       # G3-04
+    # "state:finalized": ["diagnosis.confirm.current", "render.options.current"],         # G4-02
+    # "render:deliver": ["diagnosis.confirm.current", "render.options.current"],          # G4-03
+}
+
+
+def required_before(stage: str, method=None, state: dict | None = None) -> list[str]:
+    """G0-04：返回 stage 的 required artifact_id 集合。"""
+    if stage not in STAGE_REQUIRED:
+        # 未知 stage：file gate 不阻断（保持向后兼容，vision 等未开启方法无影响）
+        return []
+    return list(STAGE_REQUIRED[stage])
+
+
+def _parse_ref_version(ref: str) -> tuple[str, int | None]:
+    """解析 source_refs 项 'diagnosis.scoring.current@v2' → (artifact_id, 2)。"""
+    if "@v" in ref:
+        aid, _, ver = ref.partition("@v")
+        try:
+            return aid, int(ver)
+        except ValueError:
+            return aid, None
+    return ref, None
+
+
+def _refs_stale(source_refs: list, manifest: dict) -> bool:
+    """G0-05：source_refs 是否指向非当前 confirmed 版本（任一引用 stale → True）。
+
+    - 引用 artifact 未登记 / status != confirmed / 版本与 manifest 当前版本不符 → stale
+    """
+    for ref in source_refs or []:
+        ref_id, ref_ver = _parse_ref_version(ref)
+        ref_entry = manifest.get(ref_id)
+        if ref_entry is None or ref_entry.get("status") != "confirmed" \
+                or (ref_ver is not None and ref_entry.get("version") != ref_ver):
+            return True
+    return False
+
+
+def check_required(stage: str, state: dict, session_dir: Path) -> dict:
+    """G0-04：校验 stage 的 required artifacts（文件/结构/hash/confirmation/manifest/stale）。
+
+    返回 {"ok": bool, "missing": [...], "invalid": [...], "stale": [...], "mismatched": [...]}。
+    - missing：manifest 缺索引或文件不存在
+    - invalid：结构契约/hash 复算/confirmation 校验失败
+    - stale：manifest 标记 stale 或 source_refs 指向非当前 confirmed 版本
+    - mismatched：manifest 与文件 hash 不一致
+    """
+    session_dir = Path(session_dir)
+    manifest = state.get("artifacts", {})
+    missing, invalid, stale, mismatched = [], [], [], []
+    for artifact_id in required_before(stage):
+        entry = manifest.get(artifact_id)
+        if entry is None:
+            missing.append(artifact_id)
+            continue
+        path = session_dir / str(entry.get("path", ""))
+        if not path.exists():
+            missing.append(artifact_id)
+            continue
+        art = read_artifact(path)
+        if not art.valid:
+            invalid.append(artifact_id)
+            continue
+        meta = art.meta
+        assert meta is not None
+        if meta.get("status") != "confirmed":
+            invalid.append(artifact_id)
+            continue
+        conf = meta.get("confirmation") or {}
+        if conf.get("status") != "confirmed" or conf.get("confirmed_by") != "user" \
+                or not conf.get("interaction_ref"):
+            invalid.append(artifact_id)
+            continue
+        if conf.get("confirmed_content_hash") != meta.get("content_hash"):
+            mismatched.append(artifact_id)
+            continue
+        # manifest 镜像一致性 + stale
+        if entry.get("status") != "confirmed":
+            stale.append(artifact_id)
+            continue
+        if entry.get("content_hash") != meta.get("content_hash"):
+            mismatched.append(artifact_id)
+            continue
+        # source_refs 非 stale：指向的 artifact 在 manifest 中 confirmed 且版本一致
+        if _refs_stale(meta.get("source_refs") or [], manifest):
+            stale.append(artifact_id)
+    ok = not (missing or invalid or stale or mismatched)
+    return {
+        "ok": ok,
+        "missing": missing,
+        "invalid": invalid,
+        "stale": stale,
+        "mismatched": mismatched,
+    }
+
+
+# --- G0-05 stale 传播（G2 接入；G1 提供工具函数） ---
+
+def mark_stale_dependents(artifact_id: str, new_version: int, state: dict) -> list[str]:
+    """G0-05：将 depends_on 指向 {artifact_id}@旧版本 的下游 artifact 标记 stale。
+
+    返回被标记 stale 的 artifact_id 列表（G2 起由写入流程调用）。
+    """
+    manifest = state.setdefault("artifacts", {})
+    marked: list[str] = []
+    old_ref = f"{artifact_id}@v{new_version - 1}"
+    for aid, entry in manifest.items():
+        if aid == artifact_id:
+            continue
+        deps = entry.get("depends_on") or []
+        if any(d == old_ref or d.startswith(f"{artifact_id}@v") and _parse_ref_version(d)[1] < new_version for d in deps):
+            if entry.get("status") == "confirmed":
+                entry["status"] = "stale"
+                marked.append(aid)
+    return marked

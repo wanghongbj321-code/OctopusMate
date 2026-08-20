@@ -15,12 +15,17 @@
 **开场引导**：
 > 本次 VITAL 诊断的对象与范围是什么？请提供纳入诊断的平台/工具清单、职责边界，以及跨平台协同情况（例如：数据中台 + 数仓 + BI，职责边界、链路交接）。
 
-**打分规则确认话术**（核心，D4）：
-> 现在确认本次诊断的打分规则。VITAL 锚点数据（`frameworks/anchors.md`）提供默认锚点作参考（1-5 分，0.5 步进，阻断阈值 2.0）。您可以：① 整体采用默认锚点（一键确认）；② 逐角度修改锚点文本；③ 调整步进或阻断阈值。**请确认最终打分规则，我将据此提示每个角度的打分参照。**
+**打分规则确认话术**（核心，D4；file gate G1）：
+> 现在确认本次诊断的打分规则。您可以：① 上传您自己的打分规则（文件或直接说明）；② 使用 VITAL 默认锚点（`frameworks/anchors.md`：1-5 分，0.5 步进，阻断阈值 2.0）——可整体采用，也可逐角度修改；③ 混合（部分角度用您的规则、其余用默认）。**请明确选择；若提供规则，我会列出覆盖角度、冲突项与缺失项后回读给您确认。**
 
-**记录要点**：诊断范围界定（对象/边界/跨平台说明）→ 顾问确认的 scoring_config 快照 → 写入 state.json（版本化）
+**落盘与 gate（引擎强制，AI 不可跳过）**：
+- 顾问确认后，调用引擎 `_engine/files.py write_scoring_artifact(session_dir, scoring_config, confirmation)` 写入 `modules/diagnosis-scoring-{topic_slug}-v{N}.md`
+- 该 md 必须带 `confirmation` 元数据（confirmed_by=user / interaction_ref / hash），并登记 `state.json.artifacts["diagnosis.scoring.current"]`
+- **无有效 confirmed scoring md 时，引擎会在执行步骤 01 前阻断（FileGateError）**——AI 不得以"已写入 scoring_config"为由自行进入打分；也不得伪造 confirmed 文件（hash/confirmation 由引擎校验）
 
-**gate 建议**：范围明确且打分规则确认 → pass；范围部分明确 → conditional（登记未决项）；范围不清 → 追问澄清
+**记录要点**：诊断范围界定（对象/边界/跨平台说明）→ 顾问确认的 scoring_config 快照 → confirmed scoring md + 同步写入 state.json（版本化，v{N} 不覆盖）
+
+**gate 建议**：范围明确且 confirmed scoring md 已写入 → pass；范围部分明确 → conditional（登记未决项）；范围不清 → 追问澄清
 
 ## 步骤 01 · V 维（V1-V4）
 
@@ -30,7 +35,7 @@
 **逐角度追问**（每个角度）：
 > 按您确认的打分规则，V1 战略承接的现状是？请说明现状事实与证据来源（制度/架构/流程/系统/运行记录/访谈）。
 
-**记录要点**：每角度记 score / judgment（核心判断）/ evidenceIds（证据编号）；evidence 登记（等级 A/B/C + 核验方式）
+**记录要点**：每角度记 score / judgment（核心判断）/ evidenceIds（证据编号）；evidence 登记（等级 A/B/C + 核验方式）。**步骤 01 执行前引擎校验前置 confirmed scoring md（文件级 gate）**：无有效 scoring md 或已 stale 时，`run_step("01")` 会被 FileGateError 阻断。
 
 **gate 建议**：V1-V4 均有分且每角度有证据 → pass；个别角度证据待补强 → conditional；缺分 → 追问
 

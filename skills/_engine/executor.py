@@ -22,6 +22,26 @@ class ExecutionError(Exception):
     pass
 
 
+class FileGateError(ExecutionError):
+    """文件级规则型 gate 阻断：前置 artifact 缺失/无效/stale/hash 不一致。
+
+    对齐 G0-04 全路径强制：run_step 记录产出前校验 required artifacts；
+    绕过（如直接 run_step("01") 但无 confirmed scoring md）即触发本异常。
+    """
+
+    def __init__(self, stage: str, result: dict):
+        self.stage = stage
+        self.result = result
+        parts = [
+            f"文件级 gate 阻断（stage={stage}）",
+        ]
+        for key, label in (("missing", "缺失"), ("invalid", "无效"),
+                           ("stale", "stale"), ("mismatched", "hash 不一致")):
+            if result.get(key):
+                parts.append(f"{label}: {', '.join(result[key])}")
+        super().__init__("；".join(parts))
+
+
 def step_ids(method: Method) -> list[str]:
     return [s.id for s in method.steps]
 
@@ -84,14 +104,29 @@ def run_step(
     step_id: str,
     output_path: str | Path,
     ai_verdict: dict | None = None,
+    session_dir: str | Path | None = None,
 ) -> dict:
-    """执行一步：记录产出 → gate 三态判定 → 条件通过时登记未决项。
+    """执行一步：前置 file gate 检查 → 记录产出 → gate 三态判定 → 条件通过时登记未决项。
 
+    - file gate（G0-04）：manifest fileGate=true 的方法，在执行前必须通过
+      `files.check_required(f"step:{step_id}")`；session_dir 必传，否则拒绝执行。
+    - 未开启 file gate 的方法（vision 域等）行为不变，session_dir 可省略。
     返回 gate 判定结果（{status, reason, open_issue}）。
     """
     step = method.step_by_id(step_id)
     if step is None:
         raise ExecutionError(f"步骤不存在：{step_id}（方法 {method.name}）")
+
+    if method.file_gate:
+        from . import files as files_mod
+
+        if session_dir is None:
+            raise ExecutionError(
+                f"file gate 方法（{method.name}）必须提供 session_dir 才能执行步骤 {step_id}"
+            )
+        result = files_mod.check_required(f"step:{step_id}", state, Path(session_dir))
+        if not result["ok"]:
+            raise FileGateError(f"step:{step_id}", result)
 
     record_step_output(state, step_id, output_path)
     result = judge_gate(step.gate, ai_verdict)
