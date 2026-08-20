@@ -1,9 +1,34 @@
 # Changelog · Octopus Mate
 
 > 版本变更记录与专家包修改规范。项目采用语义化版本（SemVer）：`MAJOR.MINOR.PATCH`。
-> 专家包当前版本：**0.2.1**（方法包锚点自包含修复，2026-08-20 发布）。
+> 专家包当前版本：**0.2.2**（VITAL 诊断管线文件级 gate 优化，2026-08-20 发布）。
 
 ## 版本历史
+
+### 0.2.2 — 2026-08-20 · 文件级 gate 优化（产物驱动型诊断管线）
+
+> 依据：`internal/docs/dev-plan/VITAL 诊断功能开发计划-文件级gate优化方案.md`（v0.2）及其 G0-G5 实施（设计评审 + 回归与发布准备文档）。触发背景：2026-08-20 外部会话复盘——AI 未与用户互动直出诊断报告，跳过"打分规则确认"与"出口授权"两处人机确认点（在内部推理中自问自答完成全部决策）。
+
+**核心修复（事故根因）**：诊断管线从「AI 自律型流程」改造为「产物驱动型流程」——每阶段产出经用户确认的**版本化 md 中间产物**，以**文件级规则型 gate**（无有效 confirmed 文件不推进）取代依赖 AI 自觉的语义型确认；结构化 `confirmation` 元数据（confirmed_by=user / interaction_ref / hash 强一致）使"确认留痕"机器可校验。
+
+**Added**
+- `skills/_engine/files.py`（新）：YAML frontmatter 解析、canonical body hash（frontmatter 不参与）、artifact 读写与版本不覆盖、`write_scoring_artifact` / `write_dimension_artifact` / `write_overview_artifact` / `write_blockers_artifact` / `write_render_options_artifact`、draft/formal 两版制确认包写入、`check_required` / `required_before`（step:00-06 / finalized / render）、`merge_scoring_rules`（user-upload/system-default/mixed 不静默补齐）、`mark_stale_dependents`
+- `skills/_engine/reconcile.py`（新）：`rebuild_state_from_artifacts`（md→state 重建）、`check_confirm_package`（确认包 item/source/hash 对账）、`collect_confirmed_data`（聚合数据源）
+- `executor.run_step` 前置 file gate（`FileGateError`）；`state.transition(finalized)` 前置校验（formal confirm + render-options）；`exit.confirm` 授权前置校验（`AuthorizationError`，无 formal 包阻断）；`exit.assemble_diagnosis_package_from_artifacts`（确认包从 confirmed md 聚合）
+- `audit_html.py --source-md`：HTML 与确认包信息对账（六节 section / 分数 / 证据编号 / 阻断编号 / 图表 SVG）；无 source-md 只算视觉审计、不计交付 gate
+- manifest schema 支持 `fileGate` 开关；VITAL manifest 开启并更新步骤 00/01/06 gate 文本；ai-scripts 强/弱确认分级与落盘话术
+
+**Fixed**
+- 打分规则确认被 AI 虚构绕过 → 无 confirmed scoring md 时 `run_step("01")` 被引擎阻断
+- 出口授权被绕过 → 直接 `confirm(pass)` 无正式确认包 → AuthorizationError
+- 视觉模式被 AI 自选默认值 → 无 confirmed render-options md 时 finalized/render 被阻断
+- 规则/维度版本更新后旧下游继续使用 → stale 传播阻断（source_refs 版本校验）
+
+**Changed**
+- 确认包生成来源：从 state/output 即兴组装改为 confirmed md 聚合（draft → 顾问确认 → formal）
+- 诊断 item 带稳定 id（`D-{angle}-{type}-{NNN}`），确认包以 item/source/hash 覆盖做信息完整性对账
+
+**测试**：全量 **238 用例全绿**（G1-G5 新增 91：file gate / md 链 / 确认包对账 / 渲染对账 / §12.7 绕过路径负例 15 条）；vision 方法（octopus-7step / north-star / golden-circle）零回归。
 
 ### 0.2.1 — 2026-08-20 · 方法包锚点来源自包含修复
 
