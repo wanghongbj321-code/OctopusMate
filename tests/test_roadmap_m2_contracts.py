@@ -510,7 +510,16 @@ class TestStepSpecialRules(unittest.TestCase):
         d = mock_step03()
         d["priorityCapabilities"]["excluded"][0]["reason"] = ""
         errors = self._errors("03", d)
-        self.assertTrue(any("非重点排除理由" in e for e in errors), errors)
+        self.assertTrue(any("排除理由" in e for e in errors), errors)
+
+    def test_step03_excluded_may_be_empty(self):
+        """无排除对象时 excluded 允许空列表，但键必须存在（M2-03 排除理由必填语义）。"""
+        d = mock_step03()
+        d["priorityCapabilities"]["excluded"] = []
+        self.assertEqual(self._errors("03", d), [])
+        del d["priorityCapabilities"]["excluded"]
+        errors = self._errors("03", d)
+        self.assertTrue(any("排除理由记录" in e for e in errors), errors)
 
     def test_step04_ai_risk_control_fields(self):
         d = mock_step04()

@@ -210,9 +210,6 @@ ROADMAP_CONTRACTS: dict[str, StepContract] = {
             ("priorityCapabilities.priorityList[].valueTraceback", "战略/愿景/价值回溯"),
             ("priorityCapabilities.priorityList[].businessOwner", "业务所有者"),
             ("priorityCapabilities.priorityList[].governanceRoles", "治理角色"),
-            ("priorityCapabilities.excluded", "非重点排除理由记录"),
-            ("priorityCapabilities.excluded[].capabilityId", "非重点能力编号"),
-            ("priorityCapabilities.excluded[].reason", "非重点排除理由"),
         ],
         enums=[
             ("priorityCapabilities.qualityGate", frozenset({"pass", "conditional", "regress"}), "质量门三态"),
@@ -411,12 +408,26 @@ def _check_step02(data: dict) -> list[str]:
 
 
 def _check_step03(data: dict) -> list[str]:
-    """阶段 03：条件重点能力机制字段齐备——conditional=是 时必须给出裁决安排（decisionArrange）。"""
+    """阶段 03：条件重点能力机制字段齐备 + 非重点排除理由。
+
+    - conditional=是 时必须给出裁决安排（decisionArrange，挂 T12）
+    - excluded 键必须存在（T6 排除理由记录），列表可为空（无排除对象）；
+      有元素时每项 capabilityId/reason 必填（防"成熟度最低项/部门诉求"误区）
+    """
     errors: list[str] = []
-    for i, p in enumerate(data.get("priorityCapabilities", {}).get("priorityList") or []):
+    pp = data.get("priorityCapabilities", {})
+    for i, p in enumerate(pp.get("priorityList") or []):
         cid = p.get("capabilityId", f"#{i}")
         if p.get("conditional") is True and _is_blank(p.get("decisionArrange")):
             errors.append(f"条件重点能力 {cid} 缺少裁决安排（decisionArrange 必填，挂 T12）")
+    if "excluded" not in pp:
+        errors.append("缺失 非重点排除理由记录（priorityCapabilities.excluded）")
+    for i, ex in enumerate(pp.get("excluded") or []):
+        cid = ex.get("capabilityId", f"#{i}")
+        if _is_blank(ex.get("capabilityId")):
+            errors.append(f"非重点能力 #{i} 缺少编号（excluded[].capabilityId）")
+        if _is_blank(ex.get("reason")):
+            errors.append(f"非重点能力 {cid} 缺少排除理由（excluded[].reason）")
     return errors
 
 
