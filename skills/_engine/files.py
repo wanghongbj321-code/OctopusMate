@@ -314,6 +314,9 @@ def _write_artifact(
         "confirmed_by": conf.get("confirmed_by", "user"),
         "interaction_ref": conf.get("interaction_ref", ""),
     })
+    # G2-04 stale 传播：新版本生成后，依赖旧版本的下游 artifact 标记 stale（G0-05）
+    if version > 1:
+        mark_stale_dependents(artifact_id, version, state)
     save_state_json(session_dir, state)
     return path
 
@@ -421,6 +424,268 @@ def _sync_scoring_config(state: dict, config: dict) -> None:
     state["scoring_config"] = config
 
 
+# --- G2-02 诊断 item id 生成规则 ---
+
+# item 类型白名单（G0 评审 P1-4：fact=现状事实 / issue=问题点 / impact=AI 就绪度影响）
+ITEM_TYPES = ("fact", "issue", "impact")
+
+
+def make_item_ids(items: list[dict]) -> list[dict]:
+    """为诊断 item 生成稳定 id：`D-{angle}-{type}-{NNN}`（同 artifact 内 type 独立编号）。
+
+    - 原地为每个 item 写入 item_id 字段
+    - 同一 artifact 内 item id 唯一（angle + type + 序号 组合唯一）
+    - type 非法（非 fact/issue/impact）→ ValueError（防止编号污染）
+    """
+    counters: dict[tuple[str, str], int] = {}
+    for it in items:
+        angle = str(it.get("angle", ""))
+        itype = it.get("type", "fact")
+        if itype not in ITEM_TYPES:
+            raise ValueError(f"非法 item type：{itype!r}（合法：{ITEM_TYPES}）")
+        if not angle:
+            raise ValueError("item 缺少 angle，无法生成 item_id")
+        counters[(angle, itype)] = counters.get((angle, itype), 0) + 1
+        it["item_id"] = f"D-{angle}-{itype}-{counters[(angle, itype)]:03d}"
+    return items
+
+
+def validate_item_ids(items: list[dict]) -> list[str]:
+    """校验 item_id 集合唯一性与格式（返回错误列表，空 = 通过）。"""
+    errors: list[str] = []
+    seen: set[str] = set()
+    for it in items:
+        iid = it.get("item_id", "")
+        if not iid or not iid.startswith("D-"):
+            errors.append(f"item_id 格式非法：{iid!r}")
+            continue
+        if iid in seen:
+            errors.append(f"item_id 重复：{iid}")
+        seen.add(iid)
+    return errors
+
+
+# --- G2-01 维度 / 总体 / 阻断 artifact 写入 ---
+
+DIM_NAMES = {
+    "v": "业务价值与战略对齐",
+    "i": "数据生命周期与适用性",
+    "t": "技术架构与平台支撑",
+    "a": "管控、风险与可信保障",
+    "l": "长效运营与持续演进",
+}
+DIMENSION_ARTIFACT_IDS = {d: f"diagnosis.dimension.{d}.current" for d in DIM_NAMES}
+
+
+def _current_version(state: dict, artifact_id: str) -> int | None:
+    """读取 manifest 中某 artifact 的当前版本号。"""
+    entry = (state or {}).get("artifacts", {}).get(artifact_id)
+    return entry.get("version") if entry else None
+
+
+def _dim_version_refs(state: dict) -> list[str]:
+    """5 维 artifact 的 source_refs（当前 confirmed 版本）。"""
+    refs = []
+    for d in DIM_NAMES:
+        v = _current_version(state, DIMENSION_ARTIFACT_IDS[d])
+        if v is not None:
+            refs.append(f"{DIMENSION_ARTIFACT_IDS[d]}@v{v}")
+    return refs
+
+
+def write_dimension_artifact(
+    session_dir: Path,
+    dim: str,
+    data: dict,
+    confirmation: dict,
+    state: dict | None = None,
+) -> Path:
+    """G2-01：写入 confirmed 维度诊断 artifact。
+
+    - dim ∈ v/i/t/a/l；生成 `modules/diagnosis-{dim}-{topic_slug}-v{N}.md`
+    - source_refs 指向确认时的 scoring 版本（引用版本 stale 检测依赖它）
+    - data: {"summary": str,                      # 维度总结（用户已确认）
+              "angles": [{angle, score, judgment, evidenceIds, anchor_ref}],
+              "items": [{angle, type, content, evidence_refs}]}   # 自动生成 item_id（G2-02）
+    """
+    if dim not in DIM_NAMES:
+        raise ValueError(f"非法维度：{dim!r}（合法：{sorted(DIM_NAMES)}）")
+    session_dir = Path(session_dir)
+    if state is None:
+        state = load_state_json(session_dir) or {}
+    topic_slug = state.get("topic_slug", "")
+    if not topic_slug:
+        raise ValueError("state.json 缺少 topic_slug，无法命名维度 artifact")
+
+    scoring_v = _current_version(state, "diagnosis.scoring.current")
+    if scoring_v is None:
+        raise ValueError("缺少 confirmed scoring artifact（diagnosis.scoring.current），无法写入维度 md")
+    source_refs = [f"diagnosis.scoring.current@v{scoring_v}"]
+
+    items = make_item_ids(list(data.get("items") or []))
+    body = _dimension_md_body(state, dim, data, items)
+    version = next_version(session_dir / "modules", f"diagnosis-{dim}-{topic_slug}")
+    return _write_artifact(
+        session_dir, topic_slug,
+        artifact_type="diagnosis-dimension",
+        artifact_id=DIMENSION_ARTIFACT_IDS[dim],
+        version=version,
+        source_refs=source_refs,
+        body=body,
+        confirmation=confirmation,
+        state=state,
+        filename=f"diagnosis-{dim}-{topic_slug}-v{version}.md",
+    )
+
+
+def _dimension_md_body(state: dict, dim: str, data: dict, items: list[dict]) -> str:
+    """维度诊断 md 正文（方案 §5.3 结构契约）。"""
+    proj, topic = state.get("project_name", ""), state.get("topic_name", "")
+    lines = [f"# {dim.upper()} 维诊断：{proj} · {topic}（{DIM_NAMES[dim]}）", "",
+             "## 维度总结（用户已确认）", str(data.get("summary", "")), "",
+             "## 角度打分表",
+             "| 角度 | 分值 | 核心判断 | 证据编号 | 锚点依据 |", "|---|---|---|---|---|"]
+    for a in data.get("angles") or []:
+        lines.append("| {} | {} | {} | {} | {} |".format(
+            a.get("angle", ""), a.get("score", ""), a.get("judgment", ""),
+            "、".join(a.get("evidenceIds") or []), a.get("anchor_ref", "")))
+    lines += ["", "## 诊断信息明细"]
+    for it in items:
+        lines.append(f"### {it.get('angle', '')}")
+        lines.append(f"- item_id: {it.get('item_id', '')}")
+        lines.append(f"  - 类型：{it.get('type', 'fact')}")
+        lines.append(f"  - 内容：{it.get('content', '')}")
+        lines.append(f"  - 证据引用：{'、'.join(it.get('evidence_refs') or [])}")
+    lines += ["", "## 人类可读确认摘要",
+              "- 打分方式：逐角度互动 / 维度末批量回读",
+              "- 确认内容摘要：见 frontmatter confirmation.confirmation_text"]
+    return "\n".join(lines)
+
+
+def write_overview_artifact(
+    session_dir: Path,
+    data: dict,
+    confirmation: dict,
+    state: dict | None = None,
+) -> Path:
+    """G2-01：写入 confirmed 总体诊断 artifact。
+
+    - 生成 `modules/diagnosis-overview-{topic_slug}-v{N}.md`
+    - source_refs 指向 5 维当前版本
+    - data: {"conclusion": str,                      # 总体结论（用户已确认）
+              "dimensions": [{dim, name, score, judgment}],
+              "narrative": str,                      # 跨维度关联分析
+              "items": [{angle, type, content, evidence_refs}]}
+    """
+    session_dir = Path(session_dir)
+    if state is None:
+        state = load_state_json(session_dir) or {}
+    topic_slug = state.get("topic_slug", "")
+    if not topic_slug:
+        raise ValueError("state.json 缺少 topic_slug，无法命名总体 artifact")
+
+    dim_refs = _dim_version_refs(state)
+    if not dim_refs:
+        raise ValueError("无任何已确认维度 artifact，无法写入总体 md")
+    source_refs = dim_refs
+
+    items = make_item_ids(list(data.get("items") or []))
+    body = _overview_md_body(state, data, items)
+    version = next_version(session_dir / "modules", f"diagnosis-overview-{topic_slug}")
+    return _write_artifact(
+        session_dir, topic_slug,
+        artifact_type="diagnosis-overview",
+        artifact_id="diagnosis.overview.current",
+        version=version,
+        source_refs=source_refs,
+        body=body,
+        confirmation=confirmation,
+        state=state,
+        filename=f"diagnosis-overview-{topic_slug}-v{version}.md",
+    )
+
+
+def _overview_md_body(state: dict, data: dict, items: list[dict]) -> str:
+    """总体诊断 md 正文（方案 §5.4 结构契约）。"""
+    proj, topic = state.get("project_name", ""), state.get("topic_name", "")
+    lines = [f"# 总体诊断：{proj} · {topic}", "",
+             "## 总体结论（用户已确认）", str(data.get("conclusion", "")), "",
+             "## 维度总览表",
+             "| 维度 | 分 | 一句话判断 |", "|---|---|---|"]
+    for d in data.get("dimensions") or []:
+        lines.append(f"| {d.get('dim', '')} | {d.get('score', '')} | {d.get('judgment', '')} |")
+    lines += ["", "## 总体诊断信息", str(data.get("narrative", "")), "",
+              "## 诊断 item 来源索引",
+              "| item_id | 来源文件 | 用途 |", "|---|---|---|"]
+    for it in items:
+        lines.append(f"| {it.get('item_id', '')} | {it.get('source_file', '')} | {it.get('content', '')} |")
+    return "\n".join(lines)
+
+
+def write_blockers_artifact(
+    session_dir: Path,
+    data: dict,
+    confirmation: dict,
+    state: dict | None = None,
+) -> Path:
+    """G2-01：写入 confirmed 阻断报告 artifact。
+
+    - 生成 `modules/diagnosis-blockers-{topic_slug}-v{N}.md`
+    - source_refs 指向 overview + 5 维当前版本
+    - data: {"blockers": [{id, angle, type, impact, evidenceIds, source_item, suggestion, owner, timeline}],
+              "path": [{priority, action, owner, timeline, source_blocker}]}
+    """
+    session_dir = Path(session_dir)
+    if state is None:
+        state = load_state_json(session_dir) or {}
+    topic_slug = state.get("topic_slug", "")
+    if not topic_slug:
+        raise ValueError("state.json 缺少 topic_slug，无法命名阻断 artifact")
+
+    overview_v = _current_version(state, "diagnosis.overview.current")
+    if overview_v is None:
+        raise ValueError("缺少 confirmed overview artifact（diagnosis.overview.current），无法写入阻断 md")
+    source_refs = [f"diagnosis.overview.current@v{overview_v}"] + _dim_version_refs(state)
+
+    body = _blockers_md_body(state, data)
+    version = next_version(session_dir / "modules", f"diagnosis-blockers-{topic_slug}")
+    return _write_artifact(
+        session_dir, topic_slug,
+        artifact_type="diagnosis-blockers",
+        artifact_id="diagnosis.blockers.current",
+        version=version,
+        source_refs=source_refs,
+        body=body,
+        confirmation=confirmation,
+        state=state,
+        filename=f"diagnosis-blockers-{topic_slug}-v{version}.md",
+    )
+
+
+def _blockers_md_body(state: dict, data: dict) -> str:
+    """阻断报告 md 正文（方案 §6.3 结构契约）。"""
+    proj, topic = state.get("project_name", ""), state.get("topic_name", "")
+    lines = [f"# 阻断性问题报告：{proj} · {topic}", "",
+             "## 阻断性问题清单",
+             "| 编号 | 所属维度/角度 | 类型 | 影响范围 | 证据引用 | 来源 item_id | 改进建议 | owner | timeline |",
+             "|---|---|---|---|---|---|---|---|---|"]
+    for b in data.get("blockers") or []:
+        lines.append("| {} | {} | {} | {} | {} | {} | {} | {} | {} |".format(
+            b.get("id", ""), b.get("angle", ""), b.get("type", ""), b.get("impact", ""),
+            "、".join(b.get("evidenceIds") or []), b.get("source_item", ""),
+            b.get("suggestion", ""), b.get("owner", "待指定"), b.get("timeline", "待指定")))
+    lines += ["", "## 改进路径（阻断优先）",
+              "| 优先级 | 改进项 | 对应阻断 | 建议 | owner/timeline |", "|---|---|---|---|---|"]
+    for p in data.get("path") or []:
+        lines.append("| {} | {} | {} | {} | {} |".format(
+            p.get("priority", ""), p.get("action", ""), p.get("source_blocker", ""),
+            p.get("suggestion", ""), f"{p.get('owner', '')}/{p.get('timeline', '')}"))
+    lines += ["", "## 人类可读确认摘要",
+              "- 确认方式：草稿呈现 → 用户互动 → 强确认",
+              "- 确认内容摘要：见 frontmatter confirmation.confirmation_text"]
+    return "\n".join(lines)
+
+
 # --- G1-05 打分规则来源合并（AI 引导层支撑：partial upload 不静默补齐） ---
 
 def merge_scoring_rules(user_config: dict | None, default_config: dict) -> dict:
@@ -496,18 +761,21 @@ def merge_scoring_rules(user_config: dict | None, default_config: dict) -> dict:
 # --- G0-04 required artifacts 映射与检查 ---
 
 # 权威映射表（对齐 G0 设计 §4.2）。
-# G1 范围：只接入 step:00/01（G1 出口标准：无有效 scoring md 时任何进入步骤 01 的路径被阻断）。
-# step:02-06 / exit / finalized / render 的 required artifacts 在 G2-03 / G3 / G4 随
-# write_dimension_artifact / write_overview_artifact / write_blockers_artifact /
-# write_render_options_artifact 一起接入（阶段未接入的 stage 返回空 = 不阻断，保持 vision 等兼容）。
+# G1 接入 step:00/01；G2 接入 step:02-06（维度/overview/blockers md 链，G2-03）。
+# exit / finalized / render 的 required artifacts 在 G3 / G4 接入
+# （阶段未接入的 stage 返回空 = 不阻断，保持 vision 等兼容）。
 STAGE_REQUIRED: dict[str, list[str]] = {
     "step:00": [],
     "step:01": ["diagnosis.scoring.current"],
-    # "step:02": ["diagnosis.scoring.current", "diagnosis.dimension.v.current"],          # G2-03
-    # "step:03": [... + dimension.i ...],                                                  # G2-03
-    # "step:04": [... + dimension.t ...],                                                  # G2-03
-    # "step:05": [... + dimension.a ...],                                                  # G2-03
-    # "step:06": [... + dimension.l + overview ...],                                       # G2-03
+    "step:02": ["diagnosis.scoring.current", "diagnosis.dimension.v.current"],
+    "step:03": ["diagnosis.scoring.current", "diagnosis.dimension.v.current", "diagnosis.dimension.i.current"],
+    "step:04": ["diagnosis.scoring.current", "diagnosis.dimension.v.current", "diagnosis.dimension.i.current",
+                "diagnosis.dimension.t.current"],
+    "step:05": ["diagnosis.scoring.current", "diagnosis.dimension.v.current", "diagnosis.dimension.i.current",
+                "diagnosis.dimension.t.current", "diagnosis.dimension.a.current"],
+    "step:06": ["diagnosis.scoring.current", "diagnosis.dimension.v.current", "diagnosis.dimension.i.current",
+                "diagnosis.dimension.t.current", "diagnosis.dimension.a.current",
+                "diagnosis.dimension.l.current", "diagnosis.overview.current"],
     # "exit:aggregate": [... + blockers ...],                                              # G3-01
     # "exit:confirm": ["diagnosis.confirm.current"],                                       # G3-04
     # "state:finalized": ["diagnosis.confirm.current", "render.options.current"],         # G4-02
