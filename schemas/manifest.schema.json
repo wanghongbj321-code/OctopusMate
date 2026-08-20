@@ -30,6 +30,10 @@
       "type": "string",
       "description": "方法显示名（出现在「选择方法」列表）"
     },
+    "fileGate": {
+      "type": "boolean",
+      "description": "是否启用文件级规则型 gate（G0：confirmed md + confirmation + hash + artifact manifest 校验）。开启后：步骤执行/出口/授权/渲染入口均检查 required artifacts（_engine/files.py）；未声明或 false 的方法（如 vision 域）不受影响。默认 false。"
+    },
     "description": {
       "type": "string",
       "description": "一句话说明适用场景（出现在「选择方法」列表副标题）"

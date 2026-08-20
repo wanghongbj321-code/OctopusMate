@@ -39,6 +39,7 @@ class Method:
     ai_constraints: list = field(default_factory=list)
     output_contract: dict | None = None
     source_path: Path | None = None
+    file_gate: bool = False
 
     def step_by_id(self, step_id: str) -> Step | None:
         for s in self.steps:
@@ -68,6 +69,7 @@ def _build_method(raw: dict, source_path: Path | None = None) -> Method:
         ai_constraints=list(raw.get("aiConstraints", [])),
         output_contract=raw.get("outputContract"),
         source_path=source_path,
+        file_gate=bool(raw.get("fileGate", False)),
     )
 
 

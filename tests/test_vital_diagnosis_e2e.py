@@ -19,7 +19,7 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "skills"))
 sys.path.insert(0, str(ROOT / "skills" / "deliverable-render" / "scripts"))
 
-from _engine import blocker, evidence, open_issues, scoring, session, state as state_mod  # noqa: E402
+from _engine import blocker, evidence, files, open_issues, scoring, session, state as state_mod  # noqa: E402
 from _engine.executor import advance, begin, run_step  # noqa: E402
 from _engine.exit import assemble_diagnosis_package, confirm, run_exit, write_diagnosis_package  # noqa: E402
 from _engine.parser import parse_manifest  # noqa: E402
@@ -28,6 +28,15 @@ from audit_html import audit as audit_html  # noqa: E402
 VITAL_MANIFEST = ROOT / "skills" / "methods" / "vital-diagnosis" / "manifest.yaml"
 CANVAS_HTML = ROOT / "skills" / "deliverable-render" / "examples" / "diagnosis-report-canvas.html"
 DEMO_OUT = ROOT / "artifacts" / "demo" / "vital-diagnosis-e2e"
+
+# 打分规则确认的授权证据（G0/G1：confirmed scoring md 的 confirmation 元数据）
+SCORING_CONFIRMATION = {
+    "status": "confirmed",
+    "confirmed_at": "2026-08-20T15:00:00+08:00",
+    "confirmed_by": "user",
+    "interaction_ref": "transcript:12:用户确认整体采用默认锚点并修改 I2 第 1 档",
+    "confirmation_text": "用户明确确认采用本版打分规则",
+}
 
 # 顾问确认的打分规则：I2 锚点第 1 档修改（默认参考 → 顾问定制，验证动态化 D4）
 SCORING_CONFIG = {
@@ -130,9 +139,11 @@ class TestVitalDiagnosisE2E(unittest.TestCase):
         out00 = topic_dir / "modules" / "diagnosis-step00.md"
         out00.write_text("# 诊断准备\n\n诊断对象：数据中台；范围：数据管理域\n", encoding="utf-8")
         r0 = run_step(state, method, "00", out00,
-                      ai_verdict={"core_ok": True, "conditional": False, "note": "范围明确"})
+                      ai_verdict={"core_ok": True, "conditional": False, "note": "范围明确"},
+                      session_dir=topic_dir)
         self.assertEqual(r0["status"], "pass")
-        state_mod.set_scoring_config(state, SCORING_CONFIG)
+        # 写入 confirmed scoring md（文件级 gate G1）：同步 state.scoring_config + artifact manifest
+        files.write_scoring_artifact(topic_dir, SCORING_CONFIG, SCORING_CONFIRMATION, state=state)
         self.assertEqual(state_mod.get_scoring_config(state)["customNote"],
                          "顾问将 I2 锚点第 1 档改为「依赖人工判断（顾问定制）」")
         advance(state, method)
@@ -144,7 +155,7 @@ class TestVitalDiagnosisE2E(unittest.TestCase):
         for sid, angles in dim_steps.items():
             out = topic_dir / "modules" / f"diagnosis-{sid}.md"
             out.write_text(f"# {method.step_by_id(sid).name}\n\n（演练模拟：{len(angles)} 角度打分）\n", encoding="utf-8")
-            r = run_step(state, method, sid, out, ai_verdict={"core_ok": True})
+            r = run_step(state, method, sid, out, ai_verdict={"core_ok": True}, session_dir=topic_dir)
             self.assertEqual(r["status"], "pass", f"步骤 {sid} 应通过：{r}")
             advance(state, method)
 
@@ -161,7 +172,7 @@ class TestVitalDiagnosisE2E(unittest.TestCase):
         self.assertEqual({b["angle"] for b in blocks}, {"I2", "I4", "T3"})
         out06 = topic_dir / "modules" / "diagnosis-06.md"
         out06.write_text(f"# 阻断性问题与改进路径\n\n{len(blocks)} 项阻断问题\n", encoding="utf-8")
-        r6 = run_step(state, method, "06", out06, ai_verdict={"core_ok": True})
+        r6 = run_step(state, method, "06", out06, ai_verdict={"core_ok": True}, session_dir=topic_dir)
         self.assertEqual(r6["status"], "pass")
         advance(state, method)
 

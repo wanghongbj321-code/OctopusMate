@@ -4,6 +4,7 @@ version: 1.0.0
 type: diagnosis-method
 displayName: "VITAL 五维诊断"
 description: "数据管理域 AI 转型现状诊断（V 价值战略 / I 数据 / T 技术 / A 管控可信 / L 运营演进，22 个二级角度），识别阻断性问题并输出诊断报告"
+fileGate: true   # 文件级规则型 gate（G0/G1）：步骤/出口/授权入口校验 confirmed md + confirmation + hash + artifact manifest
 
 steps:
   - id: "00"
@@ -11,14 +12,14 @@ steps:
     question: "诊断对象与范围是什么？（平台/工具清单、职责边界、跨平台说明）"
     operations:
       - "收集诊断对象与范围（纳入范围的平台/工具清单 + 职责边界 + 跨平台协同说明）"
-      - "引导顾问确认打分规则（锚点文本/步进/阻断阈值）→ 写入 scoring_config"
-      - "呈现锚点数据（frameworks/anchors.md）默认锚点作参考，顾问可整体替换或逐角度修改"
+      - "询问顾问是否提供本次诊断的打分规则（上传或说明）；未提供则展示框架锚点（frameworks/anchors.md）默认锚点供整体采用或逐角度修改"
+      - "确认打分规则后调用引擎写入 confirmed scoring md（modules/diagnosis-scoring-{topic_slug}-v{N}.md，含 confirmation + hash）并同步 state.json.scoring_config"
     outputs:
       - "诊断范围界定（diagnosisScope）"
-      - "scoring_config（打分规则快照）"
+      - "confirmed scoring md（diagnosis.scoring.current）"
     gate:
       coreCheck: "诊断范围明确且打分规则已确认"
-      pass: "范围边界清晰、打分规则确认（scoring_config 已写入 state.json）"
+      pass: "范围边界清晰；confirmed scoring md 已写入（文件级 gate：文件存在 + confirmation + hash + manifest 索引，见 _engine/files.py check_required）"
       conditional: "范围部分明确（登记未决项）"
 
   - id: "01"
@@ -32,7 +33,7 @@ steps:
       - "V1-V4 角度打分表（score/judgment/evidenceIds）"
     gate:
       coreCheck: "V1-V4 四角度均有分且每角度有证据支撑"
-      pass: "四角度打分完成、证据充分"
+      pass: "四角度打分完成、证据充分；前置 confirmed scoring md 未 stale（文件级 gate）"
       conditional: "个别角度证据待补强（登记未决项）"
 
   - id: "02"

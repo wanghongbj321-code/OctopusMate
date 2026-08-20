@@ -1,0 +1,116 @@
+# Mock 文件级 gate 诊断方法（G1 测试专用；fileGate=true 模拟 VITAL 结构）
+# 结构对齐 vital-diagnosis：步骤 00 诊断准备 / 01-05 五维 / 06 阻断
+name: diagnosis-method-gate-mock
+version: 1.0.0
+type: diagnosis-method
+displayName: "Mock Gate 诊断"
+description: "文件级 gate（G1）测试用最小方法：验证 required artifacts 前置检查"
+fileGate: true
+
+steps:
+  - id: "00"
+    name: "诊断准备"
+    question: "诊断对象与范围是什么？"
+    operations:
+      - "收集诊断对象与范围"
+      - "确认打分规则 → 写 confirmed scoring md"
+    outputs:
+      - "诊断范围界定"
+      - "confirmed scoring md"
+    gate:
+      coreCheck: "范围明确且打分规则已确认"
+      pass: "范围边界清晰、confirmed scoring md 已写入"
+      conditional: "范围部分明确（登记未决项）"
+  - id: "01"
+    name: "V · 价值战略"
+    question: "战略承接与价值成效现状？"
+    operations:
+      - "按 scoring_config.anchors.V 逐角度打分"
+    outputs:
+      - "V1-V2 角度打分表"
+    gate:
+      coreCheck: "两角度均有分且有证据"
+      pass: "两角度打分完成且证据充分"
+      conditional: "个别角度证据待补强（登记未决项）"
+  - id: "02"
+    name: "I · 数据"
+    question: "数据对象与链路现状？"
+    operations:
+      - "按 scoring_config.anchors.I 逐角度打分"
+    outputs:
+      - "I1-I2 角度打分表"
+    gate:
+      coreCheck: "两角度均有分且有证据"
+      pass: "两角度打分完成且证据充分"
+      conditional: "个别角度证据待补强（登记未决项）"
+  - id: "03"
+    name: "T · 技术"
+    question: "架构承载与服务开放现状？"
+    operations:
+      - "按 scoring_config.anchors.T 逐角度打分"
+    outputs:
+      - "T1-T2 角度打分表"
+    gate:
+      coreCheck: "两角度均有分且有证据"
+      pass: "两角度打分完成且证据充分"
+      conditional: "个别角度证据待补强（登记未决项）"
+  - id: "04"
+    name: "A · 管控可信"
+    question: "治理与可信保障现状？"
+    operations:
+      - "按 scoring_config.anchors.A 逐角度打分"
+    outputs:
+      - "A1-A2 角度打分表"
+    gate:
+      coreCheck: "两角度均有分且有证据"
+      pass: "两角度打分完成且证据充分"
+      conditional: "个别角度证据待补强（登记未决项）"
+  - id: "05"
+    name: "L · 运营演进"
+    question: "组织与运营现状？"
+    operations:
+      - "按 scoring_config.anchors.L 逐角度打分"
+    outputs:
+      - "L1-L2 角度打分表"
+    gate:
+      coreCheck: "两角度均有分且有证据"
+      pass: "两角度打分完成且证据充分"
+      conditional: "个别角度证据待补强（登记未决项）"
+  - id: "06"
+    name: "阻断识别"
+    question: "哪些角度 ≤ 阻断阈值？"
+    operations:
+      - "识别阻断性问题与改进路径"
+    outputs:
+      - "阻断性问题清单"
+      - "改进路径"
+    gate:
+      coreCheck: "清单与路径一致"
+      pass: "阻断清单与改进路径对齐"
+      conditional: "待补充影响范围（登记未决项）"
+
+scoring:
+  scale:
+    min: 1
+    max: 5
+    step: 0.5
+  blockThreshold: 2.0
+  anchorSource: "tests/fixtures/mock-method（测试用）"
+
+aiConstraints:
+  - "打分规则以顾问确认的 scoring_config 为准，锚点仅作默认参考"
+
+outputContract:
+  requires:
+    - diagnosisScope
+    - scoringConfig
+    - dimensionScores
+    - angleScores
+    - evidenceList
+    - overallScore
+    - reportNarrative
+  optional:
+    - blockingIssues
+    - improvementPath
+    - openIssues
+    - downstreamInterfaces
