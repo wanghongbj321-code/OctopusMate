@@ -19,9 +19,13 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "skills"))
 sys.path.insert(0, str(ROOT / "skills" / "deliverable-render" / "scripts"))
 
-from _engine import blocker, evidence, files, open_issues, scoring, session, state as state_mod  # noqa: E402
+from _engine import blocker, evidence, files, open_issues, reconcile, scoring, session, state as state_mod  # noqa: E402
 from _engine.executor import advance, begin, run_step  # noqa: E402
-from _engine.exit import assemble_diagnosis_package, confirm, run_exit, write_diagnosis_package  # noqa: E402
+from _engine.exit import (  # noqa: E402
+    assemble_diagnosis_package_from_artifacts,
+    confirm,
+    run_exit,
+)
 from _engine.parser import parse_manifest  # noqa: E402
 from audit_html import audit as audit_html  # noqa: E402
 
@@ -246,11 +250,17 @@ class TestVitalDiagnosisE2E(unittest.TestCase):
         self.assertEqual(exit_result["errors"], [], f"出口校验应通过：{exit_result['errors']}")
         self.assertFalse(exit_result["blocked"])
 
-        # 9. 确认包组装（唯一事实源）→ 授权 finalized
-        content = assemble_diagnosis_package(output, state, method)
-        pkg_path = write_diagnosis_package(topic_dir, content, slug="data-platform-diagnosis")
-        self.assertTrue(pkg_path.exists())
-        confirm(state, "pass")
+        # 9. 确认包（G3）：confirmed md 聚合 → draft → 用户确认 → formal → 对账 → 授权
+        draft = assemble_diagnosis_package_from_artifacts(topic_dir, state, method)
+        draft_path = files.write_draft_confirm_artifact(topic_dir, draft, state=state)
+        formal_path = files.write_formal_confirm_artifact(
+            topic_dir, draft, SCORING_CONFIRMATION, state=state)
+        self.assertTrue(formal_path.exists())
+        self.assertTrue(draft_path.exists())  # draft 保留
+        report = reconcile.check_confirm_package(topic_dir, state)
+        self.assertTrue(report["ok"], report["errors"])
+        result = confirm(state, "pass", session_dir=topic_dir)
+        self.assertTrue(result["authorized"])
         self.assertEqual(state["status"], "authorized")
         state_mod.transition(state, "finalized", authorized=True)
 

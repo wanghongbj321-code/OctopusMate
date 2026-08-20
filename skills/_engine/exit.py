@@ -14,7 +14,9 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from . import contract as contract_mod
+from . import files as files_mod
 from . import open_issues as issues_mod
+from . import reconcile as reconcile_mod
 from . import state as state_mod
 from .parser import Method
 
@@ -283,16 +285,198 @@ def write_diagnosis_package(session_dir: Path, content: str, slug: str = "confir
     return target
 
 
-def confirm(state: dict, decision: str) -> dict:
+def assemble_diagnosis_package_from_artifacts(
+    session_dir: Path,
+    state: dict,
+    method: Method | None = None,
+) -> str:
+    """G3-01：从 confirmed md 聚合生成确认包 draft（§7.2 聚合映射）。
+
+    - 每个 section 标注 `> 来源：...`（机器可读，供 check_confirm_package 对账）
+    - 业务内容全部来自 confirmed md（scoring / 维度 / overview / blockers），
+      不再由 AI 从 state/output 即兴组织（评审 P2-4）
+    - 只做聚合与文字呈现，不压缩信息（item/source 引用完整保留）
+    """
+    session_dir = Path(session_dir)
+    data = reconcile_mod.collect_confirmed_data(session_dir, state)
+    proj = state.get("project_name", "")
+    topic = state.get("topic_name", "")
+    lines: list[str] = [f"# 诊断确认包：{proj} · {topic}"]
+    meta = (
+        f"> 方法：{method.display_name if method else state.get('method', '')}"
+        f" ｜ 状态：draft（G3 从 confirmed md 聚合）"
+        f" ｜ 更新：{datetime.now(timezone.utc).isoformat()}"
+    )
+    lines.append(meta)
+    lines.append("")
+
+    # 1. 诊断范围界定
+    lines.append("## 诊断范围界定")
+    lines.append("> 来源：会话记录 + modules/diagnosis-scoring-*.md")
+    lines.append(str(state.get("diagnosisScope") or "（见会话记录）"))
+    lines.append("")
+
+    # 2. 打分规则快照
+    scoring = data.get("scoring")
+    if scoring:
+        lines.append("## 打分规则快照")
+        lines.append(f"> 来源：modules/{scoring['path']}")
+        for line in _extract_table(scoring["body"], "规则总览"):
+            lines.append(line)
+    lines.append("")
+
+    # 3. 维度打分分布
+    dims = data.get("dimensions", {})
+    lines.append("## 维度打分分布")
+    lines.append("> 来源：" + "、".join(f"modules/{d['path']}" for d in dims.values()))
+    lines.append(_md_table(["维度", "名称", "打分"], [
+        [dim.upper(), files_mod.DIM_NAMES.get(dim, ""),
+         _avg_score(d.get("angles") or [])]
+        for dim, d in dims.items()
+    ]))
+    lines.append("")
+
+    # 4. 二级角度打分
+    lines.append("## 二级角度打分")
+    lines.append("> 来源：" + "、".join(f"modules/{d['path']}" for d in dims.values()))
+    rows = []
+    for dim, d in dims.items():
+        for a in d.get("angles") or []:
+            rows.append([a["angle"], a["angle"], str(a["score"]), a["judgment"],
+                         "、".join(a.get("evidenceIds") or []),
+                         "、".join(_items_for_angle(d.get("item_ids") or [], a["angle"]))])
+    lines.append(_md_table(["角度", "名称", "打分", "核心判断", "证据", "来源 item"], rows))
+    lines.append("")
+
+    # 5. 阻断性问题清单
+    blockers = data.get("blockers")
+    if blockers:
+        lines.append("## 阻断性问题清单")
+        lines.append(f"> 来源：modules/{blockers['path']}")
+        rows = [[b["id"], b["angle"], b["type"], b["impact"], "、".join(b["evidenceIds"]),
+                 b["source_item"], b["suggestion"]] for b in blockers.get("blockers") or []]
+        lines.append(_md_table(["编号", "角度", "类型", "影响", "证据", "来源 item", "建议"], rows))
+        lines.append("")
+
+        # 6. 改进路径
+        lines.append("## 改进路径")
+        lines.append(f"> 来源：modules/{blockers['path']}")
+        rows = [[p.get("priority", ""), p.get("action", ""), p.get("source_blocker", ""),
+                 p.get("owner", ""), p.get("timeline", "")] for p in blockers.get("path_items") or []]
+        lines.append(_md_table(["优先级", "行动", "对应阻断", "责任方", "时间线"], rows))
+        lines.append("")
+
+    # 7. 证据清单
+    lines.append("## 证据清单")
+    lines.append("> 来源：各维度 md 证据引用汇总")
+    rows = [[e, "（见维度 md）", "", "", ""] for e in data.get("evidence_ids", [])]
+    lines.append(_md_table(["编号", "证据", "来源", "等级", "核验方式"], rows))
+    lines.append("")
+
+    # 8. 总体分
+    overview = data.get("overview")
+    if overview:
+        lines.append("## 总体分")
+        lines.append(f"> 来源：modules/{overview['path']}")
+        scores = [float(d["score"]) for d in overview.get("dimensions") or []]
+        overall = round(sum(scores) / len(scores), 1) if scores else ""
+        lines.append(f"- 总体分：{overall}")
+        lines.append("")
+
+        # 9. 报告叙事
+        lines.append("## 报告叙事")
+        lines.append(f"> 来源：modules/{overview['path']}")
+        lines.append(overview.get("narrative") or "")
+        lines.append("")
+
+    # 10. 未决条件清单
+    lines.append("## 未决条件清单")
+    lines.append("> 来源：会话 open_issues")
+    issues = state.get("open_issues") or []
+    if issues:
+        rows = [[i.get("id", ""), i.get("sourceStep", ""), i.get("content", ""),
+                 i.get("reason", ""), i.get("resolveMode", ""), i.get("resolution", "未裁决")]
+                for i in issues]
+        lines.append(_md_table(["编号", "登记步骤", "内容", "原因", "拟裁决", "裁决结果"], rows))
+    else:
+        lines.append("（无未决项）")
+    lines.append("")
+
+    # 11. 下游接口
+    lines.append("## 下游接口")
+    lines.append("> 来源：总体/阻断报告中的移交信息")
+    lines.append(str(state.get("downstreamInterfaces") or "（待移交）"))
+    return "\n".join(lines)
+
+
+def _extract_table(body: str, heading: str) -> list[str]:
+    """提取 ## {heading} 下的 markdown 表格行。"""
+    lines = body.split("\n")
+    out: list[str] = []
+    in_sec = False
+    for line in lines:
+        if line.strip() == f"## {heading}":
+            in_sec = True
+            continue
+        if in_sec:
+            if line.startswith("## "):
+                break
+            if line.startswith("|"):
+                out.append(line)
+    return out
+
+
+def _avg_score(angles: list[dict]) -> str:
+    vals = [float(a["score"]) for a in angles if a.get("score") is not None]
+    return str(round(sum(vals) / len(vals), 1)) if vals else ""
+
+
+def _items_for_angle(item_ids: list[str], angle: str) -> list[str]:
+    return [i for i in item_ids if i.startswith(f"D-{angle}-")]
+
+
+def confirm(state: dict, decision: str, session_dir: str | Path | None = None) -> dict:
     """用户授权节点：顾问对确认包决策。
 
     - decision="pass" 或 "conditional" → authorized 写入（受控，须授权标记）
     - decision="reject" → 不写 authorized，返回未授权（主 Agent 引导回指修订）
-    返回 {"authorized": bool, "reason": str}
+
+    G3-04（文件级 gate 流程）：诊断域若已走 confirmed md 链（artifacts 含
+    diagnosis.scoring.current），授权前必须通过：
+      1. formal confirmed 确认包存在（manifest + confirmation 凭据）
+      2. 确认包对账通过（reconcile.check_confirm_package）
+      3. source_refs 非 stale
+    直接 confirm(pass) 但无 formal 包 → AuthorizationError（§12.7 负例 10）。
+    返回 {"authorized": bool, "reason": str, "reconcile": dict | None}
     """
     if decision not in ("pass", "conditional", "reject"):
         raise ValueError(f"非法确认决策：{decision!r}（合法：pass/conditional/reject）")
     if decision == "reject":
-        return {"authorized": False, "reason": "顾问驳回，需回指修订后再确认"}
+        return {"authorized": False, "reason": "顾问驳回，需回指修订后再确认", "reconcile": None}
+
+    # G3-04：文件级 gate 流程的授权前置校验
+    if "diagnosis.scoring.current" in (state.get("artifacts") or {}):
+        if session_dir is None:
+            raise ValueError("授权校验需要 session_dir（formal confirm 包路径）")
+
+        entry = (state.get("artifacts") or {}).get("diagnosis.confirm.current")
+        if not entry or entry.get("status") != "confirmed":
+            raise AuthorizationError("无正式 confirmed 确认包，不能授权（须先 write_formal_confirm_artifact）")
+        pkg_path = Path(session_dir) / str(entry["path"])
+        pkg = files_mod.read_artifact(pkg_path)
+        if not pkg.valid or (pkg.meta or {}).get("status") != "confirmed":
+            raise AuthorizationError(f"formal 确认包无效：{pkg.errors}")
+        conf = (pkg.meta or {}).get("confirmation") or {}
+        if conf.get("confirmed_by") != "user" or not conf.get("interaction_ref"):
+            raise AuthorizationError("确认包 confirmation 不满足授权凭据（confirmed_by=user / interaction_ref）")
+        result = reconcile_mod.check_confirm_package(session_dir, state)
+        if not result["ok"]:
+            raise AuthorizationError(f"确认包对账未通过：{'；'.join(result['errors'][:5])}")
+
     state_mod.transition(state, "authorized", authorized=True)
-    return {"authorized": True, "reason": f"顾问确认（{decision}）"}
+    return {"authorized": True, "reason": f"顾问确认（{decision}）",
+            "reconcile": result if "result" in locals() else None}
+
+
+class AuthorizationError(Exception):
+    """G3-04：授权前置校验失败（无 formal 确认包 / 对账未通过 / 凭据缺失）。"""

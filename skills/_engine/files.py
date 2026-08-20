@@ -54,7 +54,7 @@ def canonicalize(raw_text: str) -> str:
     """规范化正文（剥离 frontmatter 后的正文按 G0-02 步骤清洗）。
 
     规则：剥离 UTF-8 BOM → 移除 frontmatter 段 → CRLF 归一化 → 行尾空白清洗 →
-    末尾空行清理（保留恰好一个 \\n）。不做大小写/全半角归一化（避免改动正文含义）。
+    前导/末尾空行清理（保留恰好一个 \\n）。不做大小写/全半角归一化（避免改动正文含义）。
     """
     text = raw_text
     if text.startswith("\ufeff"):
@@ -65,6 +65,9 @@ def canonicalize(raw_text: str) -> str:
     for line in lines:
         line = line.replace("\r", "").rstrip(" \t")
         cleaned.append(line)
+    # 去除前导空行（frontmatter 结束定界符后的换行差异不参与正文 hash）
+    while cleaned and cleaned[0] == "":
+        cleaned.pop(0)
     # 去除末尾所有空行，保留恰好一个 "\n"
     while cleaned and cleaned[-1] == "":
         cleaned.pop()
@@ -113,16 +116,24 @@ def split_frontmatter(text: str) -> tuple[dict | None, str]:
 # --- G0-01 artifact 结构校验 ---
 
 def validate_artifact_meta(meta: dict | None) -> list[str]:
-    """G0-01 校验规则：字段/白名单/必填。返回错误列表（空 = 通过）。"""
+    """G0-01 校验规则：字段/白名单/必填。返回错误列表（空 = 通过）。
+
+    - status=confirmed：confirmation + content_hash 为 gate 凭据，必填
+    - status=draft：confirmation 可选（draft 不是 gate 凭据）；content_hash 保留
+    """
     errors: list[str] = []
     if not isinstance(meta, dict):
         return ["frontmatter 缺失或非对象"]
     atype = meta.get("artifact_type")
     if atype not in ARTIFACT_TYPES:
         errors.append(f"artifact_type 必须属于白名单 {sorted(ARTIFACT_TYPES)}，实际 {atype!r}")
-    for key in ("artifact_id", "version", "status", "source_refs", "content_hash", "confirmation"):
+    for key in ("artifact_id", "version", "status", "source_refs", "content_hash"):
         if key not in meta:
             errors.append(f"frontmatter 缺少必填字段：{key}")
+    if meta.get("status") == "confirmed":
+        for key in ("confirmation",):
+            if key not in meta:
+                errors.append(f"frontmatter 缺少必填字段：{key}")
     if not isinstance(meta.get("version"), int) or meta["version"] < 1:
         errors.append(f"version 必须为 ≥1 的整数，实际 {meta.get('version')!r}")
     if meta.get("status") not in ("draft", "confirmed"):
@@ -133,10 +144,11 @@ def validate_artifact_meta(meta: dict | None) -> list[str]:
     if not isinstance(ch, str) or not ch.startswith("sha256:"):
         errors.append("content_hash 格式必须为 sha256:{hex}")
     conf = meta.get("confirmation")
-    if not isinstance(conf, dict):
-        errors.append("confirmation 必须为对象")
-    else:
-        errors.extend(_validate_confirmation(conf))
+    if conf is not None:
+        if not isinstance(conf, dict):
+            errors.append("confirmation 必须为对象")
+        else:
+            errors.extend(_validate_confirmation(conf))
     return errors
 
 
@@ -260,17 +272,21 @@ def _write_artifact(
     version: int,
     source_refs: list[str],
     body: str,
-    confirmation: dict,
+    confirmation: dict | None = None,
     state: dict | None = None,
     filename: str | None = None,
+    status: str = "confirmed",
 ) -> Path:
     """通用 artifact 写入：构造 frontmatter（含 content_hash）→ 写 md → 登记 manifest。
 
     - 版本不覆盖：文件名为 -v{N}.md，N = 指定 version；目标文件已存在则拒绝
     - confirmation 与正文分离：frontmatter 不参与正文 hash（G0-02）
-    - confirmed_content_hash 与 content_hash 强一致（G0 D3，确认基线 = 文件正文）
+    - status=confirmed：confirmed_content_hash 与 content_hash 强一致（G0 D3）
+    - status=draft：confirmation 可省略（draft 不是 gate 凭据）
     - state 提供时：就地更新 manifest 并保存 state.json；否则加载/重建保存
     """
+    if status not in ("draft", "confirmed"):
+        raise ValueError(f"非法 status：{status!r}")
     modules_dir = session_dir / "modules"
     modules_dir.mkdir(parents=True, exist_ok=True)
     if filename is None:
@@ -284,18 +300,20 @@ def _write_artifact(
         "artifact_type": artifact_type,
         "artifact_id": artifact_id,
         "version": version,
-        "status": "confirmed",
+        "status": status,
         "source_refs": source_refs,
-        "confirmation": dict(confirmation),
+        "content_hash": _hash_placeholder(),
     }
+    if confirmation is not None:
+        meta["confirmation"] = dict(confirmation)
     # 先以占位 hash 生成一次，复算 real hash 后重写（hash 只针对正文，frontmatter 不参与）
-    meta["content_hash"] = _hash_placeholder()
     file_text = f"---\n{_dump_yaml(meta)}---\n\n{body}"
     real_hash = content_hash(file_text)
-    conf = dict(confirmation)
-    conf["confirmed_content_hash"] = real_hash  # 强一致（G0 D3）
+    if confirmation is not None and status == "confirmed":
+        conf = dict(confirmation)
+        conf["confirmed_content_hash"] = real_hash  # 强一致（G0 D3）
+        meta["confirmation"] = conf
     meta["content_hash"] = real_hash
-    meta["confirmation"] = conf
     file_text = f"---\n{_dump_yaml(meta)}---\n\n{body}"
     path.write_text(file_text, encoding="utf-8")
 
@@ -303,19 +321,20 @@ def _write_artifact(
     if state is None:
         state = load_state_json(session_dir) or {}
     now = datetime.now(timezone.utc).isoformat()
+    conf = meta.get("confirmation") or {}
     register_artifact(state, artifact_id, {
         "path": f"modules/{filename}",
         "version": version,
-        "status": "confirmed",
+        "status": status,
         "content_hash": real_hash,
         "depends_on": source_refs,
         "created_at": now,
-        "confirmed_at": conf.get("confirmed_at", now),
-        "confirmed_by": conf.get("confirmed_by", "user"),
-        "interaction_ref": conf.get("interaction_ref", ""),
+        "confirmed_at": conf.get("confirmed_at", now) if status == "confirmed" else "",
+        "confirmed_by": conf.get("confirmed_by", "") if status == "confirmed" else "",
+        "interaction_ref": conf.get("interaction_ref", "") if status == "confirmed" else "",
     })
     # G2-04 stale 传播：新版本生成后，依赖旧版本的下游 artifact 标记 stale（G0-05）
-    if version > 1:
+    if status == "confirmed" and version > 1:
         mark_stale_dependents(artifact_id, version, state)
     save_state_json(session_dir, state)
     return path
@@ -684,6 +703,96 @@ def _blockers_md_body(state: dict, data: dict) -> str:
               "- 确认方式：草稿呈现 → 用户互动 → 强确认",
               "- 确认内容摘要：见 frontmatter confirmation.confirmation_text"]
     return "\n".join(lines)
+
+
+def _confirm_prefix(topic_slug: str) -> str:
+    return f"diagnosis-confirm-{topic_slug}"
+
+
+def write_draft_confirm_artifact(
+    session_dir: Path,
+    content: str,
+    state: dict | None = None,
+) -> Path:
+    """G3-02：写入确认包 draft（`diagnosis-confirm-{topic_slug}-draft-v{N}.md`）。
+
+    - status=draft，无 confirmation（draft 不是 gate 凭据，须用户确认后生成 formal）
+    - 与 formal 共享 logical version：draft-v{N} 与 v{N} 同号；draft 保留不覆盖
+    - manifest 登记 status=draft（gate 不认可 draft 推进）
+    """
+    session_dir = Path(session_dir)
+    if state is None:
+        state = load_state_json(session_dir) or {}
+    topic_slug = state.get("topic_slug", "")
+    if not topic_slug:
+        raise ValueError("state.json 缺少 topic_slug，无法命名确认包")
+    version = next_version(session_dir / "modules", _confirm_prefix(topic_slug))
+    return _write_artifact(
+        session_dir, topic_slug,
+        artifact_type="diagnosis-confirm",
+        artifact_id="diagnosis.confirm.current",
+        version=version,
+        source_refs=[],
+        body=content,
+        confirmation=None,
+        state=state,
+        filename=f"diagnosis-confirm-{topic_slug}-draft-v{version}.md",
+        status="draft",
+    )
+
+
+def write_formal_confirm_artifact(
+    session_dir: Path,
+    content: str,
+    confirmation: dict,
+    state: dict | None = None,
+    source_refs: list[str] | None = None,
+) -> Path:
+    """G3-02：写入确认包正式版（`diagnosis-confirm-{topic_slug}-v{N}.md`）。
+
+    - status=confirmed + confirmation + hash（授权 gate 凭据）
+    - 与 draft 共享 logical version：N = 当前最新 draft 版本（无 draft 则新版本号）
+    - source_refs 指向聚合来源（blockers + 5 维 + overview + scoring），供对账与 stale 检测
+    """
+    session_dir = Path(session_dir)
+    if state is None:
+        state = load_state_json(session_dir) or {}
+    topic_slug = state.get("topic_slug", "")
+    if not topic_slug:
+        raise ValueError("state.json 缺少 topic_slug，无法命名确认包")
+    # 与最新 draft 共享 logical version
+    draft_ver = next_version(session_dir / "modules", f"diagnosis-confirm-{topic_slug}-draft") - 1
+    version = draft_ver if draft_ver >= 1 else 1
+    if source_refs is None:
+        source_refs = _confirm_source_refs(state)
+    return _write_artifact(
+        session_dir, topic_slug,
+        artifact_type="diagnosis-confirm",
+        artifact_id="diagnosis.confirm.current",
+        version=version,
+        source_refs=source_refs,
+        body=content,
+        confirmation=confirmation,
+        state=state,
+        filename=f"diagnosis-confirm-{topic_slug}-v{version}.md",
+        status="confirmed",
+    )
+
+
+def _confirm_source_refs(state: dict) -> list[str]:
+    """确认包的 source_refs：blockers + 5 维 + overview + scoring 当前版本。"""
+    refs: list[str] = []
+    overview_v = _current_version(state, "diagnosis.overview.current")
+    if overview_v is not None:
+        refs.append(f"diagnosis.overview.current@v{overview_v}")
+    refs.extend(_dim_version_refs(state))
+    scoring_v = _current_version(state, "diagnosis.scoring.current")
+    if scoring_v is not None:
+        refs.append(f"diagnosis.scoring.current@v{scoring_v}")
+    blockers_v = _current_version(state, "diagnosis.blockers.current")
+    if blockers_v is not None:
+        refs.append(f"diagnosis.blockers.current@v{blockers_v}")
+    return refs
 
 
 # --- G1-05 打分规则来源合并（AI 引导层支撑：partial upload 不静默补齐） ---

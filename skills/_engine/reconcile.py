@@ -224,3 +224,312 @@ def _rebuild_evidence(state: dict, modules_dir: Path, artifacts: dict) -> None:
                     "supports": [a["angle"]],
                 })
     state["evidenceList"] = ev
+
+
+# --- G3-01 确认包聚合数据源（从 confirmed md 收集） ---
+
+_ITEM_ID_RE = re.compile(r"item_id:\s*(D-[A-Z]\d+-(?:fact|issue|impact)-\d+)")
+
+
+def collect_confirmed_data(session_dir: Path, state: dict | None = None) -> dict:
+    """G3-01：从 confirmed md 链收集确认包聚合数据（§7.2 聚合映射）。
+
+    返回：
+      {"scoring": {"path": str, "body_meta": ...},
+       "dimensions": {dim: {"path", "angles": [...], "item_ids": [...], "summary"}},
+       "overview": {"path", "conclusion", "dimensions", "narrative"} | None,
+       "blockers": {"path", "blockers": [...], "path_items": [...]} | None,
+       "evidence_ids": [...]}
+    """
+    session_dir = Path(session_dir)
+    state = state if state is not None else (load_state_json(session_dir) or {})
+    modules_dir = session_dir / "modules"
+    artifacts = state.get("artifacts", {})
+    data: dict = {"dimensions": {}, "evidence_ids": []}
+
+    def confirmed_path(aid: str) -> Path | None:
+        entry = artifacts.get(aid)
+        if not entry or entry.get("status") != "confirmed":
+            return None
+        p = modules_dir / Path(entry["path"]).name
+        return p if p.exists() else None
+
+    # scoring
+    sp = confirmed_path("diagnosis.scoring.current")
+    if sp is not None:
+        art = files.read_artifact(sp)
+        if art.valid:
+            data["scoring"] = {"path": sp.name, "body": art.body}
+
+    # dimensions
+    for d in files.DIM_NAMES:
+        p = confirmed_path(files.DIMENSION_ARTIFACT_IDS[d])
+        if p is None:
+            continue
+        art = files.read_artifact(p)
+        if not art.valid:
+            continue
+        angles: list[dict] = []
+        in_table = False
+        for line in art.body.split("\n"):
+            if line.startswith("## 角度打分表"):
+                in_table = True
+                continue
+            if in_table:
+                if line.startswith("## "):
+                    break
+                m = _ANGLE_ROW_RE.match(line)
+                if m:
+                    cells = [c.strip() for c in line.strip().strip("|").split("|")]
+                    angles.append({
+                        "angle": cells[0], "score": float(cells[1]),
+                        "judgment": cells[2] if len(cells) > 2 else "",
+                        "evidenceIds": [e for e in cells[3].split("、") if e] if len(cells) > 3 else [],
+                    })
+        item_ids = _ITEM_ID_RE.findall(art.body)
+        data["dimensions"][d] = {
+            "path": p.name, "angles": angles, "item_ids": item_ids,
+            "summary": _section_text(art.body, "维度总结"),
+        }
+        for a in angles:
+            for eid in a.get("evidenceIds") or []:
+                if eid not in data["evidence_ids"]:
+                    data["evidence_ids"].append(eid)
+
+    # overview
+    op = confirmed_path("diagnosis.overview.current")
+    if op is not None:
+        art = files.read_artifact(op)
+        if art.valid:
+            data["overview"] = {
+                "path": op.name,
+                "conclusion": _section_text(art.body, "总体结论"),
+                "narrative": _section_text(art.body, "总体诊断信息"),
+                "dimensions": _parse_overview_dims(art.body),
+            }
+
+    # blockers
+    bp = confirmed_path("diagnosis.blockers.current")
+    if bp is not None:
+        art = files.read_artifact(bp)
+        if art.valid:
+            data["blockers"] = {
+                "path": bp.name,
+                "blockers": _parse_blockers(art.body),
+                "path_items": _parse_improvement_path(art.body),
+            }
+    return data
+
+
+def _section_text(body: str, heading: str) -> str:
+    """取 ## {heading} 下的第一段文本（到下一个 ## 为止）。"""
+    lines = body.split("\n")
+    for i, line in enumerate(lines):
+        if line.strip() == f"## {heading}":
+            out = []
+            for l2 in lines[i + 1:]:
+                if l2.startswith("## "):
+                    break
+                out.append(l2)
+            return "\n".join(out).strip()
+    return ""
+
+
+def _parse_overview_dims(body: str) -> list[dict]:
+    """解析总体 md 的维度总览表。"""
+    dims: list[dict] = []
+    in_table = False
+    for line in body.split("\n"):
+        if line.startswith("## 维度总览表"):
+            in_table = True
+            continue
+        if in_table:
+            if line.startswith("## "):
+                break
+            m = re.match(r"^\|\s*([A-Z])\s*\|\s*([\d.]+)\s*\|", line)
+            if m:
+                dims.append({"dim": m.group(1), "score": float(m.group(2))})
+    return dims
+
+
+def _parse_blockers(body: str) -> list[dict]:
+    """解析阻断 md 的阻断性问题清单表。"""
+    blockers: list[dict] = []
+    in_table = False
+    for line in body.split("\n"):
+        if line.startswith("## 阻断性问题清单"):
+            in_table = True
+            continue
+        if in_table:
+            if line.startswith("## "):
+                break
+            m = _BLOCKER_ROW_RE.match(line)
+            if m:
+                cells = [c.strip() for c in line.strip().strip("|").split("|")]
+                blockers.append({
+                    "id": cells[0], "angle": cells[1], "type": cells[2], "impact": cells[3],
+                    "evidenceIds": [e for e in cells[4].split("、") if e],
+                    "source_item": cells[5], "suggestion": cells[6],
+                })
+    return blockers
+
+
+def _parse_improvement_path(body: str) -> list[dict]:
+    """解析阻断 md 的改进路径表。"""
+    path: list[dict] = []
+    in_table = False
+    for line in body.split("\n"):
+        if line.startswith("## 改进路径"):
+            in_table = True
+            continue
+        if in_table:
+            if line.startswith("## "):
+                break
+            if line.startswith("|") and not line.startswith("|---"):
+                cells = [c.strip() for c in line.strip().strip("|").split("|")]
+                if cells and cells[0].isdigit():
+                    path.append({"priority": cells[0], "action": cells[1], "source_blocker": cells[2]})
+    return path
+
+
+# --- G3-03 确认包对账 ---
+
+def check_confirm_package(session_dir: Path, state: dict | None = None) -> dict:
+    """G3-03：确认包 item/source/hash 对账（§7.3 信息完整性对账）。
+
+    检查项：
+    - formal confirm artifact 存在且 confirmed（manifest + 文件）
+    - frontmatter source_refs 非 stale（指向当前 confirmed 版本）
+    - 分值一致：确认包分数 = 中间 md 分数（机器比对）
+    - 阻断一致：确认包阻断编号 = 阻断报告 md 编号
+    - 证据一致：确认包证据编号 ⊇ 中间 md 引用全集，且无未知编号
+    - item 覆盖：中间 md item_id 全集 ⊆ 确认包引用的 item 集合（不允许无来源删除）
+
+    返回 {"ok": bool, "errors": [...], "report": {...}}。
+    """
+    session_dir = Path(session_dir)
+    state = state if state is not None else (load_state_json(session_dir) or {})
+    modules_dir = session_dir / "modules"
+    errors: list[str] = []
+
+    # 1. formal confirm artifact
+    entry = state.get("artifacts", {}).get("diagnosis.confirm.current")
+    if not entry or entry.get("status") != "confirmed":
+        return {"ok": False, "errors": ["无 formal confirmed 确认包（diagnosis.confirm.current）"], "report": {}}
+    pkg_path = modules_dir / Path(entry["path"]).name
+    pkg = files.read_artifact(pkg_path)
+    if not pkg.valid:
+        return {"ok": False, "errors": [f"确认包无效：{pkg.errors}"], "report": {}}
+    meta = pkg.meta
+    conf = meta.get("confirmation") or {}
+    if conf.get("confirmed_by") != "user" or not conf.get("interaction_ref"):
+        errors.append("确认包 confirmation 不满足授权凭据（confirmed_by=user / interaction_ref 必填）")
+
+    # 2. source_refs 非 stale
+    if files._refs_stale(meta.get("source_refs") or [], state.get("artifacts", {})):
+        errors.append("确认包 source_refs 指向 stale/缺失版本")
+
+    # 3-6. 内容对账（机器解析确认包 body vs 中间 md）
+    report: dict = {}
+    src = collect_confirmed_data(session_dir, state)
+    pkg_body = pkg.body
+
+    # 分数一致：二级角度打分表
+    pkg_angles = _parse_pkg_angle_scores(pkg_body)
+    src_angles = {}
+    for d, ddata in src.get("dimensions", {}).items():
+        for a in ddata.get("angles") or []:
+            src_angles[a["angle"]] = a["score"]
+    diff_scores = {k: (pkg_angles.get(k), v) for k, v in src_angles.items() if pkg_angles.get(k) != v}
+    report["score_diff"] = diff_scores
+    if diff_scores:
+        errors.append(f"分值不一致：{diff_scores}")
+
+    # 阻断一致
+    pkg_blocker_ids = _parse_pkg_blocker_ids(pkg_body)
+    src_blocker_ids = {b["id"] for b in (src.get("blockers") or {}).get("blockers") or []}
+    if pkg_blocker_ids != src_blocker_ids:
+        errors.append(f"阻断编号不一致：确认包 {sorted(pkg_blocker_ids)} ≠ 阻断 md {sorted(src_blocker_ids)}")
+
+    # 证据一致
+    pkg_evidence = _parse_pkg_evidence_ids(pkg_body)
+    missing_ev = [e for e in src.get("evidence_ids", []) if e not in pkg_evidence]
+    unknown_ev = [e for e in pkg_evidence if e not in src.get("evidence_ids", [])]
+    report["evidence_missing"] = missing_ev
+    report["evidence_unknown"] = unknown_ev
+    if missing_ev:
+        errors.append(f"确认包证据编号缺失：{missing_ev}")
+    if unknown_ev:
+        errors.append(f"确认包出现未知证据编号：{unknown_ev}")
+
+    # item 覆盖
+    src_items = set()
+    for d, ddata in src.get("dimensions", {}).items():
+        src_items.update(ddata.get("item_ids") or [])
+    pkg_items = _parse_pkg_item_refs(pkg_body)
+    missing_items = sorted(src_items - pkg_items)
+    report["item_missing"] = missing_items
+    if missing_items:
+        errors.append(f"确认包未引用中间 md 的诊断 item：{missing_items}")
+
+    return {"ok": not errors, "errors": errors, "report": report}
+
+
+def _parse_pkg_angle_scores(body: str) -> dict[str, float]:
+    """解析确认包「二级角度打分」表 → {角度: 分值}。
+
+    确认包行格式：| 角度 | 名称 | 打分 | 核心判断 | 证据 | 来源 item |
+    """
+    scores: dict[str, float] = {}
+    in_table = False
+    for line in body.split("\n"):
+        if line.startswith("## 二级角度打分"):
+            in_table = True
+            continue
+        if in_table:
+            if line.startswith("## "):
+                break
+            m = re.match(r"^\|\s*([A-Z]\d+)\s*\|\s*[^|]+\|\s*([\d.]+)\s*\|", line)
+            if m:
+                try:
+                    scores[m.group(1)] = float(m.group(2))
+                except ValueError:
+                    pass
+    return scores
+
+
+def _parse_pkg_blocker_ids(body: str) -> set[str]:
+    ids: set[str] = set()
+    in_table = False
+    for line in body.split("\n"):
+        if line.startswith("## 阻断性问题清单"):
+            in_table = True
+            continue
+        if in_table:
+            if line.startswith("## "):
+                break
+            m = _BLOCKER_ROW_RE.match(line)
+            if m:
+                ids.add(m.group(1))
+    return ids
+
+
+def _parse_pkg_evidence_ids(body: str) -> set[str]:
+    ids: set[str] = set()
+    in_table = False
+    for line in body.split("\n"):
+        if line.startswith("## 证据清单"):
+            in_table = True
+            continue
+        if in_table:
+            if line.startswith("## "):
+                break
+            m = re.match(r"^\|\s*(E-\d+)\s*\|", line)
+            if m:
+                ids.add(m.group(1))
+    return ids
+
+
+def _parse_pkg_item_refs(body: str) -> set[str]:
+    """解析确认包中所有 item 引用（`D-V1-fact-001` 形式，表格内裸 id）。"""
+    return set(re.findall(r"D-[A-Z]\d+-(?:fact|issue|impact)-\d+", body))

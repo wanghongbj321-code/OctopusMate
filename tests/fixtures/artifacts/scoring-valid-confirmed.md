@@ -10,8 +10,8 @@ confirmation:
   confirmed_by: user
   interaction_ref: transcript:12:用户确认整体采用默认锚点
   confirmation_text: 用户明确确认采用本版打分规则
-  confirmed_content_hash: sha256:a2a18e15e9c80400b9c757cd517e0f97847ab864ac63f3a190f3610b1b09f03a
-content_hash: sha256:a2a18e15e9c80400b9c757cd517e0f97847ab864ac63f3a190f3610b1b09f03a
+  confirmed_content_hash: sha256:0edf3bbfe171563735d22effdc912baf0bd35572d6ac47f58f82695cc5825184
+content_hash: sha256:0edf3bbfe171563735d22effdc912baf0bd35572d6ac47f58f82695cc5825184
 ---
 
 # 打分规则：示例项目 · 示例主题

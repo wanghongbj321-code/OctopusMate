@@ -18,7 +18,7 @@
       "path": "modules/diagnosis-v-test-topic-v1.md",
       "version": 1,
       "status": "stale",
-      "content_hash": "sha256:b50bafeb9ae4c846bbb993ab43be6ba2fe386f1f924c083ffae32855caef0b8f",
+      "content_hash": "sha256:5e05aa5161d941fadac400b1b281c9326f5faf4f1b63f4e1f9c7563d1ef0f5aa",
       "depends_on": [
         "diagnosis.scoring.current@v1"
       ],
