@@ -23,9 +23,9 @@ except ImportError:  # pragma: no cover
     yaml = None
 
 # --- G0-01 artifact 白名单 ---
-# roadmap 六阶段（roadmap-step01 ~ roadmap-step06）随 M2 产物契约落地（差距清单 G1），
-# gate 白名单扩展（required/stale 链）在 M4 接入；M2 提供白名单 + 命名 + 写函数 + 契约校验器
-# （见 `_engine/roadmap.py` 与开发计划 M2）。
+# roadmap 六阶段（roadmap-step01 ~ roadmap-step06）随 M2 产物契约落地（差距清单 G1）；
+# M4 接入 required/stale 链（ROADMAP_STAGE_REQUIRED）与出口三段式
+# （见 `_engine/roadmap.py`、`_engine/exit.py`、开发计划 M4）。
 
 ARTIFACT_TYPES = {
     "diagnosis-scoring",
@@ -966,21 +966,61 @@ STAGE_REQUIRED: dict[str, list[str]] = {
     "render:deliver": ["diagnosis.confirm.current", "render.options.current"],           # G4-03
 }
 
+# --- roadmap 六阶段 required 链（M4-03，§6.4 前置映射） ---
+# stage 键与 diagnosis 域命名空间隔离（required_before 按方法分支路由）：
+# - step:01 ~ step:06：run_step 推进前置（阶段 N 需全部前置阶段 confirmed）
+# - render:step01 ~ render:step06：渲染某阶段 draft 页（对应阶段 confirmed + render-options confirmed）
+# - roadmap:render_preflight：出口段 1（六阶段齐备 + render-options confirmed）
+# - roadmap:authorized / roadmap:finalized：出口段 2/3（+ roadmap.package.current 目录级 artifact；
+#   包对账在出口函数显式执行，check_required 只做登记/目录/非 stale/source_refs 检查）
+ROADMAP_STEP_ARTIFACTS = (
+    "roadmap.capabilityModel.current",
+    "roadmap.maturityBaseline.current",
+    "roadmap.priorityCapabilities.current",
+    "roadmap.futureStateGaps.current",
+    "roadmap.gapInitiatives.current",
+    "roadmap.enterpriseRoadmap.current",
+)
+
+
+def _roadmap_steps_upto(n: int) -> list[str]:
+    """六阶段链前 n 项 artifact_id（n=1 → 仅 step01；n=6 → 六阶段齐备）。"""
+    return list(ROADMAP_STEP_ARTIFACTS[:n])
+
+
+ROADMAP_STAGE_REQUIRED: dict[str, list[str]] = {
+    "step:01": [],
+    "step:02": _roadmap_steps_upto(1),
+    "step:03": _roadmap_steps_upto(2),
+    "step:04": _roadmap_steps_upto(3),
+    "step:05": _roadmap_steps_upto(4),
+    "step:06": _roadmap_steps_upto(5),
+    "render:step01": ["roadmap.capabilityModel.current", "roadmap.renderOptions.current"],
+    "render:step02": ["roadmap.maturityBaseline.current", "roadmap.renderOptions.current"],
+    "render:step03": ["roadmap.priorityCapabilities.current", "roadmap.renderOptions.current"],
+    "render:step04": ["roadmap.futureStateGaps.current", "roadmap.renderOptions.current"],
+    "render:step05": ["roadmap.gapInitiatives.current", "roadmap.renderOptions.current"],
+    "render:step06": ["roadmap.enterpriseRoadmap.current", "roadmap.renderOptions.current"],
+    "roadmap:render_preflight": _roadmap_steps_upto(6) + ["roadmap.renderOptions.current"],
+    "roadmap:authorized": _roadmap_steps_upto(6) + ["roadmap.renderOptions.current", "roadmap.package.current"],
+    "roadmap:finalized": _roadmap_steps_upto(6) + ["roadmap.renderOptions.current", "roadmap.package.current"],
+}
+
 
 def required_before(stage: str, method=None, state: dict | None = None) -> list[str]:
     """G0-04：返回 stage 的 required artifact_id 集合。
 
-    roadmap 方法（M1 起）：六阶段 required 链在 M4 接入（G4，见
-    `构建企业能力路线图-功能开发计划.md` M4-03）；M1 阶段 STAGE_REQUIRED
-    无 roadmap 键 → 返回空 = 不阻断（保持向后兼容，与 vision 一致）。
-    诊断方法沿用 diagnosis 域 STAGE_REQUIRED 映射。
+    - roadmap 方法（type=roadmap-method / state.method 前缀 roadmap-method-）：
+      M4 起返回 ROADMAP_STAGE_REQUIRED 映射（六阶段链 + 渲染/出口 gate）；
+      未知 stage → 空 = 不阻断。
+    - 诊断/vision 等其他方法：沿用 STAGE_REQUIRED（roadmap 键不存在 → 空 = 兼容）。
     """
-    if method is None and state:
-        method_name = state.get("method", "")
-        if method_name.startswith("roadmap-method-"):
-            return []  # M4 接入六阶段链；M1 不阻断
-    if method is not None and getattr(method, "type", "") == "roadmap-method":
-        return []  # M4 接入六阶段链；M1 不阻断
+    roadmap_method = (
+        (method is not None and getattr(method, "type", "") == "roadmap-method")
+        or (method is None and state and str(state.get("method", "")).startswith("roadmap-method-"))
+    )
+    if roadmap_method:
+        return list(ROADMAP_STAGE_REQUIRED.get(stage, []))
     if stage not in STAGE_REQUIRED:
         # 未知 stage：file gate 不阻断（保持向后兼容，vision 等未开启方法无影响）
         return []
@@ -1017,17 +1057,33 @@ def check_required(stage: str, state: dict, session_dir: Path) -> dict:
 
     返回 {"ok": bool, "missing": [...], "invalid": [...], "stale": [...], "mismatched": [...]}。
     - missing：manifest 缺索引或文件不存在
-    - invalid：结构契约/hash 复算/confirmation 校验失败
+    - invalid：结构契约/hash 复算/confirmation 校验失败（roadmap 阶段产物合并六阶段契约校验，M2-07）
     - stale：manifest 标记 stale 或 source_refs 指向非当前 confirmed 版本
     - mismatched：manifest 与文件 hash 不一致
+
+    roadmap.package.current（目录级 artifact）：不做 md 校验，检查登记/目录存在/非 stale/source_refs
+    非 stale；包结构 + 信息对账在出口函数（roadmap.render_preflight / exit_check）显式执行。
     """
     session_dir = Path(session_dir)
     manifest = state.get("artifacts", {})
     missing, invalid, stale, mismatched = [], [], [], []
+    from . import roadmap as roadmap_mod  # 延迟导入（roadmap 依赖本模块，避免顶层循环）
     for artifact_id in required_before(stage, state=state):
         entry = manifest.get(artifact_id)
         if entry is None:
             missing.append(artifact_id)
+            continue
+        # roadmap.package.current：目录级 artifact（非 md）
+        if artifact_id == "roadmap.package.current":
+            if entry.get("status") == "stale":
+                stale.append(artifact_id)
+                continue
+            pkg_dir = session_dir / str(entry.get("path", ""))
+            if not pkg_dir.exists():
+                missing.append(artifact_id)
+                continue
+            if _refs_stale(entry.get("source_refs") or [], manifest):
+                stale.append(artifact_id)
             continue
         path = session_dir / str(entry.get("path", ""))
         if not path.exists():
@@ -1039,6 +1095,12 @@ def check_required(stage: str, state: dict, session_dir: Path) -> dict:
             continue
         meta = art.meta
         assert meta is not None
+        # roadmap 阶段产物：合并六阶段契约校验（frontmatter + 数据块 + 枚举 + 阶段特殊规则 + 凭据）
+        if meta.get("artifact_type") in roadmap_mod.ROADMAP_ARTIFACT_TYPES:
+            ra = roadmap_mod.read_roadmap_artifact(path)
+            if not ra.valid:
+                invalid.append(artifact_id)
+                continue
         if meta.get("status") != "confirmed":
             invalid.append(artifact_id)
             continue
@@ -1070,22 +1132,39 @@ def check_required(stage: str, state: dict, session_dir: Path) -> dict:
     }
 
 
-# --- G0-05 stale 传播（G2 接入；G1 提供工具函数） ---
+# --- G0-05 stale 传播（G2 接入；G1 提供工具函数；M4-04 升级传递传播） ---
 
 def mark_stale_dependents(artifact_id: str, new_version: int, state: dict) -> list[str]:
     """G0-05：将 depends_on 指向 {artifact_id}@旧版本 的下游 artifact 标记 stale。
 
-    返回被标记 stale 的 artifact_id 列表（G2 起由写入流程调用）。
+    传递传播（M4-04，对齐 §6.5「所有依赖阶段 N 的下游产物标记 stale」）：
+    依赖「已被标记 stale 的 artifact」的下游同样标记（roadmap 六阶段链：
+    step03 更新 → step04 stale → step05/06 一并 stale；diagnosis 链同理：
+    scoring v2 → 维度 stale → overview/blockers stale）。只增不减，既有
+    diagnosis 单跳断言不受影响。
+    返回被标记 stale 的 artifact_id 列表。
     """
     manifest = state.setdefault("artifacts", {})
     marked: list[str] = []
-    old_ref = f"{artifact_id}@v{new_version - 1}"
-    for aid, entry in manifest.items():
-        if aid == artifact_id:
-            continue
-        deps = entry.get("depends_on") or []
-        if any(d == old_ref or d.startswith(f"{artifact_id}@v") and _parse_ref_version(d)[1] < new_version for d in deps):
-            if entry.get("status") == "confirmed":
+
+    def _depends_old(entry_deps) -> bool:
+        """depends_on 直接引用 {artifact_id}@旧版本（新版本前的任一旧版本）。"""
+        for d in entry_deps or []:
+            if d == f"{artifact_id}@v{new_version - 1}" or (
+                    d.startswith(f"{artifact_id}@v") and _parse_ref_version(d)[1] < new_version):
+                return True
+        return False
+
+    changed = True
+    while changed:
+        changed = False
+        for aid, entry in manifest.items():
+            if aid == artifact_id or aid in marked or entry.get("status") == "stale":
+                continue
+            deps = entry.get("depends_on") or []
+            dep_ids = {_parse_ref_version(d)[0] for d in deps}
+            if _depends_old(deps) or any(dep_id in marked for dep_id in dep_ids):
                 entry["status"] = "stale"
                 marked.append(aid)
+                changed = True
     return marked

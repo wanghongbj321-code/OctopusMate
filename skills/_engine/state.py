@@ -83,7 +83,39 @@ def transition(
         raise ValueError(
             "authorized 状态仅可由主 Agent 在顾问确认后写入（用户授权节点 = 出口确认环节）"
         )
-    if new_status == "finalized" and "diagnosis.scoring.current" in (state.get("artifacts") or {}):
+
+    roadmap_chain = "roadmap.capabilityModel.current" in (state.get("artifacts") or {})
+    # M4-05：roadmap 出口三段式（§6.6）——authorized/finalized 前置校验（防绕过 confirm 直推）
+    if roadmap_chain and new_status in ("authorized", "finalized"):
+        if session_dir is None:
+            raise ValueError(
+                f"{new_status} 前置校验需要 session_dir（roadmap 六阶段 + render-options + package 路径）"
+            )
+        from . import files as files_mod
+        from . import roadmap as roadmap_mod
+
+        stage = "roadmap:authorized" if new_status == "authorized" else "roadmap:finalized"
+        result = files_mod.check_required(stage, state, Path(session_dir))
+        if not result["ok"]:
+            raise ValueError(
+                f"{new_status} 前置校验未通过（{result}）：需六阶段 confirmed + confirmed "
+                f"render-options + roadmap.package.current 齐备且非 stale"
+            )
+        if new_status == "finalized":
+            entry = (state.get("artifacts") or {}).get("roadmap.package.current")
+            if not entry or entry.get("status") != "authorized":
+                raise ValueError(
+                    "未 authorized 不可 finalized（roadmap.package.current 须为 authorized；"
+                    "须先走 render_preflight → 用户出口授权 → authorized）"
+                )
+            # §6.6 段 3：authorized + 无 stale + HTML 对账仍通过 → 写入 finalized
+            exit_res = roadmap_mod.exit_check(
+                Path(session_dir), state, stage="roadmap:finalized", require_audit=True)
+            if not exit_res["ok"]:
+                raise ValueError(
+                    f"finalized 前置校验未通过：{'；'.join(exit_res['errors'][:5])}"
+                )
+    elif new_status == "finalized" and "diagnosis.scoring.current" in (state.get("artifacts") or {}):
         if session_dir is None:
             raise ValueError(
                 "finalized 前置校验需要 session_dir（formal confirm + render-options 路径）"
@@ -96,6 +128,11 @@ def transition(
                 f"finalized 前置校验未通过（{result}）：需 formal confirmed 确认包 + confirmed render-options md"
             )
     state["status"] = new_status
+    # M4-05 §6.6 段 3：finalized 后 package artifact 成为正式交付物
+    if new_status == "finalized" and "roadmap.capabilityModel.current" in (state.get("artifacts") or {}):
+        pkg_entry = (state.get("artifacts") or {}).get("roadmap.package.current")
+        if pkg_entry is not None:
+            pkg_entry["status"] = "finalized"
 
 
 def set_step(state: dict, step_id: str, **fields) -> None:

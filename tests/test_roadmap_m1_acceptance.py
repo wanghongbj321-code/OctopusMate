@@ -5,8 +5,9 @@
       （M1-01 manifest / M1-04 契约校验 / M1-05 distill·gate skill 包）
 
 说明：
-- roadmap 的六阶段 required artifacts 映射（step:02 需 step01 等）在 M4 接入；
-  M1 阶段 STAGE_REQUIRED 无 roadmap 键 → check_required 返回空 = 不阻断（兼容）。
+- roadmap 六阶段 required artifacts 映射（step:02 需 step01 等）自 **M4** 起强制生效
+  （§6.4 前置 gate 链）；M1 阶段无该链（STAGE_REQUIRED 无 roadmap 键 → 不阻断）属历史验收，
+  M4 后测试语义更新为「六阶段强确认链端到端强制」。
 - confirmed md 写入函数（roadmap-step01~06 白名单 + 六阶段写函数）在 M2 落地
   （G1/G3 归属 M2）；M1 验证 executor 六步走通 + 契约校验 + 注册器扫描。
 """
@@ -85,10 +86,23 @@ class TestExecutorSixSteps(unittest.TestCase):
         self._tmp.cleanup()
 
     def test_six_steps_walkthrough(self):
-        """六步依次执行：每步 gate pass（core_ok=True），advance 到最后返回 None。"""
+        """六步依次执行：每步 gate pass（core_ok=True），advance 到最后返回 None。
+
+        M4 起六阶段链强制：进入阶段 N 前，阶段 N-1 的 confirmed md 必须存在
+        （§6.4；step:02 需 step01 confirmed … step:06 需 step01~05 confirmed）。
+        """
+        from _engine.roadmap import write_roadmap_step_artifact
+        from tests.test_roadmap_m2_contracts import CONFIRMATION as M2_CONFIRMATION, MOCK_STEPS
+
         cur = self.state["current_step"]
         for i, step_id in enumerate(EXPECTED_STEPS):
             self.assertEqual(cur, step_id, f"当前步骤应为 {step_id}，实际 {cur}")
+            if step_id != "01":
+                # 前置阶段 confirmed md（六阶段链强制：缺失 → FileGateError）
+                pre = EXPECTED_STEPS[i - 1]
+                write_roadmap_step_artifact(
+                    self.topic_dir, pre, MOCK_STEPS[pre](),
+                    confirmation=M2_CONFIRMATION, state=self.state)
             r = run_step(self.state, self.method, step_id,
                          self.topic_dir / "modules" / f"step-{step_id}.md",
                          {"core_ok": True}, session_dir=self.topic_dir)
@@ -107,12 +121,15 @@ class TestExecutorSixSteps(unittest.TestCase):
             run_step(self.state, self.method, "01",
                      self.topic_dir / "modules" / "step-01.md", {"core_ok": True})
 
-    def test_file_gate_no_required_at_m1(self):
-        """M1 阶段 STAGE_REQUIRED 无 roadmap 键 → check_required 不阻断（兼容，M4 接入链）。"""
+    def test_file_gate_step01_no_prereq_step02_requires(self):
+        """M4 起六阶段链生效：step:01 无前置不阻断；step:02 需 step01 confirmed（§6.4）。"""
         from _engine import files
 
-        r = files.check_required("step:01", self.state, self.topic_dir)
-        self.assertTrue(r["ok"], f"M1 阶段不应阻断（M4 接入六阶段链）：{r}")
+        r1 = files.check_required("step:01", self.state, self.topic_dir)
+        self.assertTrue(r1["ok"], f"step:01 不应有前置：{r1}")
+        r2 = files.check_required("step:02", self.state, self.topic_dir)
+        self.assertFalse(r2["ok"], "step:02 应被六阶段链阻断（缺 step01 confirmed）")
+        self.assertIn("roadmap.capabilityModel.current", r2["missing"])
 
 
 class TestContractWalkthrough(unittest.TestCase):

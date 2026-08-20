@@ -435,8 +435,13 @@ def _items_for_angle(item_ids: list[str], angle: str) -> list[str]:
     return [i for i in item_ids if i.startswith(f"D-{angle}-")]
 
 
-def confirm(state: dict, decision: str, session_dir: str | Path | None = None) -> dict:
-    """用户授权节点：顾问对确认包决策。
+def confirm(
+    state: dict,
+    decision: str,
+    session_dir: str | Path | None = None,
+    authorization: dict | None = None,
+) -> dict:
+    """用户授权节点：顾问对确认包 / 资产包出口决策。
 
     - decision="pass" 或 "conditional" → authorized 写入（受控，须授权标记）
     - decision="reject" → 不写 authorized，返回未授权（主 Agent 引导回指修订）
@@ -447,6 +452,15 @@ def confirm(state: dict, decision: str, session_dir: str | Path | None = None) -
       2. 确认包对账通过（reconcile.check_confirm_package）
       3. source_refs 非 stale
     直接 confirm(pass) 但无 formal 包 → AuthorizationError（§12.7 负例 10）。
+
+    M4-05（roadmap 出口三段式，§6.6）：roadmap 域（artifacts 含
+    roadmap.capabilityModel.current）授权必须满足：
+      1. render_preflight 已通过（roadmap.package.current 登记为 draft，六阶段 +
+         render-options confirmed + 包对账通过）——未 render_preflight 不可 authorized
+      2. 用户出口授权证据（authorization.confirmed_by=user + interaction_ref 必传；
+         AI 不得自代授权，§6.2 强确认链）→ 写入 state.exit_authorization（R8 审计链）
+      3. package 对账复核通过（exit_check require_audit=True）
+    authorized 后 package 状态 draft → authorized（待定稿）。
     返回 {"authorized": bool, "reason": str, "reconcile": dict | None}
     """
     if decision not in ("pass", "conditional", "reject"):
@@ -454,12 +468,43 @@ def confirm(state: dict, decision: str, session_dir: str | Path | None = None) -
     if decision == "reject":
         return {"authorized": False, "reason": "顾问驳回，需回指修订后再确认", "reconcile": None}
 
-    # G3-04：文件级 gate 流程的授权前置校验
-    if "diagnosis.scoring.current" in (state.get("artifacts") or {}):
+    artifacts = state.get("artifacts") or {}
+
+    # M4-05：roadmap 出口三段式（render_preflight → authorized）
+    if "roadmap.capabilityModel.current" in artifacts:
+        from . import roadmap as roadmap_mod
+
+        if session_dir is None:
+            raise ValueError("roadmap 出口授权校验需要 session_dir（render_preflight 产物路径）")
+        if not authorization or not isinstance(authorization, dict) \
+                or authorization.get("confirmed_by") != "user" \
+                or not authorization.get("interaction_ref"):
+            raise AuthorizationError(
+                "roadmap 出口授权必须提供用户明确授权证据（authorization.confirmed_by=user "
+                "+ interaction_ref + confirmed_at），AI 不得自代授权（§6.2）")
+        result = roadmap_mod.exit_check(
+            session_dir, state, stage="roadmap:authorized", require_audit=True)
+        if not result["ok"]:
+            raise AuthorizationError(
+                f"roadmap 出口授权前置未满足：{'；'.join(result['errors'][:5])}")
+        state["exit_authorization"] = {
+            **authorization,
+            "recorded_at": datetime.now(timezone.utc).isoformat(),
+        }
+        state_mod.transition(state, "authorized", authorized=True, session_dir=session_dir)
+        pkg_entry = artifacts.get("roadmap.package.current")
+        if pkg_entry is not None:
+            pkg_entry["status"] = "authorized"  # draft → authorized（待定稿）
+        files_mod.save_state_json(session_dir, state)
+        return {"authorized": True, "reason": f"顾问授权（{decision}），资产包待定稿（finalized 前可修订）",
+                "reconcile": result["required"]}
+
+    # G3-04：诊断域文件级 gate 流程的授权前置校验
+    if "diagnosis.scoring.current" in artifacts:
         if session_dir is None:
             raise ValueError("授权校验需要 session_dir（formal confirm 包路径）")
 
-        entry = (state.get("artifacts") or {}).get("diagnosis.confirm.current")
+        entry = artifacts.get("diagnosis.confirm.current")
         if not entry or entry.get("status") != "confirmed":
             raise AuthorizationError("无正式 confirmed 确认包，不能授权（须先 write_formal_confirm_artifact）")
         pkg_path = Path(session_dir) / str(entry["path"])

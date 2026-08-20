@@ -115,13 +115,13 @@
     },
     "artifacts": {
       "type": "object",
-      "description": "产物索引：key = 产物类型（step-output / open-issues / confirm-package），value = 产物路径与版本记录",
+      "description": "产物索引：key = artifact_id（如 diagnosis.scoring.current / roadmap.capabilityModel.current / render.options.current / roadmap.package.current），value = 产物路径与版本记录。文件级产物（md）含 content_hash/depends_on/confirmation 凭据镜像；roadmap.package.current 为目录级 artifact（source_refs = 六阶段 @v 引用 + package_hash，无 md 文件）。status 流转：draft → confirmed（用户确认）→ stale（上游变更）；package 额外 authorized → finalized（出口三段式，§6.6）",
       "additionalProperties": {
         "type": "object",
         "properties": {
           "path": {
             "type": "string",
-            "description": "相对 workshop/{project_slug}/{topic_slug}/ 的产物路径"
+            "description": "相对 workshop/{project_slug}/{topic_slug}/ 的产物路径（md 为 modules/xxx.md；package 为 output/capability-roadmap-package-{topic}-v{N}/）"
           },
           "version": {
             "type": "integer",
@@ -129,8 +129,44 @@
             "description": "版本号 v{N}"
           },
           "status": {
-            "enum": ["draft", "review_ready", "authorized", "finalized"],
-            "description": "产物状态"
+            "enum": ["draft", "review_ready", "authorized", "finalized", "confirmed", "stale"],
+            "description": "产物状态：draft=草稿（gate 不认可推进）/ confirmed=用户已确认（gate 凭据）/ stale=上游变更致失效 / review_ready·authorized·finalized 为旧流程状态；roadmap.package.current 额外 authorized（出口授权待定稿）/ finalized（定稿交付）"
+          },
+          "content_hash": {
+            "type": "string",
+            "description": "canonical body sha256（文件级产物）；package 为 7 文件聚合 hash（package_hash 同值）"
+          },
+          "depends_on": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "source_refs 快照（如 roadmap.capabilityModel.current@v1），stale 依赖图依据"
+          },
+          "source_refs": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "package artifact 专用：六阶段 artifact id/version 引用（§5.1）"
+          },
+          "package_hash": {
+            "type": "string",
+            "description": "package artifact 专用：7 个 html 聚合 hash（机器对账凭据）"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "登记时间（ISO 8601）"
+          },
+          "confirmed_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "用户确认时间（confirmed 产物）"
+          },
+          "confirmed_by": {
+            "type": "string",
+            "description": "确认主体（confirmed 产物必须为 user）"
+          },
+          "interaction_ref": {
+            "type": "string",
+            "description": "确认交互引用（消息 id / transcript 序号 + 用户原文短摘，R8 审计链）"
           }
         }
       }
@@ -172,6 +208,18 @@
         },
         "additionalProperties": false
       }
+    },
+    "exit_authorization": {
+      "type": ["object", "null"],
+      "description": "roadmap 出口授权记录（M4-05，§6.6）：用户对资产包出口的明确授权证据（confirmed_by=user + interaction_ref + confirmed_at + authorization_text + recorded_at），authorized 前写入（R8 审计链）；未授权时为 null/缺省",
+      "properties": {
+        "confirmed_by": { "type": "string", "const": "user" },
+        "interaction_ref": { "type": "string" },
+        "confirmed_at": { "type": "string", "format": "date-time" },
+        "authorization_text": { "type": "string" },
+        "recorded_at": { "type": "string", "format": "date-time" }
+      },
+      "additionalProperties": true
     }
   },
   "additionalProperties": false

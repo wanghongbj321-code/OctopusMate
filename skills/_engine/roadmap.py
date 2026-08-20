@@ -1,6 +1,6 @@
-"""构建企业能力路线图 · 六阶段产物 md 管线（M2）。
+"""构建企业能力路线图 · 六阶段产物 md 管线（M2）+ 文件级 gate 链与出口三段式（M4）。
 
-对齐：`internal/docs/dev-plan/构建企业能力路线图-功能开发计划.md` M2-01 ~ M2-07
+对齐：`internal/docs/dev-plan/构建企业能力路线图-功能开发计划.md` M2-01 ~ M2-07、M4-01 ~ M4-05
       方法论 v1.2 六步骤与工具模板 T1-T13（内部契约字段对齐方法论 §5）
 
 M2 范围（含 M0-01 差距清单归属）：
@@ -11,16 +11,26 @@ M2 范围（含 M0-01 差距清单归属）：
   阶段特殊规则（02 六维完整性 / 03 排除理由 / 04 差距级别 / 06 里程碑 M·G·D + O7）
 - 结构化数据块（受控 YAML block）供 M3 渲染 / M3-04 审计 / M4 gate 消费（R12）
 
+M4 范围（roadmap adapter，不重写 G0）：
+- M4-01：roadmap artifact 类型 + confirmation adapter（白名单/命名/凭据复用 files.py，M2 已落地）
+- M4-02：artifacts manifest 扩展——六阶段产物索引、render-options（roadmap.renderOptions.current）、
+  package artifact（roadmap.package.current，source_refs = 六阶段 @v 引用 + package_hash）
+- M4-03：required artifacts 前置 gate 映射（ROADMAP_STAGE_REQUIRED 在 files.py，§6.4）
+- M4-04：stale 与回指联动（传递传播在 files.mark_stale_dependents，§6.5）
+- M4-05：出口三段式 render_preflight → authorized → finalized（§6.6，exit.py/state.py 配合）
+
 边界：
-- 阶段间 required artifacts 链（step:02 需 step01 confirmed 等）在 M4 接入；
-  M2 写函数只登记 depends_on（source_refs 快照），不阻断推进。
+- 阶段间 required artifacts 链（step:02 需 step01 confirmed 等）自 M4 起强制生效。
 - 不重写 G0：hash / frontmatter / Artifact / check_required / stale 机制全部复用 files.py。
-- 出口三段式（render_preflight / authorized / finalized）与 package artifact 在 M3/M4 落地。
+- 出口授权只认用户明确授权证据（authorization.confirmed_by=user + interaction_ref），AI 不得自代。
+- package 目录级对账（audit_html.check_capability_package）由本模块编排，Python 只审计不参与生成。
 """
 from __future__ import annotations
 
+import hashlib
 import re
 from dataclasses import dataclass, field
+from datetime import datetime, timezone
 from pathlib import Path
 
 try:
@@ -755,3 +765,321 @@ def latest_confirmed_version(state: dict, step: str) -> int | None:
     if entry and entry.get("status") == "confirmed":
         return entry.get("version")
     return None
+
+
+# ============================================================
+# M4 · 文件级 gate 链与出口三段式（§6.4 / §6.5 / §6.6）
+# ============================================================
+
+# --- M4-02 render-options（roadmap 域） ---
+
+RENDER_OPTIONS_ARTIFACT_ID = "roadmap.renderOptions.current"
+PACKAGE_ARTIFACT_ID = "roadmap.package.current"
+
+
+def _all_step_refs(state: dict) -> list[str]:
+    """六阶段当前 confirmed 版本引用（@v 形式）；未 confirmed 的阶段跳过。"""
+    refs: list[str] = []
+    for step in ROADMAP_STEP_IDS:
+        meta = ROADMAP_STEP_META[step]
+        entry = (state or {}).get("artifacts", {}).get(meta["artifact_id"])
+        if entry and entry.get("status") == "confirmed" and entry.get("version"):
+            refs.append(f"{meta['artifact_id']}@v{entry['version']}")
+    return refs
+
+
+def write_roadmap_render_options(
+    session_dir: Path,
+    data: dict,
+    confirmation: dict,
+    state: dict | None = None,
+) -> Path:
+    """M4-02：写入 roadmap 域 render-options（**通用 artifact_type**，不拆专属类型）。
+
+    - artifact_type 沿用通用 `render-options`（白名单内，M4-01 完成标准）；
+      artifact_id 用 roadmap 命名空间 `roadmap.renderOptions.current`（G2 差距清单）
+    - canvasType 必须为 capability-package（roadmap 资产包画布）
+    - source_refs 指向六阶段当前 confirmed 版本（任一上游更新 → render-options stale
+      → 需用户重新确认渲染配置，§6.5）
+    - 配色强确认：confirmation 必传（confirmed_by=user），禁止 AI 自选默认值绕过（§5.2）
+    """
+    session_dir = Path(session_dir)
+    if state is None:
+        state = files.load_state_json(session_dir) or {}
+    topic_slug = state.get("topic_slug", "")
+    if not topic_slug:
+        raise ValueError("state.json 缺少 topic_slug，无法命名 render-options")
+    if not confirmation or not isinstance(confirmation, dict):
+        raise ValueError("render-options 必须提供用户确认凭据（confirmation，强确认链）")
+    if data.get("canvasType") != "capability-package":
+        raise ValueError(
+            f"roadmap render-options canvasType 必须为 capability-package，实际 {data.get('canvasType')!r}")
+
+    source_refs = _all_step_refs(state)
+    body = _roadmap_render_options_body(state, data)
+    version = files.next_version(session_dir / "modules", f"render-options-{topic_slug}")
+    return files._write_artifact(
+        session_dir, topic_slug,
+        artifact_type="render-options",
+        artifact_id=RENDER_OPTIONS_ARTIFACT_ID,
+        version=version,
+        source_refs=source_refs,
+        body=body,
+        confirmation=confirmation,
+        state=state,
+        filename=f"render-options-{topic_slug}-v{version}.md",
+    )
+
+
+def _roadmap_render_options_body(state: dict, data: dict) -> str:
+    """roadmap render-options md 正文（含结构化数据块供审计消费）。"""
+    proj, topic = state.get("project_name", ""), state.get("topic_name", "")
+    render = {
+        "renderOptions": {
+            "canvasType": data.get("canvasType", "capability-package"),
+            "tokenId": data.get("tokenId", ""),
+            "tokenPath": data.get("tokenPath", ""),
+        }
+    }
+    lines = [
+        f"# 渲染配置：{proj} · {topic}",
+        "",
+        "## 视觉模式",
+        "| 项 | 值 |",
+        "|---|---|",
+        f"| canvasType | {data.get('canvasType', 'capability-package')} |",
+        f"| token 集 | {data.get('tokenId', '')} |",
+        f"| token 路径 | {data.get('tokenPath', '')} |",
+        "",
+        "## 结构化数据块（供渲染/审计机器消费）",
+        "",
+        "```yaml",
+    ]
+    if yaml is None:
+        raise RuntimeError("输出 YAML 结构化数据块需要 PyYAML，请先安装：pip install pyyaml")
+    lines.append(yaml.safe_dump(render, allow_unicode=True, sort_keys=False, default_flow_style=False).rstrip())
+    lines += [
+        "```",
+        "",
+        "## 人类可读确认摘要",
+        "- 确认方式：渲染前展示配色候选 → 用户明确选择（强确认，AI 不得自选默认值）",
+        "- 确认内容摘要：见 frontmatter confirmation.confirmation_text",
+    ]
+    return "\n".join(lines)
+
+
+def render_options_token_path(session_dir: Path, state: dict) -> str | None:
+    """从 confirmed render-options md 读取 tokenPath（供对账加载 token 色板）。"""
+    entry = (state or {}).get("artifacts", {}).get(RENDER_OPTIONS_ARTIFACT_ID)
+    if not entry:
+        return None
+    p = session_dir / str(entry.get("path", ""))
+    art = files.read_artifact(p)
+    if not art.valid:
+        return None
+    data = extract_data_block(art.body)
+    return ((data or {}).get("renderOptions") or {}).get("tokenPath") or None
+
+
+# --- M4-02 package artifact（目录级，无 md 文件） ---
+
+PACKAGE_REL_FILES = (
+    "index.html",
+    "01-capability-model/index.html",
+    "02-baseline-maturity/index.html",
+    "03-priority-capabilities/index.html",
+    "04-future-state/index.html",
+    "05-gap-initiatives/index.html",
+    "06-capability-roadmap/index.html",
+)
+
+
+def package_content_hash(package_dir: Path) -> str | None:
+    """包聚合 hash：7 个 html 各自 canonical hash → 再 sha256 聚合（稳定可复算，§5.1）。"""
+    digests: list[str] = []
+    for rel in PACKAGE_REL_FILES:
+        p = Path(package_dir) / rel
+        if not p.exists():
+            return None
+        digests.append(files.content_hash(p.read_text(encoding="utf-8")))
+    return "sha256:" + hashlib.sha256("\n".join(digests).encode("utf-8")).hexdigest()
+
+
+def _package_dir_version(package_dir: Path, topic_slug: str) -> int | None:
+    """从包目录名 `capability-roadmap-package-{topic_slug}-v{N}` 解析版本 N。"""
+    prefix = f"capability-roadmap-package-{topic_slug}-v"
+    name = Path(package_dir).name
+    if not name.startswith(prefix):
+        return None
+    tail = name[len(prefix):]
+    return int(tail) if tail.isdigit() else None
+
+
+def _find_latest_package(session_dir: Path, state: dict) -> Path | None:
+    """探测 output/ 下最新 capability-roadmap-package-{topic}-v{N}/ 目录。"""
+    topic_slug = state.get("topic_slug", "")
+    out = session_dir / "output"
+    if not out.exists():
+        return None
+    prefix = f"capability-roadmap-package-{topic_slug}-v"
+    dirs = [p for p in out.iterdir() if p.is_dir() and p.name.startswith(prefix)]
+    if not dirs:
+        return None
+    return max(dirs, key=lambda p: _package_dir_version(p, topic_slug) or 0)
+
+
+def register_package_artifact(
+    state: dict,
+    package_dir: Path,
+    version: int,
+    status: str = "draft",
+    package_hash_value: str | None = None,
+    source_refs: list[str] | None = None,
+) -> dict:
+    """M4-02：登记 roadmap.package.current（目录级 artifact）。
+
+    - source_refs = 六阶段当前 confirmed 版本（§5.1：记录 artifact id / version / hash 引用）
+    - package_hash = 7 文件聚合 hash（机器对账凭据）
+    - status 流转：draft（render_preflight 登记）→ authorized（出口授权）→ finalized（定稿）
+    """
+    if source_refs is None:
+        source_refs = _all_step_refs(state)
+    entry = {
+        "path": str(package_dir),
+        "version": version,
+        "status": status,
+        "content_hash": package_hash_value or "",
+        "depends_on": source_refs,
+        "source_refs": source_refs,
+        "package_hash": package_hash_value or "",
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
+    files.register_artifact(state, PACKAGE_ARTIFACT_ID, entry)
+    return entry
+
+
+def package_version(state: dict) -> int | None:
+    """当前 package 版本（未登记 → None）。"""
+    entry = (state or {}).get("artifacts", {}).get(PACKAGE_ARTIFACT_ID)
+    return entry.get("version") if entry else None
+
+
+# --- M4-05 出口三段式（§6.6） ---
+
+def _load_audit_html():
+    """延迟加载 audit_html 模块（Python 只审计不参与生成；M3-04 对账闸门）。"""
+    import sys as _sys
+    skills_dir = Path(__file__).resolve().parents[2]
+    scripts_dir = skills_dir / "deliverable-render" / "scripts"
+    for p in (skills_dir, scripts_dir):
+        if str(p) not in _sys.path:
+            _sys.path.insert(0, str(p))
+    import audit_html  # noqa: E402
+    return audit_html
+
+
+def _load_render_token_colors(session_dir: Path, state: dict) -> dict | None:
+    """从 render-options 的 tokenPath 加载 token 色板（缺省 None → 黑灰默认集）。"""
+    token_path = render_options_token_path(session_dir, state)
+    if not token_path:
+        return None
+    audit_html = _load_audit_html()
+    p = Path(token_path)
+    if not p.is_absolute():
+        p = Path(__file__).resolve().parents[2] / token_path  # 相对仓库根
+    return audit_html._load_token_colors(p)
+
+
+def _run_package_audit(package_dir: Path, session_dir: Path, state: dict,
+                       token_colors: dict | None = None) -> list[str]:
+    """M3-04 包对账：audit_html.check_capability_package（七文件/相对路径/信息比对/Illustrative/token）。"""
+    audit_html = _load_audit_html()
+    modules_dir = session_dir / "modules"
+    return audit_html.check_capability_package(Path(package_dir), modules_dir, token_colors)
+
+
+def render_preflight(
+    session_dir: Path,
+    state: dict,
+    package_dir: Path | None = None,
+    token_colors: dict | None = None,
+) -> dict:
+    """M4-05 出口段 1：render_preflight（§6.6，不要求 authorized）。
+
+    前置：六阶段 confirmed md 全部存在且有效 + render-options confirmed（roadmap:render_preflight）。
+    流程：定位/传入 draft 资产包目录 → M3-04 包对账（结构 + 相对路径 + 信息完整性 + Illustrative）
+    → 对账通过 → 登记 roadmap.package.current（status=draft，source_refs=六阶段，package_hash）。
+    返回 {"ok", "errors", "package_dir", "package_version", "audit", "registered"}。
+    """
+    session_dir = Path(session_dir)
+    errors: list[str] = []
+    req = files.check_required("roadmap:render_preflight", state, session_dir)
+    if not req["ok"]:
+        errors.append(f"render_preflight 前置未满足：{req}")
+
+    if package_dir is None:
+        package_dir = _find_latest_package(session_dir, state)
+    audit_violations: list[str] = []
+    pkg_hash: str | None = None
+    version: int | None = None
+    if package_dir is None:
+        errors.append(
+            f"未发现 draft 资产包目录（output/capability-roadmap-package-{{topic_slug}}-v{{N}}/）"
+            f"——须先由 LLM 按 SKILL.md 指令生成 7 文件包")
+    else:
+        package_dir = Path(package_dir)
+        if not (package_dir / "index.html").exists():
+            errors.append(f"资产包目录缺少 index.html：{package_dir}")
+        if token_colors is None:
+            token_colors = _load_render_token_colors(session_dir, state)
+        audit_violations = _run_package_audit(package_dir, session_dir, state, token_colors)
+        if audit_violations:
+            errors.append(f"资产包对账未通过（{len(audit_violations)} 条，前 5："
+                          f"{'；'.join(audit_violations[:5])}）")
+        pkg_hash = package_content_hash(package_dir)
+        version = _package_dir_version(package_dir, state.get("topic_slug", "")) or 1
+    if errors:
+        return {"ok": False, "errors": errors, "package_dir": package_dir,
+                "package_version": version, "audit": audit_violations, "registered": False}
+
+    register_package_artifact(
+        state, package_dir, version, status="draft",
+        package_hash_value=pkg_hash, source_refs=_all_step_refs(state))
+    files.save_state_json(session_dir, state)
+    return {"ok": True, "errors": [], "package_dir": package_dir,
+            "package_version": version, "audit": audit_violations, "registered": True}
+
+
+def exit_check(
+    session_dir: Path,
+    state: dict,
+    stage: str = "roadmap:authorized",
+    require_audit: bool = False,
+    token_colors: dict | None = None,
+) -> dict:
+    """M4-05 出口统一校验（authorized / finalized 共用，§6.6 段 2/3）。
+
+    - stage="roadmap:authorized"：六阶段 + render-options + package 登记/目录/非 stale
+    - stage="roadmap:finalized"：同上 + require_audit=True 时 HTML 对账复核（无 stale 前提下）
+    返回 {"ok", "errors", "required": check_required 结果}。
+    """
+    session_dir = Path(session_dir)
+    errors: list[str] = []
+    req = files.check_required(stage, state, session_dir)
+    if not req["ok"]:
+        errors.append(f"{stage} 前置未满足：{req}")
+    entry = (state or {}).get("artifacts", {}).get(PACKAGE_ARTIFACT_ID)
+    if not entry:
+        errors.append(f"{PACKAGE_ARTIFACT_ID} 未登记（须先 render_preflight 生成 draft 包并对账）")
+    else:
+        pkg_dir = session_dir / str(entry.get("path", ""))
+        if not pkg_dir.exists():
+            errors.append(f"package 目录不存在：{pkg_dir}")
+        if require_audit and pkg_dir.exists():
+            if token_colors is None:
+                token_colors = _load_render_token_colors(session_dir, state)
+            violations = _run_package_audit(pkg_dir, session_dir, state, token_colors)
+            if violations:
+                errors.append(f"HTML 对账未通过（{len(violations)} 条，前 3："
+                              f"{'；'.join(violations[:3])}）")
+    return {"ok": not errors, "errors": errors, "required": req}
