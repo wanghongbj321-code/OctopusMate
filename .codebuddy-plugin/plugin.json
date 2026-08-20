@@ -6,6 +6,7 @@
     "./agents/octopus-mate.md"
   ],
   "skills": [
+    "./skills/octopus-faq",
     "./skills/vision-distill",
     "./skills/vision-gate",
     "./skills/diagnosis-distill",
