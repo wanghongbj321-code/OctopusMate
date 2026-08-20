@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{资产包标题}} · 交付物包入口</title>
+<!--
+  ⚠️ 版面与签名视觉参照（capability-package 画布 · 包入口页）——仅作版式参照，不提供业务内容
+  - 本文件是「企业能力路线图」交付资产包入口页的画布：六阶段导航卡片 + 交付物包说明
+  - 业务内容一律用 {{占位符}} 标注，渲染时由 deliverable-render 按六阶段确认包 markdown 映射填充
+  - 禁止复制本文件中的样例占位文案；禁止引用 Demo 样例数值（演示用能力数/成熟度档位/举措数等，
+    见开发计划 §4.1 / M0-02）
+  - token 只来自用户选定视觉模式文件（visual-patterns/{NN}-{id}.md），本文件不提供 token 候选
+  - 本页与 01~06 六阶段页构成完整包结构（index + 01~06 相对路径），渲染时须保持自包含
+-->
+<style>
+  :root{
+    --page-bg:#FFFFFF; --block-bg:#F7F7F7; --ink:#1A1A1A; --ink-deep:#2D2D2D;
+    --ink-soft:#6B6B6B; --ink-muted:#808080; --border:#D4D4D4; --accent:#1A1A1A;
+    --table-head:#F1F1F1; --callout:#FAFAFA;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:var(--page-bg);color:var(--ink);line-height:1.6;}
+  .page{width:min(1080px,calc(100vw - 40px));margin:0 auto;padding:48px 0 64px;}
+  .eyebrow{margin:0;color:var(--ink-soft);font-size:11px;font-weight:700;letter-spacing:.2em;line-height:1.4;text-transform:uppercase;}
+  h1{margin:10px 0 0;color:var(--ink);font-size:30px;font-weight:700;line-height:1.25;}
+  .lead{margin:14px 0 0;max-width:760px;color:var(--ink-soft);font-size:15px;line-height:1.8;}
+  .stage-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px;margin-top:28px;}
+  .stage-card{display:flex;flex-direction:column;gap:10px;padding:18px;border:1px solid var(--border);background:var(--page-bg);text-decoration:none;}
+  .stage-card__head{display:flex;align-items:center;gap:10px;}
+  .stage-card__num{display:inline-flex;align-items:center;justify-content:center;flex:none;width:30px;height:30px;background:var(--ink);color:var(--page-bg);font-size:13px;font-weight:700;}
+  .stage-card__title{font-size:15px;font-weight:700;color:var(--ink);line-height:1.4;}
+  .stage-card__so{font-size:12px;color:var(--ink-soft);line-height:1.65;}
+  .stage-card__meta{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:auto;padding-top:10px;border-top:1px solid var(--border);font-size:11px;color:var(--ink-muted);}
+  .stage-card__tag{color:var(--ink);font-weight:600;}
+  .pkg-note{margin-top:30px;padding:16px 18px;border:1px solid var(--border);background:var(--page-bg);}
+  .pkg-note h2{margin:0 0 8px;font-size:14px;letter-spacing:.04em;color:var(--ink);}
+  .pkg-note p{margin:0;font-size:12px;color:var(--ink-soft);line-height:1.7;}
+  .report-footer{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;margin-top:36px;padding-top:13px;border-top:1px solid var(--border);color:var(--ink-muted);font-size:11px;}
+</style>
+</head>
+<body>
+  <div class="page">
+    <p class="eyebrow">Capability Roadmap · Delivery Package · {{版本}}</p>
+    <h1>{{资产包标题}}</h1>
+    <p class="lead">{{资产包一句话说明：面向{{主题}}的六阶段能力路线图交付物包，从能力模型到企业级路线图，收敛为{{举措总数}}项举措与三阶段路线图。}}</p>
+
+    <nav class="stage-list" aria-label="六阶段交付物目录">
+      <a class="stage-card" href="./01-capability-model/index.html">
+        <span class="stage-card__head">
+          <span class="stage-card__num">01</span>
+          <span class="stage-card__title">{{阶段一标题：构建战略对齐的企业能力模型}}</span>
+        </span>
+        <span class="stage-card__so">{{阶段一句话结论}}</span>
+        <span class="stage-card__meta">
+          <span>{{能力模型 · 架构分层}}</span>
+          <span class="stage-card__tag">{{版本}}</span>
+        </span>
+      </a>
+      <a class="stage-card" href="./02-baseline-maturity/index.html">
+        <span class="stage-card__head">
+          <span class="stage-card__num">02</span>
+          <span class="stage-card__title">{{阶段二标题：建立能力基线并评估成熟度}}</span>
+        </span>
+        <span class="stage-card__so">{{阶段一句话结论}}</span>
+        <span class="stage-card__meta">
+          <span>{{基线 · 六维成熟度评估}}</span>
+          <span class="stage-card__tag">{{版本}}</span>
+        </span>
+      </a>
+      <a class="stage-card" href="./03-priority-capabilities/index.html">
+        <span class="stage-card__head">
+          <span class="stage-card__num">03</span>
+          <span class="stage-card__title">{{阶段三标题：确定重点能力}}</span>
+        </span>
+        <span class="stage-card__so">{{阶段一句话结论}}</span>
+        <span class="stage-card__meta">
+          <span>{{重点矩阵 · 治理角色}}</span>
+          <span class="stage-card__tag">{{版本}}</span>
+        </span>
+      </a>
+      <a class="stage-card" href="./04-future-state/index.html">
+        <span class="stage-card__head">
+          <span class="stage-card__num">04</span>
+          <span class="stage-card__title">{{阶段四标题：设计未来状态并识别差距}}</span>
+        </span>
+        <span class="stage-card__so">{{阶段一句话结论}}</span>
+        <span class="stage-card__meta">
+          <span>{{未来状态 · 差距热力}}</span>
+          <span class="stage-card__tag">{{版本}}</span>
+        </span>
+      </a>
+      <a class="stage-card" href="./05-gap-initiatives/index.html">
+        <span class="stage-card__head">
+          <span class="stage-card__num">05</span>
+          <span class="stage-card__title">{{阶段五标题：识别并排序能力差距举措}}</span>
+        </span>
+        <span class="stage-card__so">{{阶段一句话结论}}</span>
+        <span class="stage-card__meta">
+          <span>{{举措全景 · 依赖排序}}</span>
+          <span class="stage-card__tag">{{版本}}</span>
+        </span>
+      </a>
+      <a class="stage-card" href="./06-capability-roadmap/index.html">
+        <span class="stage-card__head">
+          <span class="stage-card__num">06</span>
+          <span class="stage-card__title">{{阶段六标题：形成企业级能力路线图}}</span>
+        </span>
+        <span class="stage-card__so">{{阶段一句话结论}}</span>
+        <span class="stage-card__meta">
+          <span>{{战略屋 · 里程碑甘特图}}</span>
+          <span class="stage-card__tag">{{版本}}</span>
+        </span>
+      </a>
+    </nav>
+
+    <section class="pkg-note">
+      <h2>交付物包说明</h2>
+      <p>{{本包为「构建企业能力路线图」交付资产包：六阶段各输出独立 html，包入口串联全部阶段；每页单页自包含（独立 HTML + 内联样式），可单独分发；业务数据来自六阶段确认包 markdown，量化指标均为 Illustrative 需实际调研校准。}}</p>
+    </section>
+
+    <footer class="report-footer">
+      <span>Source: {{项目名称}} · Illustrative exhibit（示例数据需校准）</span>
+      <span>{{日期}} · {{版本}} · Capability Roadmap Delivery Package</span>
+    </footer>
+  </div>
+</body>
+</html>

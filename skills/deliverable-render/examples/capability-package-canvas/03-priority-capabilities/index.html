@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{阶段三标题}} · {{主题名称}}</title>
+<!--
+  ⚠️ 版面与签名视觉参照（capability-package 画布 · 重点能力）——仅作版式参照，不提供业务内容
+  - 业务内容一律用 {{占位符}} 标注，渲染时由 deliverable-render 按阶段确认包 markdown 映射填充
+  - 禁止复制本文件中的样例占位文案；禁止引用 Demo 样例数值（见开发计划 §4.3 / M0-02）
+  - token 只来自用户选定视觉模式文件，本文件不提供 token 候选
+-->
+<style>
+  :root{
+    --page-bg:#FFFFFF; --block-bg:#F7F7F7; --ink:#1A1A1A; --ink-deep:#2D2D2D;
+    --ink-soft:#6B6B6B; --ink-muted:#808080; --border:#D4D4D4; --accent:#1A1A1A;
+    --table-head:#F1F1F1; --callout:#FAFAFA;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:var(--page-bg);color:var(--ink);line-height:1.6;}
+  .page{width:min(1280px,calc(100vw - 48px));margin:0 auto;padding:28px 0 64px;}
+  .report-header{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:24px;align-items:start;padding-bottom:18px;border-bottom:1px solid var(--border);}
+  .report-kicker,.eyebrow{margin:0;color:var(--ink-soft);font-size:11px;font-weight:700;letter-spacing:.2em;line-height:1.4;text-transform:uppercase;}
+  .report-title{margin:6px 0 0;color:var(--ink);font-size:15px;font-weight:700;}
+  .report-subtitle{margin:2px 0 0;color:var(--ink-soft);font-size:12px;}
+  .report-meta{display:grid;gap:8px;color:var(--ink-soft);font-size:12px;text-align:right;}
+  .hero{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(300px,.6fr);gap:28px;padding:34px 0 24px;border-bottom:1px solid var(--border);}
+  h1{margin:10px 0 0;color:var(--ink);font-size:26px;font-weight:700;line-height:1.4;}
+  h2{color:var(--ink);font-size:20px;font-weight:700;line-height:1.4;}
+  h3{color:var(--ink);font-size:15px;font-weight:600;line-height:1.4;}
+  .lead{margin:14px 0 0;max-width:900px;color:var(--ink-deep);font-size:14px;line-height:1.75;}
+  .so-what{padding:16px;border:1px solid var(--border);border-left:3px solid var(--ink);background:var(--block-bg);font-size:13px;color:var(--ink-deep);}
+  .so-what h2{font-size:15px;}
+  .so-what p{margin:8px 0 0;}
+  .nav-strip{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px;}
+  .nav-strip a{padding:5px 8px;border:1px solid var(--border);color:var(--ink-soft);font-size:12px;text-decoration:none;}
+  .summary-strip{display:grid;grid-template-columns:repeat(3,minmax(0,1fr)) auto;gap:10px;margin-top:22px;}
+  .summary-card{padding:13px;border:1px solid var(--border);background:var(--block-bg);font-size:12px;color:var(--ink-soft);}
+  .summary-card strong{display:block;color:var(--ink);font-size:13px;line-height:1.5;}
+  .summary-card p{margin:6px 0 0;}
+  .summary-tag{padding:13px;border:1px solid var(--ink);font-size:12px;color:var(--ink-soft);}
+  .summary-tag strong{display:block;color:var(--ink);font-size:26px;line-height:1.2;}
+  .section{padding-top:34px;}
+  .section-head{display:grid;grid-template-columns:minmax(0,1fr) minmax(260px,.34fr);gap:24px;align-items:end;margin-bottom:14px;}
+  .section-head p{margin:6px 0 0;color:var(--ink-soft);font-size:13px;}
+  .section-note{margin:0;padding:11px;border:1px solid var(--border);background:var(--block-bg);color:var(--ink-deep);font-size:12px;}
+  .logic-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;}
+  .logic-node{padding:13px;border:1px solid var(--border);background:var(--block-bg);}
+  .logic-node strong{display:block;margin-top:8px;color:var(--ink);font-size:14px;line-height:1.45;}
+  .logic-node p{margin:6px 0 0;color:var(--ink-soft);font-size:12px;}
+  .node-label{display:inline-block;color:var(--ink-muted);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;}
+  .arch-row{display:grid;grid-template-columns:170px minmax(0,1fr);gap:10px;margin-bottom:10px;}
+  .arch-label{padding:13px;border:1px solid var(--ink);font-size:13px;font-weight:700;color:var(--ink);}
+  .arch-cells{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;}
+  .domain{padding:13px;border:1px solid var(--border);background:var(--block-bg);}
+  .domain-top{display:flex;justify-content:space-between;gap:10px;}
+  .domain-code{padding:3px 6px;border:1px solid var(--ink);font-size:11px;font-weight:700;}
+  .domain p{margin:8px 0 0;color:var(--ink-soft);font-size:12px;}
+  .classification{display:block;margin-top:10px;color:var(--ink-muted);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;}
+  .table-wrap{overflow-x:auto;border:1px solid var(--border);background:var(--page-bg);}
+  table{width:100%;min-width:900px;border-collapse:collapse;}
+  th,td{padding:10px 12px;border-bottom:1px solid var(--border);text-align:left;vertical-align:top;font-size:13px;line-height:1.5;}
+  th{color:var(--ink);background:var(--table-head);border-bottom:2px solid var(--ink);font-weight:700;}
+  td{color:var(--ink-deep);}
+  caption{padding:9px 12px 5px;text-align:left;color:var(--ink-soft);font-size:12px;font-weight:700;}
+  .quality-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;}
+  .quality-card{min-height:120px;padding:13px;border:1px solid var(--border);background:var(--block-bg);}
+  .quality-card h3{font-size:14px;}
+  .quality-card p{margin:8px 0 0;color:var(--ink-soft);font-size:12px;}
+  .status{display:inline-block;margin-bottom:8px;padding-bottom:2px;color:var(--ink);border-bottom:1px solid var(--ink);font-size:12px;font-weight:700;}
+  details.panel{margin-top:12px;border:1px solid var(--border);background:var(--block-bg);}
+  details.panel summary{padding:11px 13px;color:var(--ink);font-size:13px;font-weight:700;cursor:pointer;}
+  details.panel .panel-body{padding:0 13px 13px;color:var(--ink-deep);font-size:13px;}
+  .action-table{margin-top:12px;}
+  .pill{display:inline-block;padding:3px 6px;border:1px solid var(--ink);color:var(--ink);background:var(--page-bg);font-size:12px;white-space:nowrap;}
+  .report-footer{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;margin-top:40px;padding-top:13px;border-top:1px solid var(--border);color:var(--ink-muted);font-size:11px;}
+  @media (max-width:980px){
+    .hero,.report-header,.section-head,.arch-row{grid-template-columns:1fr;}
+    .summary-strip,.logic-grid,.arch-cells,.quality-grid{grid-template-columns:1fr;}
+    .report-meta{text-align:left;}
+  }
+  @media print{.page{width:auto;padding:0;}.nav-strip{display:none;}}
+</style>
+</head>
+<body>
+  <div class="page">
+    <header class="report-header">
+      <div>
+        <p class="report-kicker">Capability Roadmap · Stage 03 · {{版本}}</p>
+        <p class="report-title">{{项目名称}} · {{主题名称}}</p>
+        <p class="report-subtitle">{{阶段交付物名称}} · Illustrative exhibit</p>
+      </div>
+      <div class="report-meta" aria-label="交付物元信息">
+        <span>阶段：03</span>
+        <span>对象：重点能力</span>
+        <span>状态：{{质量门状态}}</span>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero">
+        <div>
+          <p class="eyebrow">Executive Message</p>
+          <h1>{{阶段三主结论标题}}</h1>
+          <p class="lead">{{阶段三一句话说明}}</p>
+          <nav class="nav-strip" aria-label="页面导航">
+            <a href="#logic">判断逻辑</a><a href="#matrix">重点矩阵</a><a href="#register">重点清单</a><a href="#governance">治理角色</a><a href="#value-stream">价值流校验</a><a href="#quality">质量门</a>
+          </nav>
+        </div>
+        <aside class="so-what">
+          <h2>So what</h2>
+          <p>{{管理含义：重点能力不是成熟度最低项，也不是部门项目诉求；管理层应批准重点清单并明确 Capability Owner。}}</p>
+        </aside>
+      </section>
+
+      <section class="summary-strip" aria-label="核心支撑论点">
+        <article class="summary-card">
+          <span class="node-label">支撑论点 1</span>
+          <strong>{{支撑论点一标题}}</strong>
+          <p>{{支撑论点一说明}}</p>
+        </article>
+        <article class="summary-card">
+          <span class="node-label">支撑论点 2</span>
+          <strong>{{支撑论点二标题}}</strong>
+          <p>{{支撑论点二说明}}</p>
+        </article>
+        <article class="summary-card">
+          <span class="node-label">支撑论点 3</span>
+          <strong>{{支撑论点三标题}}</strong>
+          <p>{{支撑论点三说明}}</p>
+        </article>
+        <div class="summary-tag">
+          <strong>{{关键数字}}</strong>
+          <span>{{关键数字说明}}</span>
+        </div>
+      </section>
+
+      <section class="section" id="logic">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">01 · Assessment Logic</p>
+            <h2>{{重点能力判断逻辑标题}}</h2>
+            <p>{{重点能力判断逻辑说明}}</p>
+          </div>
+          <p class="section-note">{{输出判断}}</p>
+        </div>
+        <div class="logic-grid">
+          <article class="logic-node"><span class="node-label">视角 1 · 能力模型</span><strong>{{判断对愿景/价值最关键的能力域}}</strong><p>{{输出候选}}</p></article>
+          <article class="logic-node"><span class="node-label">视角 2 · 域内差距</span><strong>{{判断域内构成关键差距的单项能力}}</strong><p>{{输出候选}}</p></article>
+          <article class="logic-node"><span class="node-label">合并清单</span><strong>{{两视角合并去重，形成企业级清单}}</strong><p>{{重点 + 条件重点}}</p></article>
+          <article class="logic-node"><span class="node-label">所有权指定</span><strong>{{指定 Capability Owner 与治理角色}}</strong><p>{{六类治理角色最小职责}}</p></article>
+          <article class="logic-node"><span class="node-label">价值流校验</span><strong>{{检查支撑关键价值流与客户结果}}</strong><p>{{校验结论}}</p></article>
+        </div>
+      </section>
+      <section class="section" id="matrix">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">02 · Priority Matrix</p>
+            <h2>{{重点矩阵标题}}</h2>
+            <p>{{重点矩阵说明}}</p>
+          </div>
+          <p class="section-note">{{输出判断}}</p>
+        </div>
+                <svg viewBox="0 0 680 480" role="img" aria-label="重点能力判断矩阵（Sample：结构示意，内容占位）">
+          <title>重点能力判断矩阵</title>
+          <desc>横轴战略关键性、纵轴当前成熟度，四象限：持续强化 / 优先攻坚 / 观察验证 / 维持运营；能力圆点位置与实心/虚线状态渲染时按确认包数据确定。</desc>
+          <line x1="60" y1="240" x2="640" y2="240" stroke="#1A1A1A" stroke-width="1.5" opacity="0.6"></line>
+          <line x1="350" y1="40" x2="350" y2="440" stroke="#1A1A1A" stroke-width="1.5" opacity="0.6"></line>
+          <rect x="60" y="40" width="290" height="200" fill="#F7F7F7"></rect>
+          <rect x="350" y="40" width="290" height="200" fill="#F7F7F7"></rect>
+          <rect x="60" y="240" width="290" height="200" fill="#F7F7F7"></rect>
+          <rect x="350" y="240" width="290" height="200" fill="#F7F7F7"></rect>
+          <text x="358" y="62" font-size="12" font-weight="700" fill="#2D2D2D">持续强化 · 高关键 · 高成熟</text>
+          <line x1="358" y1="70" x2="382" y2="70" stroke="#1A1A1A" stroke-width="1.2"></line>
+          <text x="358" y="262" font-size="12" font-weight="700" fill="#2D2D2D">优先攻坚 · 高关键 · 低成熟</text>
+          <line x1="358" y1="270" x2="382" y2="270" stroke="#1A1A1A" stroke-width="1.2"></line>
+          <text x="342" y="262" font-size="12" font-weight="700" fill="#2D2D2D" text-anchor="end">观察验证 · 低关键 · 低成熟</text>
+          <line x1="318" y1="270" x2="342" y2="270" stroke="#1A1A1A" stroke-width="1.2"></line>
+          <text x="342" y="62" font-size="12" font-weight="700" fill="#2D2D2D" text-anchor="end">维持运营 · 低关键 · 高成熟</text>
+          <line x1="318" y1="70" x2="342" y2="70" stroke="#1A1A1A" stroke-width="1.2"></line>
+          <text x="60" y="462" font-size="12" font-weight="700" fill="#1A1A1A">战略关键性</text>
+          <text x="60" y="478" font-size="11" fill="#1A1A1A" font-weight="600">低</text>
+          <text x="620" y="478" font-size="11" fill="#1A1A1A" font-weight="600" text-anchor="end">高</text>
+          <text x="18" y="246" font-size="12" font-weight="700" fill="#1A1A1A" transform="rotate(-90 18 246)">当前成熟度</text>
+          <text x="44" y="440" font-size="11" fill="#1A1A1A" font-weight="600">滞后</text>
+          <text x="44" y="55" font-size="11" fill="#1A1A1A" font-weight="600">领先</text>
+          <circle cx="478" cy="192" r="20" fill="#2D2D2D"></circle>
+          <text x="478" y="197" font-size="12.5" font-weight="700" fill="#FFFFFF" text-anchor="middle">{{C1}}</text>
+          <circle cx="512" cy="220" r="20" fill="#2D2D2D"></circle>
+          <text x="512" y="225" font-size="12.5" font-weight="700" fill="#FFFFFF" text-anchor="middle">{{C2}}</text>
+          <circle cx="234" cy="176" r="20" fill="none" stroke="#1A1A1A" stroke-width="1.6"></circle>
+          <text x="234" y="181" font-size="12.5" font-weight="700" fill="#2D2D2D" text-anchor="middle">{{C3}}</text>
+          <circle cx="420" cy="320" r="20" fill="#2D2D2D"></circle>
+          <text x="420" y="325" font-size="12.5" font-weight="700" fill="#FFFFFF" text-anchor="middle">{{C4}}</text>
+          <circle cx="304" cy="352" r="20" fill="none" stroke="#2D2D2D" stroke-width="1.6" stroke-dasharray="6 3"></circle>
+          <text x="304" y="357" font-size="12.5" font-weight="700" fill="#2D2D2D" text-anchor="middle">{{C5}}</text>
+          <circle cx="553" cy="376" r="20" fill="#2D2D2D"></circle>
+          <text x="553" y="381" font-size="12.5" font-weight="700" fill="#FFFFFF" text-anchor="middle">{{C6}}</text>
+          <g font-size="11" fill="#2D2D2D">
+            <text x="478" y="238" text-anchor="middle">{{能力域A}}</text>
+            <text x="512" y="266" text-anchor="middle">{{能力域B}}</text>
+            <text x="234" y="216" text-anchor="middle">{{能力域C}}</text>
+            <text x="420" y="366" text-anchor="middle">{{能力域D}}</text>
+            <text x="304" y="398" text-anchor="middle">{{能力域E}}</text>
+            <text x="553" y="336" text-anchor="middle">{{能力域F}}</text>
+          </g>
+        </svg>
+        <p style="margin:8px 0 0;color:var(--ink-soft);font-size:12px;">图例：实心 = 重点能力；虚线圆 = 条件重点（待证据裁决）；空心 = 非重点（维持运营）。Sample 中圆点位置为示意，实际位置由 {{priority-capabilities 确认包 md · 重点矩阵章节}} 数据确定。</p><div class="table-wrap">
+          <table>
+            <caption>{{重点能力 × 象限 × 判断依据 · Illustrative}}</caption>
+            <thead><tr><th>能力域</th><th>象限</th><th>战略关键性</th><th>当前成熟度</th><th>判断依据</th></tr></thead>
+            <tbody>
+              <tr><td>{{能力域}}</td><td>{{象限}}</td><td>{{高/中/低}}</td><td>{{成熟度}}</td><td>{{判断依据}}</td></tr>
+              <tr><td colspan="5">{{…其余能力域行…}}</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+      <section class="section" id="register">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">03 · Priority Register</p>
+            <h2>{{重点能力清单标题}}</h2>
+            <p>{{重点能力清单说明}}</p>
+          </div>
+          <p class="section-note">{{输出判断}}</p>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <caption>{{企业级重点能力清单（含条件重点与排除理由）· Illustrative}}</caption>
+            <thead><tr><th>重点能力</th><th>主要判断视角</th><th>战略与价值回溯</th><th>成熟度输入</th><th>关键差距</th><th>Capability Owner</th><th>是否重点</th></tr></thead>
+            <tbody>
+              <tr><td>{{能力域}}</td><td>{{判断视角}}</td><td>{{战略与价值回溯}}</td><td>{{成熟度输入}}</td><td>{{关键差距}}</td><td>{{Capability Owner}}</td><td>{{重点 / 条件重点 / 非重点}}</td></tr>
+              <tr><td colspan="7">{{…其余行（含非重点能力排除理由记录）…}}</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+      <section class="section" id="governance">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">04 · Ownership & Governance</p>
+            <h2>{{治理角色标题}}</h2>
+            <p>{{治理角色说明}}</p>
+          </div>
+          <p class="section-note">{{输出判断}}</p>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <caption>{{重点能力治理角色矩阵 · 最小职责定义}}</caption>
+            <thead><tr><th>重点能力</th><th>Capability Owner</th><th>Business Process Owner</th><th>Technology Owner</th><th>Data Owner</th><th>Change / Talent Owner</th><th>组合治理接口</th></tr></thead>
+            <tbody>
+              <tr><td>{{能力域}}</td><td>{{Owner}}</td><td>{{Owner}}</td><td>{{Owner}}</td><td>{{Owner}}</td><td>{{Owner}}</td><td>{{组合治理接口}}</td></tr>
+              <tr><td colspan="7">{{…其余能力域行…}}</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+      <section class="section" id="value-stream">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">05 · Value Stream Check</p>
+            <h2>{{价值流校验标题}}</h2>
+            <p>{{价值流校验说明}}</p>
+          </div>
+          <p class="section-note">{{输出判断}}</p>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <caption>{{重点能力 × 价值流校验 · 目标指标为 Illustrative 数字}}</caption>
+            <thead><tr><th>价值流</th><th>目标结果</th><th>目标指标（Illustrative）</th><th>重点能力支撑</th><th>覆盖判断</th><th>校验结论</th></tr></thead>
+            <tbody>
+              <tr><td>{{价值流}}</td><td>{{目标结果}}</td><td>{{目标指标}}</td><td>{{支撑能力}}</td><td>{{覆盖判断}}</td><td>{{校验结论}}</td></tr>
+              <tr><td colspan="6">{{…其余价值流行…}}</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+      <section class="section" id="quality">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">Quality Gate</p>
+            <h2>{{质量门标题：阶段 03 建议"{{质量门状态}}"}}</h2>
+            <p>{{质量门说明}}</p>
+          </div>
+          <p class="section-note">{{下一步重点}}</p>
+        </div>
+        <div class="quality-grid">
+          <article class="quality-card"><span class="status">{{状态}}</span><h3>{{检查项}}</h3><p>{{检查说明}}</p></article>
+          <article class="quality-card"><span class="status">{{状态}}</span><h3>{{检查项}}</h3><p>{{检查说明}}</p></article>
+          <article class="quality-card"><span class="status">{{状态}}</span><h3>{{检查项}}</h3><p>{{检查说明}}</p></article>
+          <article class="quality-card"><span class="status">{{状态}}</span><h3>{{检查项}}</h3><p>{{检查说明}}</p></article>
+          <article class="quality-card"><span class="status">{{状态}}</span><h3>{{检查项}}</h3><p>{{检查说明}}</p></article>
+          
+        </div>
+      </section>
+
+      <details class="panel" open>
+        <summary>{{未决条件清单（{{未决项数量}} 项，登记于本阶段）· 按方法论 T12 跟踪}}</summary>
+        <div class="panel-body">
+          <div class="table-wrap">
+            <table>
+              <caption>{{未决项列表}}</caption>
+              <thead>
+                <tr><th>编号</th><th>来源/原编号</th><th>未决内容</th><th>影响面</th><th>证据强度</th><th>责任人</th><th>拟裁决方式</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>{{U-xx}}</td><td>{{来源/原编号}}</td><td>{{未决内容}}</td><td>{{影响面}}</td><td>{{证据强度}}</td><td>{{责任人}}</td><td>{{拟裁决方式}}</td></tr>
+                <tr><td colspan="7">{{…其余未决项…}}</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </details>
+
+      <div class="table-wrap action-table">
+        <table>
+          <caption>下一步行动 · 行动 + owner + 时限</caption>
+          <thead><tr><th>下一步行动</th><th>责任 owner</th><th>时限</th></tr></thead>
+          <tbody>
+            <tr><td>{{下一步行动}}</td><td>{{责任 owner}}</td><td>{{时限}}</td></tr>
+            <tr><td colspan="3">{{…其余行动…}}</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </main>
+
+    <footer class="report-footer">
+      <span>Source: {{项目名称}} · Illustrative exhibit（示例数据需校准）</span>
+      <span>{{日期}} · {{版本}} · Capability Roadmap Demo · 03</span>
+    </footer>
+  </div>
+</body>
+</html>
