@@ -12,18 +12,18 @@ source_refs:
 - diagnosis.dimension.l.current@v1
 - diagnosis.scoring.current@v1
 - diagnosis.blockers.current@v1
-content_hash: sha256:33db1d7ce3fb38590eee6ad931ce33aaef1a5c1cd2b4072293360bf70c1ad014
+content_hash: sha256:276383fe5617f3d581c32be88f5b2ded5eb7433cf6ad532ea548b008d48df704
 confirmation:
   status: confirmed
   confirmed_at: '2026-08-20T15:00:00+08:00'
   confirmed_by: user
   interaction_ref: transcript:12:用户确认整体采用默认锚点并修改 I2 第 1 档
   confirmation_text: 用户明确确认采用本版打分规则
-  confirmed_content_hash: sha256:33db1d7ce3fb38590eee6ad931ce33aaef1a5c1cd2b4072293360bf70c1ad014
+  confirmed_content_hash: sha256:276383fe5617f3d581c32be88f5b2ded5eb7433cf6ad532ea548b008d48df704
 ---
 
 # 诊断确认包：示例企业集团 · 数据中台 AI 转型诊断
-> 方法：VITAL 五维诊断 ｜ 状态：draft（G3 从 confirmed md 聚合） ｜ 更新：2026-08-20T14:09:12.944398+00:00
+> 方法：VITAL 五维诊断 ｜ 状态：draft（G3 从 confirmed md 聚合） ｜ 更新：2026-08-21T02:20:07.163314+00:00
 
 ## 诊断范围界定
 > 来源：会话记录 + modules/diagnosis-scoring-*.md
@@ -35,7 +35,6 @@ confirmation:
 |---|---|
 | 分值范围 | 1-5 |
 | 步进 | 0.5 |
-| 阻断阈值 | 2.0 |
 | 来源 | system-default |
 
 ## 维度打分分布
@@ -79,19 +78,13 @@ confirmation:
 > 来源：modules/diagnosis-blockers-data-platform-diagnosis-v1.md
 | 编号 | 角度 | 类型 | 影响 | 证据 | 来源 item | 建议 |
 | --- | --- | --- | --- | --- | --- | --- |
-| B-01 | I4 | 规则型（≤2.0） |  | E-05 | D-I4-issue-001 |  |
-| B-02 | I2 | 规则型（≤2.0） |  | E-04 | D-I2-issue-001 |  |
-| B-03 | T3 | 规则型（≤2.0） |  | E-05 | D-T3-issue-001 |  |
-| B-04 | T3 | 规则型（≤2.0） | AI 场景无实时业务数据输入 | E-05 | D-T3-issue-001 | 建设直连接口 |
+| B-01 | T3 | 语义型（链路断裂/能力缺口） | AI 场景无实时业务数据输入 | E-05 | D-T3-issue-001 | 建设直连接口 |
 
 ## 改进路径
 > 来源：modules/diagnosis-blockers-data-platform-diagnosis-v1.md
 | 优先级 | 行动 | 对应阻断 | 责任方 | 时间线 |
 | --- | --- | --- | --- | --- |
-| 1 | 修复阻断性问题：人工上报链路中断（≤ 阈值 → 阻断） |  |  |  |
-| 2 | 修复阻断性问题：动销数据漏采迟报（≤ 阈值 → 阻断） |  |  |  |
-| 3 | 修复阻断性问题：DMS 无直连接口（≤ 阈值 → 阻断） |  |  |  |
-| 4 | 建设直连接口 |  |  |  |
+| 1 | 建设直连接口 |  |  |  |
 
 ## 证据清单
 > 来源：各维度 md 证据引用汇总

@@ -258,7 +258,6 @@ def assemble_diagnosis_package(output: dict, state: dict, method: Method | None 
             scale = value.get("scale", {})
             lines.append(
                 f"- **量表**：{scale.get('min')}–{scale.get('max')} 分（步进 {scale.get('step')}）"
-                f"；阻断阈值：{value.get('blockThreshold')}"
             )
             if value.get("customNote"):
                 lines.append(f"- **顾问备注**：{value['customNote']}")

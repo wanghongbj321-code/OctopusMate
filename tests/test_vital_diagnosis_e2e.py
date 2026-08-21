@@ -46,7 +46,6 @@ SCORING_CONFIRMATION = {
 # 顾问确认的打分规则：I2 锚点第 1 档修改（默认参考 → 顾问定制，验证动态化 D4）
 SCORING_CONFIG = {
     "scale": {"min": 1, "max": 5, "step": 0.5},
-    "blockThreshold": 2.0,
     "anchors": {
         "V": {"V1": {1: "初步定位", 2: "明确职责", 3: "全面落地", 4: "成效量化", 5: "机制成熟"},
               "V2": {1: "范围初明", 2: "边界明确", 3: "跨平台落实", 4: "边界量化", 5: "模型自适应"},
@@ -204,21 +203,22 @@ class TestVitalDiagnosisE2E(unittest.TestCase):
             "items": [{"angle": "I2", "type": "issue", "content": "数据链路断裂（演练）", "evidence_refs": ["E-04"]}],
         }, SCORING_CONFIRMATION, state=state)
 
-        # 7. 步骤 06 阻断识别（规则型 ≤2.0 + 语义型链路断裂）→ 写 confirmed blockers md
+        # 7. 步骤 06 阻断识别（仅语义型链路断裂）→ 写 confirmed blockers md
         blocks = blocker.identify_blockers(
-            DEMO_SCORES, ev_list, state_mod.get_scoring_config(state),
+            DEMO_SCORES, ev_list,
             semantic_blocks=[{"angle": "T3", "issue": "核心业务系统无直连接口，链路断裂",
                               "impact": "AI 场景无实时业务数据输入",
                               "evidenceIds": ["E-05"], "suggestion": "建设直连接口"}],
         )
-        self.assertEqual({b["angle"] for b in blocks}, {"I2", "I4", "T3"})
+        # 阻断仅来自语义型（T3 链路断裂）；I2/I4 低分不自动触发阻断
+        self.assertEqual({b["angle"] for b in blocks}, {"T3"})
         out06 = topic_dir / "modules" / "diagnosis-06.md"
         out06.write_text(f"# 阻断性问题与改进路径\n\n{len(blocks)} 项阻断问题\n", encoding="utf-8")
         r6 = run_step(state, method, "06", out06, ai_verdict={"core_ok": True}, session_dir=topic_dir)
         self.assertEqual(r6["status"], "pass")
         files.write_blockers_artifact(topic_dir, {
             "blockers": [
-                {"id": b["id"], "angle": b["angle"], "type": "规则型（≤2.0）", "impact": b["impact"],
+                {"id": b["id"], "angle": b["angle"], "type": "语义型（链路断裂/能力缺口）", "impact": b["impact"],
                  "evidenceIds": b["evidenceIds"], "source_item": f"D-{b['angle']}-issue-001",
                  "suggestion": b["suggestion"], "owner": "待指定", "timeline": "待指定"}
                 for b in blocks

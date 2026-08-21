@@ -1,9 +1,26 @@
 # Changelog · Octopus Mate
 
 > 版本变更记录与专家包修改规范。项目采用语义化版本（SemVer）：`MAJOR.MINOR.PATCH`。
-> 专家包当前版本：**0.3.0**（构建企业能力路线图：六阶段 + 交付资产包 + 强确认链，2026-08-21 待发布）。
+> 专家包当前版本：**0.3.1**（在 0.3.0 之上叠加——清除 VITAL 诊断阻断识别硬阈值规则，2026-08-21 待发布）。
 
 ## 版本历史
+
+### 0.3.1 — 2026-08-21 · 清除 VITAL 诊断阻断识别硬阈值规则（breaking change）
+
+> 依据：`internal/docs/debug/清除 VITAL 诊断-阻断判断标准-硬阈值规则.md`（2026-08-21，用户确认执行）。
+> 决策：阻断性问题的识别不再基于角度打分阈值，仅保留语义型（链路断裂 / 能力覆盖缺口）。
+
+**Changed（breaking）**
+- `skills/_engine/blocker.py`：`identify_blockers()` 移除"规则型（任一角度 `score ≤ blockThreshold` 默认 2.0）"分支——阻断识别完全来自语义型核验（链路断裂/能力覆盖缺口），不再依赖任何角度打分阈值；删除 `scoring_config`/`DEFAULT_BLOCK_THRESHOLD`/`_angle_score` 与按分排序逻辑，仅保留语义型合并与 B-01 递增编号
+- `skills/methods/vital-diagnosis/manifest.yaml`：删除 `scoring.blockThreshold`；步骤 06 question/operations 改写为"仅基于语义型核验识别阻断"
+- `skills/methods/vital-diagnosis/templates/阻断性问题清单表.md`：删除规则型条目，阻断字段说明改为仅语义型
+- `internal/docs/methodology/VITAL数据管理域AI转型五维诊断方法.md` §二-4：删除"任一二级角度打分不高于 2 分"触发阻断的规则；低分维度/角度改为在打分表中呈现（待重点关注），不自动进入阻断清单
+- `skills/diagnosis-gate/SKILL.md`、`skills/diagnosis-distill/SKILL.md`：阻断一致性/步骤 06 描述与 step00 锚点说明同步移除硬阈值表述
+- `schemas/state.json.schema.json`：移除 `scoring_config.blockThreshold` 与 `scoring_config_history.blockThreshold` 属性；放宽两处 `additionalProperties` 以容忍历史 state.json 残留字段（引擎运行时忽略旧字段，不写入新数据）
+- `schemas/manifest.schema.json`：移除 `scoring.blockThreshold` 属性
+- `skills/_engine/reconcile.py` / `files.py` / `exit.py`：移除重建/合并/展示中的 blockThreshold 引用
+
+**测试**：同步清理 `test_blocker` / `test_diagnosis_pipeline` / `test_vital_diagnosis_e2e` / `test_g2_md_chain` / `test_g3_confirm` / `test_g4_render` / `test_g5_bypass` / `test_roadmap_g0_smoke` / `test_files_gate` / `test_scoring` 及全部相关 fixtures 中的 blockThreshold 字面量；原"硬阈值触发/自定义阈值/按分升序"断言改为"语义型合并/低分不触发阻断"验证。
 
 ### 0.3.0 — 2026-08-21 · 构建企业能力路线图（六阶段 + 交付资产包 + 强确认链）
 

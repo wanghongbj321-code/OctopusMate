@@ -45,9 +45,9 @@ steps:
       conditional: "个别角度证据待补强（登记未决项）"
   - id: "03"
     name: "阻断识别"
-    question: "哪些角度 ≤ 阻断阈值，或存在链路断裂？"
+    question: "是否存在链路断裂/能力覆盖缺口（阻断性问题）？"
     operations:
-      - "引擎 blocker 识别阻断性问题（≤ blockThreshold 或链路断裂）"
+      - "引擎 blocker 识别阻断性问题（仅语义型：链路断裂/能力覆盖缺口）"
       - "形成改进路径（阻断性问题优先输入）"
     outputs:
       - "阻断性问题清单"
@@ -62,7 +62,6 @@ scoring:
     min: 1
     max: 5
     step: 0.5
-  blockThreshold: 2.0
   anchorSource: "tests/fixtures/mock-method（测试用，非方法论文档）"
 
 aiConstraints:

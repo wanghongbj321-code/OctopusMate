@@ -1,4 +1,8 @@
-"""M1-03 blocker 模块单元测试：阻断识别（规则型 ≤ 阈值 + 语义型链路断裂）/ 排序 / 改进路径。"""
+"""M1-03 blocker 模块单元测试：阻断识别（仅语义型链路断裂/能力缺口）/ 编号 / 改进路径。
+
+注意：硬阈值规则（角度 ≤ blockThreshold 触发阻断）已于 v0.3.1 清除；
+阻断识别完全来自语义型核验，不再基于任何角度打分阈值。
+"""
 import sys
 import unittest
 from pathlib import Path
@@ -11,9 +15,10 @@ from _engine import blocker  # noqa: E402
 
 
 class TestIdentifyBlockers(unittest.TestCase):
-    """阻断性问题识别。"""
+    """阻断性问题识别（仅语义型）。"""
 
     def _scores(self):
+        # 低分角度（如 I1/I2）不再自动触发阻断——仅作上下文
         return {
             "V1": {"score": 3.5, "judgment": "战略承接清晰", "evidenceIds": ["E-01"]},
             "I1": {"score": 2.0, "judgment": "数据对象覆盖不全", "evidenceIds": ["E-02"]},
@@ -21,46 +26,35 @@ class TestIdentifyBlockers(unittest.TestCase):
             "T1": {"score": 3.0, "judgment": "架构规范", "evidenceIds": []},
         }
 
-    def test_below_threshold_identified(self):
-        # 阈值 2.0：I1(2.0) 与 I2(1.5) 均 ≤ 2.0 → 阻断
-        blocks = blocker.identify_blockers(self._scores(), [], {"blockThreshold": 2.0})
-        angles = {b["angle"] for b in blocks}
-        self.assertEqual(angles, {"I1", "I2"})
-
-    def test_default_threshold_2(self):
+    def test_low_score_not_blocking(self):
+        # 角度低分（I1=2.0 / I2=1.5）不再触发阻断（硬阈值规则已清除）
         blocks = blocker.identify_blockers(self._scores(), [])
-        self.assertEqual({b["angle"] for b in blocks}, {"I1", "I2"})
-
-    def test_custom_threshold(self):
-        blocks = blocker.identify_blockers(self._scores(), [], {"blockThreshold": 3.0})
-        # V1 3.5 不触发；T1 3.0 恰好等于阈值 → 触发
-        self.assertEqual({b["angle"] for b in blocks}, {"I1", "I2", "T1"})
-
-    def test_sorted_by_score_asc(self):
-        blocks = blocker.identify_blockers(self._scores(), [], {"blockThreshold": 2.0})
-        self.assertLessEqual(len(blocks), 2)
-        # I2(1.5) 应在 I1(2.0) 之前（升序，低分优先）
-        self.assertEqual(blocks[0]["angle"], "I2")
-        self.assertEqual(blocks[1]["angle"], "I1")
+        self.assertEqual(blocks, [])
 
     def test_semantic_blocks_merged(self):
         semantic = [{"angle": "T3", "issue": "DMS 无直连接口，链路断裂", "impact": "AI 场景无数据输入",
                      "evidenceIds": ["E-04"], "suggestion": "建设 DMS 直连接口"}]
-        blocks = blocker.identify_blockers(self._scores(), [], {"blockThreshold": 2.0}, semantic_blocks=semantic)
-        angles = {b["angle"] for b in blocks}
-        self.assertEqual(angles, {"I1", "I2", "T3"})
-        # 语义型无分排最后
-        self.assertEqual(blocks[-1]["angle"], "T3")
+        blocks = blocker.identify_blockers(self._scores(), [], semantic_blocks=semantic)
+        self.assertEqual({b["angle"] for b in blocks}, {"T3"})
+        self.assertEqual(blocks[0]["issue"], "DMS 无直连接口，链路断裂")
 
     def test_no_blockers(self):
         scores = {"V1": {"score": 4.0, "judgment": "良好"}, "V2": {"score": 3.5, "judgment": "良好"}}
-        self.assertEqual(blocker.identify_blockers(scores, [], {"blockThreshold": 2.0}), [])
+        self.assertEqual(blocker.identify_blockers(scores, []), [])
 
-    def test_ids_reassigned_after_sort(self):
-        semantic = [{"angle": "T3", "issue": "链路断裂"}]
-        blocks = blocker.identify_blockers(self._scores(), [], {"blockThreshold": 2.0}, semantic_blocks=semantic)
+    def test_ids_assigned_in_order(self):
+        semantic = [
+            {"angle": "T3", "issue": "链路断裂 A"},
+            {"angle": "I4", "issue": "能力缺口 B"},
+        ]
+        blocks = blocker.identify_blockers(self._scores(), [], semantic_blocks=semantic)
         ids = [b["id"] for b in blocks]
-        self.assertEqual(ids, ["B-01", "B-02", "B-03"])
+        self.assertEqual(ids, ["B-01", "B-02"])
+        self.assertEqual([b["angle"] for b in blocks], ["T3", "I4"])
+
+    def test_empty_semantic_none(self):
+        blocks = blocker.identify_blockers(self._scores(), [], semantic_blocks=None)
+        self.assertEqual(blocks, [])
 
 
 class TestBuildImprovementPath(unittest.TestCase):

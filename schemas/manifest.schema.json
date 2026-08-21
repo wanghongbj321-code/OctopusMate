@@ -110,10 +110,6 @@
           },
           "additionalProperties": false
         },
-        "blockThreshold": {
-          "type": "number",
-          "description": "阻断阈值：任一角度 ≤ 该值识别为阻断性问题（默认 2.0）"
-        },
         "anchorSource": {
           "type": "string",
           "description": "默认锚点来源文档路径（仅作默认参考，不构成事实引用）"
