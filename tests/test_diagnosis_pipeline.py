@@ -28,7 +28,6 @@ MOCK_MANIFEST = ROOT / "tests" / "fixtures" / "mock-diagnosis-method" / "manifes
 # 顾问确认的打分规则（锚点从方法论默认参考修改——验证动态化）
 SCORING_CONFIG = {
     "scale": {"min": 1, "max": 5, "step": 0.5},
-    "blockThreshold": 2.0,
     "anchors": {
         "V": {"V1": {1: "初步定位", 2: "明确职责", 3: "全面落地", 4: "成效量化", 5: "机制成熟"},
               "V2": {1: "范围初明", 2: "边界明确", 3: "跨平台落实", 4: "边界量化", 5: "模型自适应"}},
@@ -56,13 +55,12 @@ class TestScoringConfigVersioning(unittest.TestCase):
 
     def test_versioning_history(self):
         st = state_mod.new_state("p", "项目", "t", "主题")
-        v1 = {"scale": {"min": 1, "max": 5, "step": 0.5}, "blockThreshold": 2.0, "anchors": {}}
-        v2 = dict(v1, blockThreshold=1.5)
+        v1 = {"scale": {"min": 1, "max": 5, "step": 0.5}, "anchors": {}}
+        v2 = dict(v1, anchors={"V": {"V1": "定制V1"}})
         state_mod.set_scoring_config(st, v1)
         state_mod.set_scoring_config(st, v2)
         self.assertEqual(state_mod.get_scoring_config(st), v2)
         self.assertEqual(len(st["scoring_config_history"]), 1)
-        self.assertEqual(st["scoring_config_history"][0]["blockThreshold"], 2.0)
         self.assertIn("replaced_at", st["scoring_config_history"][0])
 
     def test_config_required_before_scoring(self):
@@ -91,7 +89,7 @@ class TestDiagnosisPipeline(unittest.TestCase):
             }
             state_mod.set_step(st, "01", status="completed")
 
-            # --- 步骤 02 I 维打分（I1/I2）：I2 低分触发阻断 ---
+            # --- 步骤 02 I 维打分（I1/I2）：低分仅呈现，不触发阻断 ---
             scores["I1"] = {"score": 3.0, "judgment": "数据对象目录基本贯通", "evidenceIds": ["E-02"]}
             scores["I2"] = {"score": 1.5, "judgment": "动销数据漏采迟报", "evidenceIds": ["E-03"]}
             state_mod.set_step(st, "02", status="completed")
@@ -105,14 +103,15 @@ class TestDiagnosisPipeline(unittest.TestCase):
             evidence.register(ev_list, "覆盖率统计 <40%", level="A",
                               verification="按终端/SKU/月份抽样", supports=["I2"], source_type="运行记录")
 
-            # --- 步骤 03 阻断识别 + 语义型链路断裂 ---
+            # --- 步骤 03 阻断识别（仅语义型链路断裂）---
             blocks = blocker.identify_blockers(
-                scores, ev_list, state_mod.get_scoring_config(st),
+                scores, ev_list,
                 semantic_blocks=[{"angle": "T3", "issue": "DMS 无直连接口，链路断裂",
                                   "impact": "AI 场景无数据输入", "evidenceIds": ["E-04"],
                                   "suggestion": "建设 DMS 直连接口"}],
             )
-            self.assertEqual({b["angle"] for b in blocks}, {"I2", "T3"})
+            # 阻断仅来自语义型（T3 链路断裂）；I2 低分不自动触发阻断
+            self.assertEqual({b["angle"] for b in blocks}, {"T3"})
 
             # --- scoring 统计 ---
             result = scoring.compute_all(scores, state_mod.get_scoring_config(st))
@@ -208,20 +207,15 @@ class TestDiagnosisPipeline(unittest.TestCase):
             self.assertEqual(state_mod.step_status(st, "01"), "draft")
             self.assertEqual(st["steps"]["01"]["regress_count"], 1)
 
-    def test_threshold_adjust_changes_blockers(self):
-        """阻断阈值调整场景（P2-7）：调低阈值后识别结果变化。"""
+    def test_scores_never_trigger_blockers(self):
+        """阻断识别与角度打分完全解耦（硬阈值规则已清除）：无论分值多低，无语义型则不阻断。"""
         scores = {
             "V1": {"score": 3.5, "judgment": "良好", "evidenceIds": ["E-01"]},
             "I1": {"score": 2.0, "judgment": "覆盖不全", "evidenceIds": ["E-02"]},
-            "I2": {"score": 1.5, "judgment": "漏采", "evidenceIds": ["E-03"]},
+            "I2": {"score": 1.0, "judgment": "漏采", "evidenceIds": ["E-03"]},
         }
-        # 默认阈值 2.0：I1(2.0) 与 I2(1.5) 均触发
-        blocks_default = blocker.identify_blockers(scores, [], {"blockThreshold": 2.0})
-        self.assertEqual({b["angle"] for b in blocks_default}, {"I1", "I2"})
-
-        # 顾问下调阈值至 1.8：I1(2.0) 不再触发，仅 I2(1.5) 触发（动态化生效）
-        blocks_lowered = blocker.identify_blockers(scores, [], {"blockThreshold": 1.8})
-        self.assertEqual({b["angle"] for b in blocks_lowered}, {"I2"})
+        blocks = blocker.identify_blockers(scores, [])
+        self.assertEqual(blocks, [])
 
     def test_evidence_single_source_not_blocking(self):
         """缺双来源"待补强"而非阻断（P2-5 / 方法论"材料缺失≠能力缺失"）。
@@ -236,9 +230,9 @@ class TestDiagnosisPipeline(unittest.TestCase):
         self.assertFalse(ok)  # 单来源 → 待补强提示
         self.assertEqual(len(sources), 1)
 
-        # 阻断识别不受单来源影响（按打分判定，不因证据少而误报）
+        # 阻断识别不受单来源影响（仅语义型判定，不因证据少或低分而误报）
         scores = {"V1": {"score": 4.0, "judgment": "良好", "evidenceIds": ["E-01"]}}
-        blocks = blocker.identify_blockers(scores, ev_list, {"blockThreshold": 2.0})
+        blocks = blocker.identify_blockers(scores, ev_list)
         self.assertEqual(blocks, [])
 
     def test_bad_score_step_excluded(self):
@@ -267,7 +261,7 @@ def build_diagnosis_output(st: dict, scores: dict | None = None) -> dict:
                       verification="现网核验", supports=["I1"], source_type="系统现状")
     evidence.register(ev_list, "覆盖率统计 <40%", level="A",
                       verification="按终端/SKU/月份抽样", supports=["I2"], source_type="运行记录")
-    blocks = blocker.identify_blockers(scores, ev_list, cfg)
+    blocks = blocker.identify_blockers(scores, ev_list)
     return {
         "diagnosisScope": {"objects": ["数据中台"], "boundary": "数据管理域"},
         "scoringConfig": cfg,
@@ -305,6 +299,10 @@ class TestDiagnosisExit(unittest.TestCase):
         with tempfile.TemporaryDirectory() as td:
             st = make_state(Path(td))
             output = build_diagnosis_output(st)
+            # 注入语义型阻断（链路断裂）→ 触发"存在阻断必须给改进路径"条件必填
+            output["blockingIssues"] = [{"id": "B-01", "angle": "T3", "issue": "链路断裂",
+                                         "impact": "AI 无数据", "evidenceIds": ["E-04"],
+                                         "suggestion": "建设直连接口"}]
             del output["improvementPath"]  # 有阻断问题但缺改进路径 → 条件必填（软阻断）
             res = run_exit(output, requires=[], state=st, contract_type="diagnosis")
             # 条件必填缺失 = errors 提示（调用方据此阻止进入确认），与 vision 域

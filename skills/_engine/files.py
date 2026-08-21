@@ -418,7 +418,6 @@ def _scoring_md_body(project_name: str, topic_name: str, scoring_config: dict) -
         "|---|---|",
         f"| 分值范围 | {scale.get('min', '?')}-{scale.get('max', '?')} |",
         f"| 步进 | {scale.get('step', '?')} |",
-        f"| 阻断阈值 | {(scoring_config or {}).get('blockThreshold', '?')} |",
         f"| 来源 | {source} |",
         "",
         "## 逐角度锚点",
@@ -880,7 +879,7 @@ def merge_scoring_rules(user_config: dict | None, default_config: dict) -> dict:
     - 用户未提供 → source=system-default，merged 全为默认内容
     - 部分提供 → source=mixed：已覆盖角度用用户内容，未覆盖角度列出为 missing_angles
       （**不静默补齐**：missing_angles 必须由调用方回读确认后才可落盘）
-    - conflicts：用户规则与默认规则在 scale/blockThreshold 等顶层配置不一致时列出，由调用方回读
+    - conflicts：用户规则与默认规则在 scale 顶层配置不一致时列出，由调用方回读
 
     返回 {"source": str, "merged": dict, "missing_angles": [...], "conflicts": [...]}。
     """
@@ -892,11 +891,8 @@ def merge_scoring_rules(user_config: dict | None, default_config: dict) -> dict:
     conflicts: list[str] = []
     merged = {
         "scale": user_config.get("scale") or (default_config or {}).get("scale"),
-        "blockThreshold": user_config.get("blockThreshold")
-        if user_config.get("blockThreshold") is not None
-        else (default_config or {}).get("blockThreshold"),
     }
-    for key, label in (("scale", "量表"), ("blockThreshold", "阻断阈值")):
+    for key, label in (("scale", "量表"),):
         u, d = user_config.get(key), (default_config or {}).get(key)
         if u is not None and d is not None and u != d:
             conflicts.append(f"{label}：用户 {u} ≠ 默认 {d}")

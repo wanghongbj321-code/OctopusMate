@@ -184,7 +184,6 @@ def _rebuild_scoring(state: dict, modules_dir: Path) -> None:
                 anchors.setdefault(angle[0], {})[angle] = parts if parts else anchor_text.strip()
     state["scoring_config"] = {
         "scale": {"min": 1, "max": 5, "step": 0.5},
-        "blockThreshold": 2.0,
         "anchors": anchors,
         "source": "system-default",
     }

@@ -99,7 +99,7 @@ class TestComputeAll(unittest.TestCase):
 
     def test_full_pipeline(self):
         scores = {"V1": {"score": 3.5}, "V2": {"score": 4.0}, "I1": {"score": 1.5}, "I2": {"score": 2.5}}
-        result = scoring.compute_all(scores, {"scale": SCALE, "blockThreshold": 2.0, "anchors": ANCHORS})
+        result = scoring.compute_all(scores, {"scale": SCALE, "anchors": ANCHORS})
         self.assertEqual(result["errors"], [])
         self.assertEqual(result["dimension_scores"]["V"], 3.8)
         self.assertEqual(result["dimension_scores"]["I"], 2.0)

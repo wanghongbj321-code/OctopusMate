@@ -40,7 +40,6 @@ CONFIRMATION = {
 
 SCORING_CONFIG = {
     "scale": {"min": 1, "max": 5, "step": 0.5},
-    "blockThreshold": 2.0,
     "anchors": {
         "V": {"V1": {1: "初步定位", 3: "全面落地", 5: "机制成熟"}},
     },
@@ -185,7 +184,7 @@ class TestWriteScoringArtifact(unittest.TestCase):
 
         # state 同步：scoring_config + manifest
         reloaded = state_mod.load_state(self.topic_dir / "state.json")
-        self.assertEqual(reloaded["scoring_config"]["blockThreshold"], 2.0)
+        self.assertNotIn("blockThreshold", reloaded["scoring_config"])
         entry = reloaded["artifacts"]["diagnosis.scoring.current"]
         self.assertEqual(entry["version"], 1)
         self.assertEqual(entry["status"], "confirmed")
@@ -378,7 +377,6 @@ class TestMergeScoringRules(unittest.TestCase):
 
     DEFAULT = {
         "scale": {"min": 1, "max": 5, "step": 0.5},
-        "blockThreshold": 2.0,
         "anchors": {"V": {"V1": "默认V1", "V2": "默认V2"}, "I": {"I1": "默认I1"}},
     }
 
@@ -391,7 +389,6 @@ class TestMergeScoringRules(unittest.TestCase):
     def test_user_upload_full(self):
         user = {
             "scale": {"min": 1, "max": 5, "step": 0.5},
-            "blockThreshold": 2.0,
             "anchors": {"V": {"V1": "用户V1", "V2": "用户V2"}, "I": {"I1": "用户I1"}},
         }
         r = files.merge_scoring_rules(user, self.DEFAULT)
@@ -411,17 +408,20 @@ class TestMergeScoringRules(unittest.TestCase):
         self.assertEqual(r["merged"]["anchors"]["V"]["V1"], "用户V1")
 
     def test_conflict_detected(self):
-        """用户阈值与默认不一致 → conflicts 列出（回读确认）。"""
-        user = {"blockThreshold": 1.5, "anchors": {"V": {"V1": "用户V1", "V2": "用户V2"},
-                                                   "I": {"I1": "用户I1"}}}
+        """用户量表与默认不一致 → conflicts 列出（回读确认）。"""
+        user = {"scale": {"min": 1, "max": 5, "step": 1.0},
+                "anchors": {"V": {"V1": "用户V1", "V2": "用户V2"},
+                            "I": {"I1": "用户I1"}}}
         r = files.merge_scoring_rules(user, self.DEFAULT)
         self.assertEqual(r["source"], "user-upload")
-        self.assertTrue(any("阻断阈值" in c for c in r["conflicts"]))
+        self.assertTrue(any("量表" in c for c in r["conflicts"]))
 
     def test_mixed_conflict_and_missing(self):
-        user = {"blockThreshold": 1.5, "anchors": {"V": {"V1": "用户V1"}}}
+        # 部分提供（仅 V1）+ 量表不一致 → source=mixed 且 conflicts 非空
+        user = {"scale": {"min": 1, "max": 5, "step": 1.0}, "anchors": {"V": {"V1": "用户V1"}}}
         r = files.merge_scoring_rules(user, self.DEFAULT)
         self.assertEqual(r["source"], "mixed")
+        self.assertTrue(r["conflicts"])
         self.assertTrue(r["conflicts"])
         self.assertIn("V2", r["missing_angles"])
 

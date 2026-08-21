@@ -129,7 +129,7 @@ def main() -> None:
                 "interaction_ref": "transcript:12:用户确认整体采用默认锚点",
             }
         },
-        "scoring_config": {"scale": {"min": 1, "max": 5, "step": 0.5}, "blockThreshold": 2.0},
+        "scoring_config": {"scale": {"min": 1, "max": 5, "step": 0.5}},
     }
     (STATES / "valid-state.json").write_text(
         json.dumps(valid_state, ensure_ascii=False, indent=2), encoding="utf-8")

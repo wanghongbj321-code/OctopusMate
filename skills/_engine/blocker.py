@@ -1,64 +1,37 @@
 """M1-03 阻断性问题识别（blocker）。
 
 对齐 VITAL 方法论 §二-4 阻断性问题识别与展示：
-- 任一二级角度打分不高于 blockThreshold（默认 2.0），或核验发现跨平台
-  数据/任务链路断裂、能力覆盖缺口时，识别为阻断性问题
+- 阻断性问题仅来自**语义型核验**（跨平台数据/任务链路断裂、能力覆盖缺口），
+  由 AI 语义判定（方法步骤 06），**独立于角度打分**——不再基于任何打分阈值
 - 阻断性问题 = 必须修复才能支撑 AI 转型就绪的问题，不限于链路断裂
 - 阻断性问题清单独立呈现（标注问题角度/影响范围/证据引用/改进建议），
   作为改进路径的优先输入，不参与总体分否决
+- 说明：角度打分低分不再机械触发阻断（硬阈值规则已清除）；低分角度在
+  维度分布/角度打分表中呈现并由顾问关注，但不自动进入阻断清单
 """
 from __future__ import annotations
-
-DEFAULT_BLOCK_THRESHOLD = 2.0
-
-
-def _angle_score(scores: dict, angle: str) -> float | None:
-    entry = scores.get(angle)
-    if isinstance(entry, dict) and "score" in entry:
-        return entry["score"]
-    return None
 
 
 def identify_blockers(
     scores: dict,
     evidence_list: list[dict],
-    scoring_config: dict | None = None,
     semantic_blocks: list[dict] | None = None,
 ) -> list[dict]:
-    """识别阻断性问题清单。
+    """识别阻断性问题清单（仅语义型）。
 
     - scores: {角度: {"score": float, "judgment": str, "evidenceIds": [...]}}
+      （诊断上下文，仅作参考，不再用于阻断判定）
     - evidence_list: 证据清单（用于引用证据编号）
-    - scoring_config: 打分规则（含 blockThreshold；缺省用 2.0）
     - semantic_blocks: AI 语义型识别出的链路断裂/能力缺口（方法步骤 06
       语义判定结果，格式同清单项：{angle, issue, impact, suggestion}）
 
     返回清单 [{id, angle, issue, impact, evidenceIds, suggestion}]，
-    按角度分升序排列（低分优先）。
+    按语义型输入顺序编号 B-01 递增。
+
+    阻断识别完全来自语义型核验，不基于任何角度打分阈值。
     """
-    threshold = float(
-        (scoring_config or {}).get("blockThreshold", DEFAULT_BLOCK_THRESHOLD)
-    )
     results: list[dict] = []
-
-    # 规则型：角度 ≤ 阈值
-    for angle, entry in (scores or {}).items():
-        score = _angle_score(scores, angle)
-        if score is None or score > threshold:
-            continue
-        if not isinstance(entry, dict):
-            continue
-        results.append({
-            "id": f"B-{len(results) + 1:02d}",
-            "angle": angle,
-            "issue": entry.get("judgment") or f"{angle} 打分 {score} 不高于阻断阈值 {threshold}",
-            "impact": entry.get("impact") or "",
-            "evidenceIds": entry.get("evidenceIds") or [],
-            "suggestion": entry.get("suggestion") or "",
-        })
-
-    # 语义型：链路断裂/能力覆盖缺口（AI 语义判定结果，独立于打分）
-    for i, blk in enumerate(semantic_blocks or [], start=len(results) + 1):
+    for i, blk in enumerate(semantic_blocks or [], start=1):
         results.append({
             "id": f"B-{i:02d}",
             "angle": blk.get("angle") or "",
@@ -67,16 +40,6 @@ def identify_blockers(
             "evidenceIds": blk.get("evidenceIds") or [],
             "suggestion": blk.get("suggestion") or "",
         })
-
-    # 升序：规则型按分排（低分优先），语义型无分排最后
-    def sort_key(b: dict) -> tuple:
-        score = _angle_score(scores, b.get("angle", ""))
-        return (0 if score is not None else 1, score if score is not None else 0.0)
-
-    results.sort(key=sort_key)
-    # 重编号（排序后保持 B-01 递增）
-    for i, b in enumerate(results, start=1):
-        b["id"] = f"B-{i:02d}"
     return results
 
 

@@ -47,7 +47,6 @@ CONFIRMATION = {
 
 SCORING_CONFIG = {
     "scale": {"min": 1, "max": 5, "step": 0.5},
-    "blockThreshold": 2.0,
     "anchors": {"V": {"V1": {1: "初步", 3: "全面", 5: "成熟"}}},
 }
 

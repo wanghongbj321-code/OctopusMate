@@ -33,7 +33,6 @@ CONFIRMATION = {
 
 SCORING_CONFIG = {
     "scale": {"min": 1, "max": 5, "step": 0.5},
-    "blockThreshold": 2.0,
     "anchors": {
         "V": {"V1": {1: "初步", 5: "成熟"}, "V2": {1: "初明", 5: "自适应"}},
         "I": {"I1": {1: "核心识别", 5: "自适应"}, "I2": {1: "依赖人工", 5: "按需"}},
@@ -367,7 +366,8 @@ class TestRebuildState(unittest.TestCase):
     def test_rebuild_preserves_existing_scoring_mirror(self):
         """现有 state.scoring_config 镜像可信时优先保留（重建不覆盖）。"""
         state2 = reconcile.rebuild_state_from_artifacts(self.topic_dir, self.state)
-        self.assertEqual(state2["scoring_config"]["blockThreshold"], 2.0)
+        self.assertIn("scale", state2["scoring_config"])
+        self.assertNotIn("blockThreshold", state2["scoring_config"])
 
 
 if __name__ == "__main__":
